@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+
+  /* MOFA button tokens (outline / secondary control) */
+  --mofa-btn-outline-border: #e7e7ee;
+  --mofa-btn-outline-hover: #f3f3f7;
+  /* Slightly stronger than hover so selection is visible */
+  --mofa-btn-outline-selected: #eeeff6;
+  --mofa-btn-outline-focus-halo: rgba(101, 144, 199, 0.22);
+
+  /* MOFA Primary Button Tokens */
+  --mofa-btn-primary-bg: #48476e;
+  --mofa-btn-primary-border: #5a597d;
+  --mofa-btn-primary-hover: #3f3e63;
+  --mofa-btn-primary-text: #ffffff;
+
+  /* Global UI Tokens */
+  --mofa-text-primary: #414651;
+  --mofa-border-subtle: #eeedf5;
+}
+
+html,
+body {
+  height: 100%;
+}
