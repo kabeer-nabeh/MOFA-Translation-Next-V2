@@ -55,7 +55,6 @@ const LOCATION: Option[] = [
     label: "Teams",
     description: "Online via Microsoft Teams",
     icon: (
-      // eslint-disable-next-line @next/next/no-img-element
       <img src="/teams.png" alt="" className="h-[18px] w-[18px]" />
     ),
   },
@@ -64,7 +63,6 @@ const LOCATION: Option[] = [
     label: "Beam",
     description: "Online via Beam",
     icon: (
-      // eslint-disable-next-line @next/next/no-img-element
       <img src="/beam-blue.png" alt="" className="h-[18px] w-[18px] object-contain" />
     ),
   },

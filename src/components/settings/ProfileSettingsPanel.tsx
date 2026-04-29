@@ -2,7 +2,6 @@
 
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { SelectMenu } from "@/components/ui/SelectMenu";
 import { TextField } from "@/components/ui/TextField";
 
@@ -115,7 +114,6 @@ export function ProfileSettingsPanel() {
         <div className="flex items-center gap-6">
           <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#f3f3f7] text-[28px] font-semibold leading-[42px] text-[#6e6b8b]">
             {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={avatarUrl}
                 alt="Avatar preview"

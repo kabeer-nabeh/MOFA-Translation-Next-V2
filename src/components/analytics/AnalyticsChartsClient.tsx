@@ -1,13 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Activity,
-  BarChart3,
-  ChevronDown,
-  Languages,
-  Type,
-} from "lucide-react";
+import { Activity, BarChart3, Languages, Type } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -81,9 +75,6 @@ export function AnalyticsChartsClient() {
 
   const wordsData = WORDS_OVER_TIME[range];
   const sessionData = SESSION_TRENDS[range];
-
-  const currentLangLabel =
-    LANGUAGE_OPTIONS.find((o) => o.id === language)?.label ?? "All Language";
 
   return (
     <div className="flex flex-col gap-6 pt-6">

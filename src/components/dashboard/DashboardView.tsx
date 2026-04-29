@@ -1,11 +1,4 @@
-import {
-  BarChart3,
-  Calendar,
-  Globe2,
-  Home,
-  Settings,
-  Video,
-} from "lucide-react";
+import { BarChart3, Calendar, Globe2, Home, Video } from "lucide-react";
 
 import { GreetingSection } from "@/components/dashboard/GreetingSection";
 import { MeetingCard } from "@/components/dashboard/MeetingCard";
@@ -14,8 +7,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { NewMeetingModalTrigger } from "@/components/meetings/NewMeetingModalTrigger";
-import type { Meeting } from "@/types/meeting";
-
 import { getCurrentMeeting, getUpcomingMeetings } from "@/lib/services/meetings";
 
 const logoSrc =

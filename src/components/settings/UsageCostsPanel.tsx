@@ -10,10 +10,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ChevronDown, Download, DollarSign, Search, Type, Users } from "lucide-react";
+import { Download, DollarSign, Search, Type, Users } from "lucide-react";
 import * as React from "react";
 
-import { Button, buttonVariants } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { SelectDropdown } from "@/components/ui/SelectDropdown";
 import { COST_SERIES, USAGE_TABLE, USAGE_BY_MEETINGS_ROWS } from "@/lib/mocks/settings";
