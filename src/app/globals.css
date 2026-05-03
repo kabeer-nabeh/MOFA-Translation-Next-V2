@@ -30,18 +30,17 @@ body {
   height: 100%;
 }
 
-@layer base {
-  a[href],
-  button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]),
-  input[type="button"]:not(:disabled),
-  input[type="submit"]:not(:disabled),
-  input[type="reset"]:not(:disabled) {
-    cursor: pointer;
-  }
+/* Unlayered (after @import) so this wins over Tailwind preflight / @layer base. */
+a[href],
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled) {
+  cursor: pointer;
+}
 
-  button:disabled,
-  [aria-disabled="true"] {
-    cursor: not-allowed;
-  }
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
 }
