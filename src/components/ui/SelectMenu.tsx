@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/Button";
 import { useClickOutside } from "@/components/ui/useClickOutside";
 
 export type SelectOption<T extends string> = { id: T; label: string };
@@ -76,8 +77,8 @@ export function SelectMenu<T extends string>({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex h-10 w-full items-center justify-between rounded-lg border border-[#eeedf5] bg-white px-3 text-left text-sm text-[#414651] shadow-[0_0_1px_rgba(0,0,0,0.1),0_1px_0_rgba(0,0,0,0.1)] outline-none",
-          "focus:shadow-[0_0_1px_rgba(0,0,0,0.1),0_1px_0_rgba(0,0,0,0.1),0_0_0_2px_var(--mofa-btn-outline-focus-halo)]",
+          buttonVariants({ variant: "secondary", size: "md" }),
+          "w-full justify-between text-left",
           buttonClassName,
         )}
       >

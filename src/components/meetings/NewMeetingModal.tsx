@@ -8,9 +8,13 @@ import {
   Languages,
   HelpCircle,
   Monitor,
+  Search,
+  Check,
+  ChevronDown,
   X,
 } from "lucide-react";
 
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { RadioCardGroup } from "@/components/ui/RadioCardGroup";
@@ -19,12 +23,25 @@ import { SelectMenu } from "@/components/ui/SelectMenu";
 import { useClickOutside } from "@/components/ui/useClickOutside";
 
 type Option = { id: string; label: string; icon?: React.ReactNode; description?: string };
+type PersonOption = {
+  id: string;
+  label: string;
+  email: string;
+  avatarSrc?: string | null;
+};
 
-const PEOPLE: Option[] = [
-  { id: "abdullah", label: "Abdullah Al Harbi" },
-  { id: "suliman", label: "Suliman Alawi" },
-  { id: "fatima", label: "Fatima Alzahra" },
-  { id: "khalid", label: "Khalid Mansour" },
+const PEOPLE: PersonOption[] = [
+  { id: "abdullah", label: "Abdullah Al Harbi", email: "abdullah@mofa.gov.sa" },
+  { id: "suliman", label: "Suliman Alawi", email: "suliman@mofa.gov.sa" },
+  { id: "fatima", label: "Fatima Alzahra", email: "fatima@mofa.gov.sa" },
+  { id: "khalid", label: "Khalid Mansour", email: "khalid@mofa.gov.sa" },
+];
+
+const PROJECTS: Option[] = [
+  { id: "amplifai", label: "AmplifAI Project" },
+  { id: "q2-planning", label: "Q2 Planning" },
+  { id: "ambassadorial-briefing", label: "Ambassadorial Briefing" },
+  { id: "translation-demo", label: "MOFA Translation Demo" },
 ];
 
 const LANGUAGES: Option[] = [
@@ -68,6 +85,167 @@ const LOCATION: Option[] = [
   },
 ];
 
+function initialsFor(name: string) {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function AttendeesMultiSelect({
+  id,
+  value,
+  onChange,
+  options,
+  error,
+}: {
+  id: string;
+  value: string[];
+  onChange: (next: string[]) => void;
+  options: PersonOption[];
+  error?: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState("");
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  useClickOutside(rootRef, () => setOpen(false));
+
+  React.useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(timer);
+  }, [open]);
+
+  const selectedPeople = options.filter((person) => value.includes(person.id));
+  const filteredPeople = options.filter((person) =>
+    `${person.label} ${person.email}`.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  function togglePerson(personId: string) {
+    if (value.includes(personId)) {
+      onChange(value.filter((currentId) => currentId !== personId));
+      return;
+    }
+    onChange([...value, personId]);
+  }
+
+  return (
+    <div className="relative" ref={rootRef}>
+      <button
+        id={id}
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+        className={cn(
+          "flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border bg-white px-[14px] py-[10px] text-left shadow-[0_1px_2px_rgba(10,13,18,0.05)]",
+          error ? "border-[#fca5a5]" : "border-[#d5d7da]",
+        )}
+      >
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          <Users size={18} aria-hidden="true" className="shrink-0 text-[#717680]" />
+          {selectedPeople.length > 0 ? (
+            <span className="flex min-w-0 flex-wrap items-center gap-2">
+              {selectedPeople.slice(0, 2).map((person) => (
+                <span
+                  key={person.id}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#eeedf5] px-2.5 py-1 text-sm font-medium text-[#414651]"
+                >
+                  <Avatar
+                    src={person.avatarSrc ?? null}
+                    alt={person.label}
+                    fallback={initialsFor(person.label)}
+                    className="h-6 w-6 border-0 bg-[#ddd9f7] text-[10px]"
+                  />
+                  <span className="truncate">{person.label}</span>
+                </span>
+              ))}
+              {selectedPeople.length > 2 ? (
+                <span className="text-sm font-medium text-[#535862]">
+                  +{selectedPeople.length - 2} more
+                </span>
+              ) : null}
+            </span>
+          ) : (
+            <span className="text-[rgba(65,70,81,0.5)]">Select Attendees</span>
+          )}
+        </span>
+        <ChevronDown size={18} className="shrink-0 text-[#535862]" aria-hidden="true" />
+      </button>
+
+      {open ? (
+        <div className="absolute left-0 top-[calc(100%+8px)] z-[90] w-full overflow-hidden rounded-2xl border border-[#e4e7ec] bg-white shadow-[0_20px_32px_rgba(10,13,18,0.16)]">
+          <div className="border-b border-[#eef0f3] p-3">
+            <div className="flex items-center gap-2 rounded-lg border border-[#d5d7da] bg-white px-3 py-2">
+              <Search size={16} className="text-[#717680]" aria-hidden="true" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search attendees"
+                className="w-full bg-transparent text-sm text-[#181d27] outline-none placeholder:text-[#98a2b3]"
+              />
+            </div>
+          </div>
+
+          <div className="max-h-64 overflow-y-auto py-2" role="listbox" aria-multiselectable="true">
+            {filteredPeople.length > 0 ? (
+              filteredPeople.map((person) => {
+                const selected = value.includes(person.id);
+                return (
+                  <button
+                    key={person.id}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    onClick={() => togglePerson(person.id)}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-4 py-3 text-left",
+                      selected ? "bg-[#f5f7ff]" : "hover:bg-[#f8f9fc]",
+                    )}
+                  >
+                    <Avatar
+                      src={person.avatarSrc ?? null}
+                      alt={person.label}
+                      fallback={initialsFor(person.label)}
+                      className="h-10 w-10 bg-[#ece9f8] text-[12px]"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-[#181d27]">
+                        {person.label}
+                      </span>
+                      <span className="block truncate text-sm text-[#667085]">
+                        {person.email}
+                      </span>
+                    </span>
+                    <span
+                      className={cn(
+                        "flex h-5 w-5 items-center justify-center rounded-full border",
+                        selected
+                          ? "border-[#52528c] bg-[#52528c] text-white"
+                          : "border-[#d0d5dd] bg-white text-transparent",
+                      )}
+                    >
+                      <Check size={12} aria-hidden="true" />
+                    </span>
+                  </button>
+                );
+              })
+            ) : (
+              <div className="px-4 py-6 text-center text-sm text-[#667085]">
+                No attendees match your search.
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function NewMeetingModal({
   open,
   onClose,
@@ -80,7 +258,8 @@ export function NewMeetingModal({
   const titleRef = React.useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = React.useState("");
-  const [attendees, setAttendees] = React.useState<string | null>(null);
+  const [project, setProject] = React.useState<string | null>(null);
+  const [attendees, setAttendees] = React.useState<string[]>([]);
   const [location, setLocation] = React.useState<string | null>("in-app");
   const [myLanguage, setMyLanguage] = React.useState<string | null>(null);
   const [startDate, setStartDate] = React.useState(new Date(2026, 3, 22));
@@ -126,7 +305,7 @@ export function NewMeetingModal({
   function validate() {
     const next: typeof errors = {};
     if (!title.trim()) next.title = "Meeting title is required.";
-    if (!attendees) next.attendees = "Please select at least one attendee.";
+    if (attendees.length === 0) next.attendees = "Please select at least one attendee.";
     if (!myLanguage) next.myLanguage = "Please select your language.";
     if (!startTime) next.startTime = "Start time is required.";
     if (!endTime) next.endTime = "End time is required.";
@@ -214,24 +393,37 @@ export function NewMeetingModal({
 
             <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
               <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[#414651]">
-                Invite Attendees
+                Related Project
               </div>
               <div className="min-w-[480px] max-w-[512px] flex-1">
                 <SelectMenu
+                  value={project}
+                  onChange={setProject}
+                  options={PROJECTS}
+                  placeholder="Select Project"
+                  id="new-meeting-project"
+                  buttonClassName="h-11 px-[14px] py-[10px] shadow-[0_1px_2px_rgba(10,13,18,0.05)] border-[#d5d7da]"
+                />
+              </div>
+            </div>
+
+            <div className="my-4 h-px w-full bg-[#e9eaeb]" />
+
+            <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
+              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[#414651]">
+                Invite Attendees
+              </div>
+              <div className="min-w-[480px] max-w-[512px] flex-1">
+                <AttendeesMultiSelect
                   value={attendees}
-                  onChange={(v) => {
-                    setAttendees(v);
+                  onChange={(nextAttendees) => {
+                    setAttendees(nextAttendees);
                     if (errors.attendees)
                       setErrors((p) => ({ ...p, attendees: undefined }));
                   }}
                   options={PEOPLE}
-                  leadingIcon={<Users size={18} aria-hidden="true" />}
-                  placeholder="Select Attendees"
                   id="new-meeting-attendees"
-                  buttonClassName={cn(
-                    "h-11 px-[14px] py-[10px] shadow-[0_1px_2px_rgba(10,13,18,0.05)]",
-                    errors.attendees ? "border-[#fca5a5]" : "border-[#d5d7da]",
-                  )}
+                  error={errors.attendees}
                 />
                 {errors.attendees ? (
                   <div className="mt-1 text-[12px] leading-[18px] text-[#b91c1c]">
@@ -385,4 +577,3 @@ export function NewMeetingModal({
     document.body,
   );
 }
-
