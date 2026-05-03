@@ -156,7 +156,7 @@ const PLATFORM_STYLES: Record<
     text: "#1554c0",
     border: "#b8d0fb",
     // eslint-disable-next-line @next/next/no-img-element
-    icon: <img src="/beam-logo.png" alt="Beam" className="size-[13px] object-contain" />,
+    icon: <img src="/beam-logo.png" alt="" className="size-[13px] object-contain" aria-hidden />,
   },
 };
 
