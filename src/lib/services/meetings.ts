@@ -1,10 +1,11 @@
 import type { Meeting } from "@/types/meeting";
 
 // Mock data representing the backend database
+/** Matches demo row `m1` in `meetings-data` / `MEETING_DETAILS` so Join navigates to a real detail page. */
 const MOCK_CURRENT_MEETING: Meeting = {
-  id: "current",
-  title: "MOFA Diplomatic Coordination - Ambassadorial Briefing",
-  startLabel: "December 24, 2025",
+  id: "m1",
+  title: "AmplifAI Project - Client Feedback Discussion",
+  startLabel: "Dec 24, 2025",
   timeRangeLabel: "9:00 AM - 9:30 AM",
   hostName: "Suliman Alawi",
   languages: ["Arabic", "English"],

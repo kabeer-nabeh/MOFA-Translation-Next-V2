@@ -57,7 +57,10 @@ export async function DashboardView() {
               languageLabel={`Language: ${currentMeeting.languages.join(", ")}`}
               participants={currentMeeting.participants}
               participantsCount={currentMeeting.participantsCount}
-              joinAction={{ label: "Join Meeting", href: "/meetings/current" }}
+              joinAction={{
+                label: "Join Meeting",
+                href: `/meetings/${currentMeeting.id}`,
+              }}
             />
           ) : (
             <div className="py-8 text-center text-slate-500">No active meeting currently.</div>
