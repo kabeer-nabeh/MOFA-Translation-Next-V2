@@ -28,6 +28,7 @@ export function setIntegrationConnected(
   id: IntegrationId,
   opts?: { source?: IntegrationClientState["source"] },
 ) {
+  if (typeof window === "undefined") return;
   const payload: IntegrationClientState = {
     status: "connected",
     connectedAt: new Date().toISOString(),
@@ -37,21 +38,37 @@ export function setIntegrationConnected(
 }
 
 export function clearIntegrationState(id: IntegrationId) {
+  if (typeof window === "undefined") return;
   localStorage.removeItem(INTEGRATION_STORAGE_KEY(id));
 }
 
 const PENDING_KEY = "mofa:integration:pending";
 
 export function setPendingIntegration(id: IntegrationId) {
-  sessionStorage.setItem(PENDING_KEY, id);
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(PENDING_KEY, id);
+  } catch {
+    /* private mode / quota */
+  }
 }
 
 export function getPendingIntegration(): IntegrationId | null {
-  const v = sessionStorage.getItem(PENDING_KEY) as IntegrationId | null;
-  if (v === "teams" || v === "outlook" || v === "beam") return v;
-  return null;
+  if (typeof window === "undefined") return null;
+  try {
+    const v = sessionStorage.getItem(PENDING_KEY) as IntegrationId | null;
+    if (v === "teams" || v === "outlook" || v === "beam") return v;
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export function clearPendingIntegration() {
-  sessionStorage.removeItem(PENDING_KEY);
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(PENDING_KEY);
+  } catch {
+    /* ignore */
+  }
 }
