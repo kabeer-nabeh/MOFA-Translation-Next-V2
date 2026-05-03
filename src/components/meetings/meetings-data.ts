@@ -205,7 +205,6 @@ export const MEETINGS: Meeting[] = [
     platform: "In App",
     participants: DEMO_PARTICIPANTS.slice(1, 4),
     participantCount: 7,
-    meetingLink: "https://us06web.zoom.us/j/0000003",
     dateChip: _chip(M6_START),
     rsvpStatus: "pending",
     startDatetime: M6_START,

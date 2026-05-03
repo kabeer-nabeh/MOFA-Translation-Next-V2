@@ -901,7 +901,6 @@ function MeetingCard({
   const [rsvpFading, setRsvpFading] = React.useState(false);
   const relativeTime = useRelativeTime(meeting);
   const isEnded = meeting.status === "upcoming" && relativeTime.state === "ended";
-  const isLive = meeting.status === "upcoming" && relativeTime.state === "live";
   const isHost = meeting.host === currentUser;
 
   React.useEffect(() => {
@@ -1065,31 +1064,20 @@ function MeetingCard({
                 /* Soon / Live / Ended: show the Join button */
                 meeting.platform === "In App" ? (
                   <ButtonLink
-                    href={meeting.meetingLink ?? "#"}
+                    href={`/meetings/${meeting.id}`}
                     variant="secondary"
                     size="md"
-                    className={cn(
-                      "gap-2 no-underline",
-                      isLive && "animate-pulse ring-2 ring-[#17b26a]/40",
-                      !meeting.meetingLink && "pointer-events-none opacity-50",
-                    )}
-                    rel="noreferrer"
-                    target="_blank"
-                    aria-disabled={!meeting.meetingLink}
-                    title={meeting.meetingLink ? undefined : "Meeting room link not available"}
+                    className="gap-2 no-underline"
                   >
                     <Monitor size={16} aria-hidden />
-                    Open Meeting Room
+                    Join Meeting
                   </ButtonLink>
                 ) : meeting.meetingLink ? (
                   <ButtonLink
                     href={meeting.meetingLink}
                     variant="secondary"
                     size="md"
-                    className={cn(
-                      "gap-2 no-underline",
-                      isLive && "animate-pulse ring-2 ring-[#17b26a]/40",
-                    )}
+                    className="gap-2 no-underline"
                     rel="noreferrer"
                     target="_blank"
                   >

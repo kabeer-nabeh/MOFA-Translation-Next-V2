@@ -41,6 +41,7 @@ import {
   type TranscriptEntry,
   MEETING_DETAILS,
 } from "@/components/meetings/meeting-detail-data";
+import { InAppMeetingRoom } from "@/components/meetings/InAppMeetingRoom";
 import {
   MEETINGS,
   type Meeting,
@@ -853,7 +854,6 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
   const [audioProgress, setAudioProgress] = React.useState(0);
 
   const meeting = MEETINGS.find((m) => m.id === meetingId);
-  const detail = MEETING_DETAILS[meetingId];
 
   const totalSec = React.useMemo(
     () => (meeting?.audioDuration ? parseDuration(meeting.audioDuration) : 0),
@@ -867,11 +867,33 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
     }, 50);
   };
 
-  if (!meeting || !detail) {
+  if (!meeting) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 py-24">
         <p className="text-base font-semibold text-[#414651]">Meeting not found</p>
         <Link href="/meetings" className="text-sm text-[#6f6e8a] underline hover:text-[#414651]">
+          Back to meetings
+        </Link>
+      </div>
+    );
+  }
+
+  if (meeting.status === "upcoming" && meeting.platform === "In App") {
+    return <InAppMeetingRoom meeting={meeting} />;
+  }
+
+  const detail = MEETING_DETAILS[meetingId];
+
+  if (!detail) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-24 text-center">
+        <p className="text-base font-semibold text-[#414651]">No in-app recap yet</p>
+        <p className="max-w-md text-sm text-[#717680]">
+          This meeting is hosted outside MOFA or hasn&apos;t finished. Use{" "}
+          <strong>Join</strong> on the meetings list to open the provider link, or pick a
+          completed meeting to view AI summary and transcript.
+        </p>
+        <Link href="/meetings" className="text-sm font-medium text-[#6f6e8a] underline hover:text-[#414651]">
           Back to meetings
         </Link>
       </div>
