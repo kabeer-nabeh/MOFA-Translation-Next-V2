@@ -5,14 +5,17 @@ import {
   Calendar,
   Globe2,
   Home,
+  Plug2,
   Shield,
   User,
   Users,
   Video,
 } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
 import { Navbar } from "@/components/layout/Navbar";
+import { IntegrationsSettingsPanel } from "@/components/settings/IntegrationsSettingsPanel";
 import { SETTINGS_AVATAR, SETTINGS_LOGO } from "@/components/settings/settings-assets";
 import { ProfileSettingsPanel } from "@/components/settings/ProfileSettingsPanel";
 import { RolesSettingsPanel } from "@/components/settings/RolesSettingsPanel";
@@ -20,7 +23,7 @@ import { UsageCostsPanel } from "@/components/settings/UsageCostsPanel";
 import { UsersSettingsPanel } from "@/components/settings/UsersSettingsPanel";
 import { cn } from "@/lib/utils";
 
-type SettingsTab = "profile" | "users" | "roles" | "usage";
+type SettingsTab = "profile" | "users" | "roles" | "usage" | "integrations";
 
 const TAB_ITEMS: Array<{
   id: SettingsTab;
@@ -31,10 +34,41 @@ const TAB_ITEMS: Array<{
   { id: "users", label: "Users", icon: Users },
   { id: "roles", label: "Roles", icon: Shield },
   { id: "usage", label: "Usage & Costs", icon: BarChart3 },
+  { id: "integrations", label: "Integrations", icon: Plug2 },
 ];
 
+const VALID: SettingsTab[] = [
+  "profile",
+  "users",
+  "roles",
+  "usage",
+  "integrations",
+];
+
+function parseTab(v: string | null): SettingsTab {
+  if (v && (VALID as string[]).includes(v)) return v as SettingsTab;
+  return "profile";
+}
+
 export function SettingsView({ className }: { className?: string }) {
-  const [tab, setTab] = React.useState<SettingsTab>("profile");
+  const router = useRouter();
+  const pathname = usePathname();
+  const sp = useSearchParams();
+  const [tab, setTab] = React.useState<SettingsTab>(() => parseTab(sp.get("tab")));
+
+  React.useEffect(() => {
+    setTab(parseTab(sp.get("tab")));
+  }, [sp]);
+
+  const setTabWithUrl = React.useCallback(
+    (next: SettingsTab) => {
+      setTab(next);
+      const q = new URLSearchParams(sp.toString());
+      q.set("tab", next);
+      router.replace(`${pathname}?${q.toString()}`, { scroll: false });
+    },
+    [router, pathname, sp],
+  );
 
   return (
     <div className={cn("min-h-dvh bg-white", className)}>
@@ -70,7 +104,7 @@ export function SettingsView({ className }: { className?: string }) {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setTab(item.id)}
+                    onClick={() => setTabWithUrl(item.id)}
                     className={cn(
                       "relative flex h-[37px] w-full items-center rounded-lg px-3 text-left text-sm font-medium leading-[21px]",
                       active ? "bg-[#eeedf5] text-[#111827]" : "text-[#64748b]",
@@ -96,6 +130,7 @@ export function SettingsView({ className }: { className?: string }) {
             {tab === "users" ? <UsersSettingsPanel /> : null}
             {tab === "roles" ? <RolesSettingsPanel /> : null}
             {tab === "usage" ? <UsageCostsPanel /> : null}
+            {tab === "integrations" ? <IntegrationsSettingsPanel /> : null}
           </section>
         </div>
       </main>
