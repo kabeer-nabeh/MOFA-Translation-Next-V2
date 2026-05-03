@@ -57,7 +57,7 @@ const ROWS: RowProps[] = [
     name: "Beam",
     description: "Link Beam to run interpretation meetings with the same team workflow.",
     icon: (
-      <img src="/beam-blue.png" alt="Beam" className="h-9 w-9 object-contain" />
+      <img src="/beam-mark.png" alt="Beam" className="h-9 w-9 object-contain" />
     ),
   },
 ];

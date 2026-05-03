@@ -80,7 +80,7 @@ const LOCATION: Option[] = [
     label: "Beam",
     description: "Online via Beam",
     icon: (
-      <img src="/beam-blue.png" alt="Beam" className="h-[18px] w-[18px] object-contain" />
+      <img src="/beam-mark.png" alt="Beam" className="h-[18px] w-[18px] object-contain" />
     ),
   },
 ];
