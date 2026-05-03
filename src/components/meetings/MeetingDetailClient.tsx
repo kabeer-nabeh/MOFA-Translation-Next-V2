@@ -27,7 +27,6 @@ import {
   TrendingUp,
   User,
   Users,
-  Video,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -42,7 +41,11 @@ import {
   type TranscriptEntry,
   MEETING_DETAILS,
 } from "@/components/meetings/meeting-detail-data";
-import { MEETINGS, type MeetingPlatform } from "@/components/meetings/meetings-data";
+import {
+  MEETINGS,
+  type Meeting,
+  type MeetingPlatform,
+} from "@/components/meetings/meetings-data";
 
 // ─── Waveform ─────────────────────────────────────────────────────────────────
 
@@ -141,7 +144,7 @@ function AudioPlayer({
   duration: string;
   meetingId: string;
   progress: number;
-  onProgressChange: (p: number) => void;
+  onProgressChange: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const totalSec = React.useMemo(() => parseDuration(duration), [duration]);
   const bars = React.useMemo(() => generateWaveform(meetingId, 200), [meetingId]);
@@ -176,7 +179,9 @@ function AudioPlayer({
     });
   };
 
-  React.useEffect(() => { if (playing) startPlayback(); }, [speed]); // eslint-disable-line
+  React.useEffect(() => {
+    if (playing) startPlayback();
+  }, [speed]);
   React.useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
   React.useEffect(() => {
     if (!speedMenuOpen) return;
@@ -262,11 +267,10 @@ function Sidebar({
   detail,
   onParticipantClick,
 }: {
-  meeting: ReturnType<typeof MEETINGS.find> & object;
+  meeting: Meeting;
   detail: MeetingDetail;
   onParticipantClick?: (id: string) => void;
 }) {
-  if (!meeting) return null;
   return (
     <aside className="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto pr-1">
       {/* Meeting info card */}
@@ -917,7 +921,7 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
       <div className="flex min-h-0 flex-1 gap-6">
         {/* ── Sidebar ── */}
         <Sidebar
-          meeting={meeting as any}
+          meeting={meeting}
           detail={detail}
           onParticipantClick={handleParticipantClick}
         />
