@@ -256,7 +256,7 @@ function AudioPlayer({
 function PlatformIcon({ platform, containerSize }: { platform?: MeetingPlatform; containerSize?: boolean }) {
   if (!platform) return null;
   if (platform === "Teams") return <img src="/teams.png" alt="Teams" className={cn("object-contain", containerSize ? "size-4" : "size-3.5")} />;
-  if (platform === "Beam") return <img src="/beam-mark.png" alt="Beam" className={cn("object-contain", containerSize ? "size-4" : "size-3.5")} />;
+  if (platform === "Beam") return <img src="/beam-logo.png" alt="Beam" className={cn("object-contain", containerSize ? "size-4" : "size-3.5")} />;
   return <Monitor size={containerSize ? 13 : 13} className="text-[#545469]" />;
 }
 
