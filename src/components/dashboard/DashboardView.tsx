@@ -1,13 +1,13 @@
 import { BarChart3, Calendar, Globe2, Home, Video } from "lucide-react";
 
+import { DashboardUpcomingMeetings } from "@/components/dashboard/DashboardUpcomingMeetings";
 import { GreetingSection } from "@/components/dashboard/GreetingSection";
 import { MeetingCard } from "@/components/dashboard/MeetingCard";
-import { UpcomingMeetingItem } from "@/components/dashboard/UpcomingMeetingItem";
 import { Navbar } from "@/components/layout/Navbar";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { NewMeetingModalTrigger } from "@/components/meetings/NewMeetingModalTrigger";
-import { getCurrentMeeting, getUpcomingMeetings } from "@/lib/services/meetings";
+import { getCurrentMeeting } from "@/lib/services/meetings";
 
 const logoSrc =
   "https://www.figma.com/api/mcp/asset/07071394-f040-458b-a0ba-f05352719e1a";
@@ -16,7 +16,6 @@ const logoSrc =
 export async function DashboardView() {
   // Fetch data cleanly from the service
   const currentMeeting = await getCurrentMeeting();
-  const upcomingMeetings = await getUpcomingMeetings();
 
   return (
     <div className="min-h-dvh bg-white">
@@ -83,24 +82,7 @@ export async function DashboardView() {
               </ButtonLink>
             </div>
 
-            <div className="space-y-4">
-              {upcomingMeetings.map((m) => (
-                <UpcomingMeetingItem
-                  key={m.id}
-                  date={{ monthShort: "JAN", day: "10" }}
-                  title={m.title}
-                  dateTimeLabel={`${m.startLabel} • ${m.timeRangeLabel}`}
-                  hostLabel={`Host: ${m.hostName}`}
-                  languageLabel={`Language: ${m.languages.join(", ")}`}
-                  acceptAction={{ label: "Accept", href: `/meetings/${m.id}/accept` }}
-                  declineAction={{
-                    label: "Decline",
-                    href: `/meetings/${m.id}/decline`,
-                  }}
-                  menuAction={{ label: "More options", href: `/meetings/${m.id}` }}
-                />
-              ))}
-            </div>
+            <DashboardUpcomingMeetings maxItems={6} />
           </section>
         </div>
       </PageContainer>
