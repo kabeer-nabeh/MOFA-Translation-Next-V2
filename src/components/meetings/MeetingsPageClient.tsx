@@ -896,24 +896,11 @@ export function MeetingCard({
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [declineConfirmOpen, setDeclineConfirmOpen] = React.useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = React.useState(false);
-  const rsvp = meeting.rsvpStatus ?? "pending";
-  const [displayedRsvp, setDisplayedRsvp] = React.useState<RsvpStatus>(rsvp);
-  const [rsvpFading, setRsvpFading] = React.useState(false);
+  /** Parent overrides (e.g. dashboard / meetings page) — avoid duplicate local RSVP state that can desync from props */
+  const effectiveRsvp = meeting.rsvpStatus ?? "pending";
   const relativeTime = useRelativeTime(meeting);
   const isEnded = meeting.status === "upcoming" && relativeTime.state === "ended";
   const isHost = meeting.host === currentUser;
-
-  React.useEffect(() => {
-    if (rsvp === displayedRsvp) return;
-
-    setRsvpFading(true);
-    const swapTimer = window.setTimeout(() => {
-      setDisplayedRsvp(rsvp);
-      window.requestAnimationFrame(() => setRsvpFading(false));
-    }, 140);
-
-    return () => window.clearTimeout(swapTimer);
-  }, [displayedRsvp, rsvp]);
 
   // ── Completed card ──────────────────────────────────────────────────────────
   if (meeting.status === "completed") {
@@ -1023,15 +1010,11 @@ export function MeetingCard({
 
       {/* RSVP actions */}
       <div className="flex shrink-0 items-center gap-2">
-        <div
-          className={cn(
-            "flex items-center gap-2 transition-opacity duration-150 ease-out",
-            rsvpFading ? "opacity-0" : "opacity-100",
-          )}
-        >
-          {displayedRsvp === "pending" && (
+        <div className="flex items-center gap-2">
+          {effectiveRsvp === "pending" && (
             <>
               <Button
+                type="button"
                 variant="secondary"
                 size="md"
                 className="gap-2"
@@ -1041,6 +1024,7 @@ export function MeetingCard({
                 Accept
               </Button>
               <Button
+                type="button"
                 variant="secondary"
                 size="md"
                 className="gap-2"
@@ -1052,7 +1036,7 @@ export function MeetingCard({
             </>
           )}
 
-          {displayedRsvp === "accepted" && (
+          {effectiveRsvp === "accepted" && (
             <>
               {/* Future (days away): show quiet Accepted badge only */}
               {relativeTime.state === "future" ? (
@@ -1097,7 +1081,7 @@ export function MeetingCard({
             </>
           )}
 
-          {displayedRsvp === "declined" && (
+          {effectiveRsvp === "declined" && (
             <>
               <span className="rounded-md border border-[#fecdca] bg-[#fff1f0] px-3 py-1.5 text-sm font-medium text-[#b42318]">
                 Declined
@@ -1109,7 +1093,7 @@ export function MeetingCard({
         <MoreMenu
           open={menuOpen}
           onToggle={() => setMenuOpen((v) => !v)}
-          meeting={{ ...meeting, rsvpStatus: displayedRsvp }}
+          meeting={meeting}
           onRsvp={onRsvp}
           onRequestDecline={() => setDeclineConfirmOpen(true)}
           onRequestCancel={() => setCancelConfirmOpen(true)}
