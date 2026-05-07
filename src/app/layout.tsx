@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans } from "next/font/google";
 
 import "./globals.css";
+import { ActiveMeetingProvider } from "@/contexts/ActiveMeetingContext";
 
 const ibmPlexSans = IBM_Plex_Sans({
   subsets: ["latin", "latin-ext"],
@@ -25,7 +26,9 @@ export default function RootLayout({
       <body
         className={`${ibmPlexSans.className} min-h-dvh bg-white font-sans text-slate-900 antialiased`}
       >
-        {children}
+        <ActiveMeetingProvider>
+          {children}
+        </ActiveMeetingProvider>
       </body>
     </html>
   );
