@@ -151,12 +151,12 @@ const PLATFORM_STYLES: Record<
     // eslint-disable-next-line @next/next/no-img-element
     icon: <img src="/teams.png" alt="" className="size-[13px] object-contain" />,
   },
-  Beam: {
+  Beem: {
     bg: "#e8f1fd",
     text: "#1554c0",
     border: "#b8d0fb",
     // eslint-disable-next-line @next/next/no-img-element
-    icon: <img src="/beam-logo.png" alt="" className="size-[13px] object-contain" aria-hidden />,
+    icon: <img src="/beam-logo.png" alt="Beem" className="size-[13px] object-contain" />,
   },
 };
 
@@ -258,7 +258,7 @@ function getMeetingStartTime(meeting: Meeting): number {
   return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
 }
 
-export function sortMeetingsForTab(meetings: Meeting[], activeTab: MeetingStatus): Meeting[] {
+function sortMeetingsForTab(meetings: Meeting[], activeTab: MeetingStatus): Meeting[] {
   if (activeTab !== "upcoming") return meetings;
 
   const now = Date.now();
@@ -285,7 +285,7 @@ export function sortMeetingsForTab(meetings: Meeting[], activeTab: MeetingStatus
 
 // ─── Current logged-in user (demo) ───────────────────────────────────────────
 
-export const CURRENT_USER = "Abdullah Al Harbi";
+const CURRENT_USER = "Abdullah Al Harbi";
 
 // ─── ICS Calendar Download ────────────────────────────────────────────────────
 
@@ -322,7 +322,7 @@ function downloadICS(meeting: Meeting): void {
 
 // ─── Conflict Detection ───────────────────────────────────────────────────────
 
-export function getConflictIds(meetings: Meeting[]): Set<string> {
+function getConflictIds(meetings: Meeting[]): Set<string> {
   const upcoming = meetings.filter(
     (m) => m.status === "upcoming" && m.startDatetime && m.endDatetime,
   );
@@ -882,7 +882,7 @@ function CancelMeetingModal({
 
 // ─── Meeting Card ─────────────────────────────────────────────────────────────
 
-export function MeetingCard({
+function MeetingCard({
   meeting,
   onRsvp,
   isConflict = false,
@@ -896,11 +896,25 @@ export function MeetingCard({
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [declineConfirmOpen, setDeclineConfirmOpen] = React.useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = React.useState(false);
-  /** Parent overrides (e.g. dashboard / meetings page) — avoid duplicate local RSVP state that can desync from props */
-  const effectiveRsvp = meeting.rsvpStatus ?? "pending";
+  const rsvp = meeting.rsvpStatus ?? "pending";
+  const [displayedRsvp, setDisplayedRsvp] = React.useState<RsvpStatus>(rsvp);
+  const [rsvpFading, setRsvpFading] = React.useState(false);
   const relativeTime = useRelativeTime(meeting);
   const isEnded = meeting.status === "upcoming" && relativeTime.state === "ended";
+  const isLive = meeting.status === "upcoming" && relativeTime.state === "live";
   const isHost = meeting.host === currentUser;
+
+  React.useEffect(() => {
+    if (rsvp === displayedRsvp) return;
+
+    setRsvpFading(true);
+    const swapTimer = window.setTimeout(() => {
+      setDisplayedRsvp(rsvp);
+      window.requestAnimationFrame(() => setRsvpFading(false));
+    }, 140);
+
+    return () => window.clearTimeout(swapTimer);
+  }, [displayedRsvp, rsvp]);
 
   // ── Completed card ──────────────────────────────────────────────────────────
   if (meeting.status === "completed") {
@@ -1010,11 +1024,15 @@ export function MeetingCard({
 
       {/* RSVP actions */}
       <div className="flex shrink-0 items-center gap-2">
-        <div className="flex items-center gap-2">
-          {effectiveRsvp === "pending" && (
+        <div
+          className={cn(
+            "flex items-center gap-2 transition-opacity duration-150 ease-out",
+            rsvpFading ? "opacity-0" : "opacity-100",
+          )}
+        >
+          {displayedRsvp === "pending" && (
             <>
               <Button
-                type="button"
                 variant="secondary"
                 size="md"
                 className="gap-2"
@@ -1024,7 +1042,6 @@ export function MeetingCard({
                 Accept
               </Button>
               <Button
-                type="button"
                 variant="secondary"
                 size="md"
                 className="gap-2"
@@ -1036,7 +1053,7 @@ export function MeetingCard({
             </>
           )}
 
-          {effectiveRsvp === "accepted" && (
+          {displayedRsvp === "accepted" && (
             <>
               {/* Future (days away): show quiet Accepted badge only */}
               {relativeTime.state === "future" ? (
@@ -1051,10 +1068,12 @@ export function MeetingCard({
                     href={`/meetings/${meeting.id}`}
                     variant="secondary"
                     size="md"
-                    className="gap-2 no-underline"
+                    className={cn(
+                      "gap-2 no-underline",
+                    )}
                   >
                     <Monitor size={16} aria-hidden />
-                    Join Meeting
+                    Open Meeting Room
                   </ButtonLink>
                 ) : meeting.meetingLink ? (
                   <ButtonLink
@@ -1081,7 +1100,7 @@ export function MeetingCard({
             </>
           )}
 
-          {effectiveRsvp === "declined" && (
+          {displayedRsvp === "declined" && (
             <>
               <span className="rounded-md border border-[#fecdca] bg-[#fff1f0] px-3 py-1.5 text-sm font-medium text-[#b42318]">
                 Declined
@@ -1093,7 +1112,7 @@ export function MeetingCard({
         <MoreMenu
           open={menuOpen}
           onToggle={() => setMenuOpen((v) => !v)}
-          meeting={meeting}
+          meeting={{ ...meeting, rsvpStatus: displayedRsvp }}
           onRsvp={onRsvp}
           onRequestDecline={() => setDeclineConfirmOpen(true)}
           onRequestCancel={() => setCancelConfirmOpen(true)}

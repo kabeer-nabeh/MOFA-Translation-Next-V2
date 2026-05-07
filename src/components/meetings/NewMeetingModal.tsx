@@ -37,13 +37,6 @@ const PEOPLE: PersonOption[] = [
   { id: "khalid", label: "Khalid Mansour", email: "khalid@mofa.gov.sa" },
 ];
 
-const PROJECTS: Option[] = [
-  { id: "amplifai", label: "AmplifAI Project" },
-  { id: "q2-planning", label: "Q2 Planning" },
-  { id: "ambassadorial-briefing", label: "Ambassadorial Briefing" },
-  { id: "translation-demo", label: "MOFA Translation Demo" },
-];
-
 const LANGUAGES: Option[] = [
   { id: "Arabic", label: "Arabic" },
   { id: "English", label: "English" },
@@ -72,15 +65,17 @@ const LOCATION: Option[] = [
     label: "Teams",
     description: "Online via Microsoft Teams",
     icon: (
+      // eslint-disable-next-line @next/next/no-img-element
       <img src="/teams.png" alt="" className="h-[18px] w-[18px]" />
     ),
   },
   {
     id: "beam",
-    label: "Beam",
-    description: "Online via Beam",
+    label: "Beem",
+    description: "Online via Beem",
     icon: (
-      <img src="/beam-logo.png" alt="" className="h-[18px] w-[18px] object-contain" aria-hidden />
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src="/beam-logo.png" alt="Beem" className="h-[18px] w-[18px] object-contain" />
     ),
   },
 ];
@@ -258,7 +253,6 @@ export function NewMeetingModal({
   const titleRef = React.useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = React.useState("");
-  const [project, setProject] = React.useState<string | null>(null);
   const [attendees, setAttendees] = React.useState<string[]>([]);
   const [location, setLocation] = React.useState<string | null>("in-app");
   const [myLanguage, setMyLanguage] = React.useState<string | null>(null);
@@ -386,24 +380,6 @@ export function NewMeetingModal({
                     {errors.title}
                   </div>
                 ) : null}
-              </div>
-            </div>
-
-            <div className="my-4 h-px w-full bg-[#e9eaeb]" />
-
-            <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[#414651]">
-                Related Project
-              </div>
-              <div className="min-w-[480px] max-w-[512px] flex-1">
-                <SelectMenu
-                  value={project}
-                  onChange={setProject}
-                  options={PROJECTS}
-                  placeholder="Select Project"
-                  id="new-meeting-project"
-                  buttonClassName="h-11 px-[14px] py-[10px] shadow-[0_1px_2px_rgba(10,13,18,0.05)] border-[#d5d7da]"
-                />
               </div>
             </div>
 

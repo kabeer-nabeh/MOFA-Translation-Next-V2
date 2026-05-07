@@ -54,10 +54,10 @@ const ROWS: RowProps[] = [
   },
   {
     id: "beam",
-    name: "Beam",
-    description: "Link Beam to run interpretation meetings with the same team workflow.",
+    name: "Beem",
+    description: "Link Beem to run interpretation meetings with the same team workflow.",
     icon: (
-      <img src="/beam-logo.png" alt="" className="h-9 w-9 object-contain" aria-hidden />
+      <img src="/beam-logo.png" alt="Beem" className="h-9 w-9 object-contain" />
     ),
   },
 ];
@@ -122,28 +122,19 @@ export function IntegrationsSettingsPanel() {
   const [busy, setBusy] = React.useState(false);
   const [disconnectError, setDisconnectError] = React.useState<string | null>(null);
 
-  /** Avoid SSR vs client hydration mismatch: storage only exists after mount. */
   const connected = React.useMemo(() => {
     void tick;
-    if (!mounted) {
-      return {
-        teams: null as ReturnType<typeof getIntegrationState>,
-        outlook: null as ReturnType<typeof getIntegrationState>,
-        beam: null as ReturnType<typeof getIntegrationState>,
-      };
-    }
     return {
       teams: getIntegrationState("teams"),
       outlook: getIntegrationState("outlook"),
       beam: getIntegrationState("beam"),
     };
-  }, [tick, mounted]);
+  }, [tick]);
 
   const pending = React.useMemo(() => {
     void tick;
-    if (!mounted) return null;
     return getPendingIntegration();
-  }, [tick, mounted]);
+  }, [tick]);
 
   React.useEffect(() => setMounted(true), []);
   React.useEffect(() => {

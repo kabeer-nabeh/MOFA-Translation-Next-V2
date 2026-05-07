@@ -15,7 +15,7 @@ export type DateChip = {
 };
 
 /** Must match the LOCATION options in NewMeetingModal */
-export type MeetingPlatform = "In App" | "Teams" | "Beam";
+export type MeetingPlatform = "In App" | "Teams" | "Beem";
 
 export type Meeting = {
   id: string;
@@ -147,7 +147,7 @@ export const MEETINGS: Meeting[] = [
     host: "Koray Okumus",
     languages: "Arabic, English, French",
     status: "completed",
-    platform: "Beam",
+    platform: "Beem",
     participants: DEMO_PARTICIPANTS.slice(0, 3),
     participantCount: 6,
     audioDuration: "01:12",
@@ -183,7 +183,7 @@ export const MEETINGS: Meeting[] = [
     host: "Abdullah Al Harbi",
     languages: "Arabic",
     status: "upcoming",
-    platform: "Beam",
+    platform: "Beem",
     participants: DEMO_PARTICIPANTS.slice(2, 5),
     participantCount: 5,
     meetingLink: "https://us06web.zoom.us/j/0000002",
@@ -239,7 +239,7 @@ export const MEETINGS: Meeting[] = [
     host: "Abdullah Al Harbi",
     languages: "Arabic, English",
     status: "upcoming",
-    platform: "Beam",
+    platform: "Beem",
     participants: DEMO_PARTICIPANTS.slice(1, 5),
     participantCount: 8,
     meetingLink: "https://us06web.zoom.us/j/0000005",

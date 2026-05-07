@@ -30,17 +30,32 @@ body {
   height: 100%;
 }
 
-/* Unlayered (after @import) so this wins over Tailwind preflight / @layer base. */
 a[href],
-button:not(:disabled),
-[role="button"]:not([aria-disabled="true"]),
-input[type="button"]:not(:disabled),
-input[type="submit"]:not(:disabled),
-input[type="reset"]:not(:disabled) {
+button,
+[role="button"],
+summary {
   cursor: pointer;
 }
 
-button:disabled,
-[aria-disabled="true"] {
-  cursor: not-allowed;
+/* ─── Live meeting animations ─────────────────────────────────── */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wordPop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

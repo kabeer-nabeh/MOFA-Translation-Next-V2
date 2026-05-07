@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   Bot,
   Calendar,
   Check,
@@ -16,7 +17,11 @@ import {
   Mic,
   Monitor,
   MoreVertical,
+  PhoneOff,
   Pause,
+  PictureInPicture,
+  PictureInPicture2,
+  Pin,
   Play,
   Search,
   Send,
@@ -29,8 +34,11 @@ import {
   Users,
   Volume2,
   VolumeX,
+  X,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -41,12 +49,7 @@ import {
   type TranscriptEntry,
   MEETING_DETAILS,
 } from "@/components/meetings/meeting-detail-data";
-import { InAppMeetingRoom } from "@/components/meetings/InAppMeetingRoom";
-import {
-  MEETINGS,
-  type Meeting,
-  type MeetingPlatform,
-} from "@/components/meetings/meetings-data";
+import { MEETINGS, type MeetingPlatform } from "@/components/meetings/meetings-data";
 
 // ─── Waveform ─────────────────────────────────────────────────────────────────
 
@@ -180,9 +183,7 @@ function AudioPlayer({
     });
   };
 
-  React.useEffect(() => {
-    if (playing) startPlayback();
-  }, [speed]);
+  React.useEffect(() => { if (playing) startPlayback(); }, [speed]); // eslint-disable-line
   React.useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
   React.useEffect(() => {
     if (!speedMenuOpen) return;
@@ -256,9 +257,9 @@ function AudioPlayer({
 
 function PlatformIcon({ platform, containerSize }: { platform?: MeetingPlatform; containerSize?: boolean }) {
   if (!platform) return null;
-  if (platform === "Teams") return <img src="/teams.png" alt="Teams" className={cn("object-contain", containerSize ? "size-4" : "size-3.5")} />;
-  if (platform === "Beam") return <img src="/beam-logo.png" alt="" className={cn("object-contain", containerSize ? "size-4" : "size-3.5")} />;
-  return <Monitor size={containerSize ? 13 : 13} className="text-[#545469]" />;
+  if (platform === "Teams") return <img src="/teams.png" alt="Teams" className={cn("object-contain shrink-0", containerSize ? "size-4" : "size-5")} />;
+  if (platform === "Beem") return <img src="/beam-logo.png" alt="Beem" className={cn("object-contain shrink-0", containerSize ? "size-4" : "size-5")} />;
+  return <Monitor size={containerSize ? 13 : 14} className="text-[#717680] shrink-0" />;
 }
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
@@ -268,10 +269,11 @@ function Sidebar({
   detail,
   onParticipantClick,
 }: {
-  meeting: Meeting;
+  meeting: ReturnType<typeof MEETINGS.find> & object;
   detail: MeetingDetail;
   onParticipantClick?: (id: string) => void;
 }) {
+  if (!meeting) return null;
   return (
     <aside className="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto pr-1">
       {/* Meeting info card */}
@@ -329,9 +331,9 @@ function Sidebar({
       </div>
 
       {/* Speakers quick list */}
-      <div className="shrink-0 rounded-xl border border-[#e9eaeb] bg-white p-4">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#717680]">Speakers</p>
-        <div className="flex flex-col gap-2">
+      <div className="shrink-0 rounded-xl border border-[#e9eaeb] bg-white overflow-hidden flex flex-col">
+        <p className="px-4 pt-4 pb-3 text-xs font-semibold uppercase tracking-wider text-[#717680]">Speakers</p>
+        <div className="flex flex-col gap-2 px-4 pb-4 overflow-y-auto max-h-48">
           {detail.participants.map((p) => {
             const dot = p.engagement === "Very High" ? "#17b26a"
               : p.engagement === "High" ? "#2e90fa"
@@ -362,20 +364,15 @@ function Sidebar({
       </div>
 
       {/* Keywords */}
-      <div className="shrink-0 rounded-xl border border-[#e9eaeb] bg-white p-4">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#717680]">Keywords</p>
-        <div className="flex flex-wrap gap-1.5">
-          {detail.keywords.slice(0, 8).map((kw) => (
+      <div className="shrink-0 rounded-xl border border-[#e9eaeb] bg-white overflow-hidden flex flex-col">
+        <p className="px-4 pt-4 pb-3 text-xs font-semibold uppercase tracking-wider text-[#717680]">Keywords</p>
+        <div className="flex flex-wrap gap-1.5 px-4 pb-4 overflow-y-auto max-h-32">
+          {detail.keywords.map((kw) => (
             <span key={kw}
               className="rounded-full border border-[#e0dde8] bg-[#f3f3f7] px-2 py-0.5 text-[11px] font-medium text-[#545469]">
               {kw}
             </span>
           ))}
-          {detail.keywords.length > 8 && (
-            <span className="rounded-full border border-[#e0dde8] bg-[#f3f3f7] px-2 py-0.5 text-[11px] text-[#717680]">
-              +{detail.keywords.length - 8} more
-            </span>
-          )}
         </div>
       </div>
     </aside>
@@ -798,6 +795,1143 @@ const DOWNLOAD_FORMATS = [
   { label: "Subtitles (SRT)", ext: ".srt" },
 ];
 
+const PARTICIPANT_DIRECTORY: Record<string, { name: string; role: string }> = {
+  p1: { name: "Suliman Alawi", role: "Lead" },
+  p2: { name: "Koray Okumus", role: "Engineering" },
+  p3: { name: "Zara Malik", role: "Product" },
+  p4: { name: "Ahmed Bashir", role: "Client" },
+  p5: { name: "Rania Nasser", role: "Design" },
+};
+
+type LiveTranscriptMessage = {
+  id: string;
+  speakerId: string;
+  text: string;
+  time: string;
+  translated?: boolean;
+  language?: string;
+};
+
+/** Messages use relative participant indices: the first participant (index 0) = "You" */
+function buildLiveMessages(participants: ReturnType<typeof normalizeLiveParticipants>): LiveTranscriptMessage[] {
+  const pid = (idx: number) => participants[idx]?.id ?? "p1";
+  return [
+    { id: "l1", speakerId: pid(1), time: "6:02 PM", language: "Arabic", text: "We have the ambassadorial briefing in ten minutes, so let's lock the agenda and assignments." },
+    { id: "l2", speakerId: pid(1), time: "6:02 PM", language: "Arabic", translated: true, text: "Please make sure all interpreter channels are active before we begin." },
+    { id: "l3", speakerId: pid(0), time: "6:03 PM", language: "English", text: "Agreed. I've reviewed the latest briefing notes — everything looks good on my end." },
+    { id: "l4", speakerId: pid(2), time: "6:04 PM", language: "English", text: "I'll cover the opening context and hand over to the diplomatic coordination updates." },
+    { id: "l5", speakerId: pid(1), time: "6:06 PM", language: "Arabic", translated: true, text: "Engineering is ready. The live translation path for Arabic and English is stable on both channels." },
+    { id: "l6", speakerId: pid(3), time: "6:08 PM", language: "English", text: "From the client side, the main concern is keeping terminology consistent during the security segment." },
+    { id: "l7", speakerId: pid(0), time: "6:09 PM", language: "English", text: "Good point. Let me flag that with the translation team before we start." },
+    { id: "l8", speakerId: pid(2), time: "6:10 PM", language: "English", text: "I am monitoring the interpreter panel and participant language preferences right now." },
+  ];
+}
+
+function getParticipantMeta(id: string, initials: string, bg: string) {
+  const directory = PARTICIPANT_DIRECTORY[id] ?? { name: initials, role: "Participant" };
+  return { id, initials, bg, ...directory };
+}
+
+function normalizeLiveParticipants(meeting: NonNullable<ReturnType<typeof MEETINGS.find>>) {
+  return meeting.participants.map((participant) => getParticipantMeta(participant.id, participant.initials, participant.bg));
+}
+
+// Tile min/max widths (px) — used for the auto-fill grid
+const TILE_MIN_W = 200;
+const TILE_MAX_W = 300;
+const MAX_VISIBLE = 8; // show at most 8 tiles; beyond that → More tile
+
+function LiveParticipantTile({
+  participant,
+  isYou,
+  isSpeaking,
+  index,
+}: {
+  participant: ReturnType<typeof getParticipantMeta>;
+  isYou?: boolean;
+  isSpeaking?: boolean;
+  index: number;
+}) {
+  return (
+    <div
+      className={cn(
+        "group relative flex h-full w-full flex-col items-center justify-center gap-2.5 overflow-hidden rounded-xl border bg-gradient-to-b from-[#f5f5f5] to-[#e9eaeb] py-5 transition-all duration-500 ease-out animate-[fadeSlideIn_0.3s_ease-out_both]",
+        isSpeaking
+          ? "border-[rgba(0,0,0,0.1)] shadow-[0_0_0_2px_white,0_0_0_4px_#8988ab]"
+          : "border-[rgba(0,0,0,0.1)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:border-[rgba(0,0,0,0.15)]",
+      )}
+      style={{ animationDelay: `${index * 80}ms` }}
+    >
+      {/* Radial decorative background */}
+      <div className="pointer-events-none absolute -top-8 left-1/2 size-48 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(0,0,0,0.025)_0%,transparent_70%)]" />
+
+      {/* Avatar */}
+      <div
+        className="relative flex size-16 shrink-0 items-center justify-center rounded-full border border-[rgba(0,0,0,0.08)] text-lg font-semibold text-[#414651] transition-transform duration-300 group-hover:scale-105"
+        style={{ backgroundColor: participant.bg }}
+      >
+        {participant.initials}
+      </div>
+
+      {/* Name + role */}
+      <div className="flex w-full min-w-0 flex-col items-center gap-0.5 px-3">
+        <div className="flex w-full min-w-0 items-center justify-center gap-1.5">
+          <p className="min-w-0 truncate text-sm font-semibold text-[#414651]">
+            {participant.name}
+          </p>
+          {isYou && (
+            <span className="shrink-0 rounded-full border border-[#d0cfdd] bg-[#fcfcfd] px-2 py-0.5 text-[10px] font-medium text-[#545469]">
+              You
+            </span>
+          )}
+        </div>
+        <p className="w-full truncate text-center text-[11px] text-[#535862]">
+          ({participant.role})
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function MoreParticipantsTile({
+  participants,
+  onPin,
+  pinnedIds,
+}: {
+  participants: ReturnType<typeof getParticipantMeta>[];
+  onPin: (id: string) => void;
+  pinnedIds: Set<string>;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  React.useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative h-full min-h-[170px] w-full">
+      {/* Tile */}
+      <button
+        type="button"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={(e) => {
+          // keep open if moving into the popover
+          if (!ref.current?.contains(e.relatedTarget as Node)) setOpen(false);
+        }}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#d5d7da] bg-[#f5f5f7] transition-colors duration-200 hover:bg-[#eeeff6]"
+      >
+        <div className="flex size-10 items-center justify-center rounded-full border border-[#d5d7da] bg-white">
+          <Users size={18} className="text-[#717680]" />
+        </div>
+        <div className="flex flex-col items-center gap-0.5">
+          <p className="text-sm font-semibold text-[#414651]">+{participants.length} more</p>
+          <p className="text-[10px] text-[#9fa3ae]">Hover to view</p>
+        </div>
+      </button>
+
+      {/* Popover */}
+      {open && (
+        <div
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-[260px] overflow-hidden rounded-2xl border border-[#e9eaeb] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.15s_ease-out_both]"
+        >
+          <div className="border-b border-[#eeedf5] px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#9fa3ae]">
+              {participants.length} Participants
+            </p>
+          </div>
+          <ul className="max-h-[220px] overflow-y-auto p-2">
+            {participants.map((p) => {
+              const isPinned = pinnedIds.has(p.id);
+              return (
+                <li key={p.id} className="flex items-center gap-2.5 rounded-lg px-3 py-2 hover:bg-[#f5f5f7]">
+                  <div
+                    className="flex size-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-[#414651]"
+                    style={{ backgroundColor: p.bg }}
+                  >
+                    {p.initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-[#414651]">{p.name}</p>
+                    <p className="truncate text-[10px] text-[#717680]">{p.role}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onPin(p.id)}
+                    title={isPinned ? "Unpin" : "Pin to view"}
+                    className={cn(
+                      "shrink-0 rounded-md p-1.5 transition-colors duration-150",
+                      isPinned
+                        ? "text-[#8988ab] hover:bg-[#eeeff6]"
+                        : "text-[#9fa3ae] hover:bg-[#f3f3f7] hover:text-[#414651]",
+                    )}
+                  >
+                    <Pin size={13} className={isPinned ? "fill-[#8988ab]" : ""} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const AVAILABLE_LANGUAGES = [
+  "English", "Arabic", "French", "Spanish", "German",
+  "Mandarin", "Japanese", "Russian", "Turkish", "Urdu",
+];
+
+function LiveTranscriptPanel({
+  messages,
+  participants,
+  currentUserId,
+}: {
+  messages: LiveTranscriptMessage[];
+  participants: ReturnType<typeof normalizeLiveParticipants>;
+  currentUserId: string;
+}) {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [showScrollBtn, setShowScrollBtn] = React.useState(false);
+
+  // ── Language state ───────────────────────────────────────────────────────
+  const [targetLang, setTargetLang] = React.useState("English");
+  const [showLangMenu, setShowLangMenu] = React.useState(false);
+  const langMenuRef = React.useRef<HTMLDivElement>(null);
+
+  // Derive source language from the non-You speakers' messages
+  const sourceLang = React.useMemo(() => {
+    const langs = messages
+      .filter((m) => m.speakerId !== currentUserId && m.language)
+      .map((m) => m.language!);
+    const unique = [...new Set(langs)];
+    if (unique.length === 0) return "Auto";
+    if (unique.length === 1) return unique[0]!;
+    return "Multiple";
+  }, [messages, currentUserId]);
+
+  // Close the language dropdown on outside click
+  React.useEffect(() => {
+    if (!showLangMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (!langMenuRef.current?.contains(e.target as Node)) setShowLangMenu(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showLangMenu]);
+
+  // Word-by-word streaming for the last message
+  const lastMsg = messages[messages.length - 1];
+  const lastMsgWords = React.useMemo(() => lastMsg?.text.split(" ") ?? [], [lastMsg?.id]);
+  const [revealedCount, setRevealedCount] = React.useState(0);
+
+  React.useEffect(() => {
+    setRevealedCount(0);
+    const timer = setInterval(() => {
+      setRevealedCount((prev) => {
+        if (prev >= lastMsgWords.length) {
+          clearInterval(timer);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 160);
+    return () => clearInterval(timer);
+  }, [lastMsg?.id, lastMsgWords.length]);
+
+  // Auto-scroll as words stream in
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    if (isNearBottom) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [revealedCount]);
+
+  // Track scroll position to show/hide scroll-to-bottom button
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 80);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Auto-scroll to bottom when new messages arrive, but only if already near bottom
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    if (isNearBottom) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages.length]);
+
+  const scrollToBottom = () => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      {/* Compact language bar — single row, minimal height */}
+      <div className="flex shrink-0 items-center gap-2 border-b border-[#f0f0f4] bg-white px-4 pb-2.5 pt-0">
+        {/* Source — label + value */}
+        <span className="text-xs font-medium text-[#9fa3ae]">Source</span>
+        <div className="flex items-center gap-1">
+          <Globe size={12} className="shrink-0 text-[#717680]" />
+          <span className="text-xs font-semibold text-[#535862]">{sourceLang}</span>
+        </div>
+        <ArrowRight size={12} className="shrink-0 text-[#c1c4cd]" />
+        {/* Target — label + interactive value */}
+        <span className="text-xs font-medium text-[#9fa3ae]">Target</span>
+        <div ref={langMenuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setShowLangMenu((v) => !v)}
+            className="flex items-center gap-1 rounded-md px-1.5 py-0.5 transition-colors hover:bg-[#eeedf5]"
+          >
+            <Globe size={12} className="shrink-0 text-[#48476e]" />
+            <span className="text-xs font-semibold text-[#48476e]">{targetLang}</span>
+            <ChevronDown
+              size={11}
+              className={cn("shrink-0 text-[#8988ab] transition-transform duration-150", showLangMenu && "rotate-180")}
+            />
+          </button>
+
+          {showLangMenu && (
+            <div className="absolute left-0 top-full z-50 mt-1 min-w-[152px] overflow-hidden rounded-xl border border-[#e9eaeb] bg-white py-1 shadow-[0_8px_24px_rgba(0,0,0,0.1)] animate-[fadeSlideIn_0.15s_ease-out]">
+              <p className="px-3 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-wider text-[#9fa3ae]">
+                Translate to
+              </p>
+              {AVAILABLE_LANGUAGES.map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => { setTargetLang(lang); setShowLangMenu(false); }}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors",
+                    lang === targetLang
+                      ? "bg-[#f3f3f7] font-semibold text-[#48476e]"
+                      : "text-[#414651] hover:bg-[#f8f8fb]",
+                  )}
+                >
+                  <span className="flex w-3 shrink-0 items-center justify-center">
+                    {lang === targetLang && <Check size={11} className="text-[#48476e]" />}
+                  </span>
+                  {lang}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-smooth">
+        <div className="flex flex-col gap-3 px-4 pb-4">
+          {messages.map((message, idx) => {
+            const participant = participants.find((item) => item.id === message.speakerId);
+            if (!participant) return null;
+            const isYou = message.speakerId === currentUserId;
+            const prevMsg = messages[idx - 1];
+            const isSameAsPrev = prevMsg?.speakerId === message.speakerId;
+            const isLastMsg = idx === messages.length - 1;
+
+            return (
+              <div
+                key={message.id}
+                className={cn(
+                  "group flex gap-2 animate-[fadeSlideIn_0.25s_ease-out_both]",
+                  isYou ? "flex-row-reverse" : "flex-row",
+                  isSameAsPrev ? "mt-0" : "mt-1",
+                )}
+                style={{ animationDelay: `${idx * 50}ms` }}
+              >
+                {/* Avatar — only on first of a consecutive group, others' messages only */}
+                <div className="mt-0.5 shrink-0 self-start">
+                  {!isYou ? (
+                    isSameAsPrev ? (
+                      <div className="size-8" /> /* spacer to keep alignment */
+                    ) : (
+                      <div
+                        className="flex size-8 items-center justify-center rounded-full text-[10px] font-bold text-[#414651]"
+                        style={{ backgroundColor: participant.bg }}
+                      >
+                        {participant.initials}
+                      </div>
+                    )
+                  ) : null}
+                </div>
+
+                {/* Bubble + meta */}
+                <div className={cn("flex max-w-[80%] flex-col gap-2", isYou ? "items-end" : "items-start")}>
+                  {/* Speaker name + time + language + translated badge — only on first message of a group */}
+                  {!isSameAsPrev && (
+                    <div className={cn("flex items-center gap-2", isYou ? "flex-row-reverse pr-1" : "flex-row")}>
+                      <span className="text-xs font-semibold text-[#414651]">
+                        {isYou ? "You" : participant.name}
+                      </span>
+                      <span className="text-[10px] text-[#9fa3ae]">{message.time}</span>
+                      {message.language && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full border border-[#e0dde8] bg-white px-1.5 py-px text-[9px] font-medium text-[#717680]">
+                          <Globe size={9} />
+                          {message.language}
+                        </span>
+                      )}
+                      {message.translated && (
+                        <span className="inline-flex items-center rounded-full border border-[#b2ddff] bg-[#eff8ff] px-1 py-px text-[9px] font-semibold text-[#175cd3]">
+                          Translated
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bubble */}
+                  <div
+                    className={cn(
+                      "relative border px-3 py-2 text-sm leading-6 text-[#181d27] transition-colors duration-200",
+                      isYou
+                        ? "rounded-bl-lg rounded-br-lg rounded-tl-lg border-[#d0cfdd] bg-[#e7e7ee] hover:bg-[#dfdfe8]"
+                        : "rounded-bl-lg rounded-br-lg rounded-tr-lg border-[#e9eaeb] bg-[#fafafa] hover:bg-[#f3f3f7]",
+                    )}
+                  >
+                    {isLastMsg ? (
+                      <>
+                        {lastMsgWords.slice(0, revealedCount).map((word, wordIdx) => (
+                          <React.Fragment key={wordIdx}>
+                            <span className="animate-[wordPop_0.15s_ease-out_both]">
+                              {word}
+                            </span>
+                            {wordIdx < lastMsgWords.length - 1 ? " " : ""}
+                          </React.Fragment>
+                        ))}
+                        {revealedCount < lastMsgWords.length && (
+                          <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse rounded-sm bg-[#9fa3ae] align-middle" />
+                        )}
+                      </>
+                    ) : (
+                      message.text
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Scroll-to-bottom button */}
+      {showScrollBtn && (
+        <button
+          type="button"
+          onClick={scrollToBottom}
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full border border-[#d5d7da] bg-white px-3 py-1.5 text-xs font-semibold text-[#414651] shadow-md transition-all duration-200 hover:bg-[#f3f3f7] animate-[fadeSlideIn_0.2s_ease-out]"
+        >
+          <ChevronDown size={12} />
+          Jump to latest
+        </button>
+      )}
+    </div>
+  );
+}
+
+function LiveParticipantsPanel({
+  participants,
+  currentUserId,
+}: {
+  participants: ReturnType<typeof normalizeLiveParticipants>;
+  currentUserId: string;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="px-4 pb-2 pt-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-[#717680]">
+          Participants · {participants.length}
+        </p>
+      </div>
+      <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-4">
+        {participants.map((participant, index) => {
+          const isYou = participant.id === currentUserId;
+          const isSpeaking = index < 2;
+          const dotColor = isSpeaking ? "#17b26a" : "#98a2b3";
+          return (
+            <div
+              key={participant.id}
+              className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors duration-150 hover:bg-[#f3f3f7] animate-[fadeSlideIn_0.3s_ease-out_both]"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              {/* Avatar with status dot */}
+              <div
+                className="relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-[#414651]"
+                style={{ backgroundColor: participant.bg }}
+              >
+                {participant.initials}
+                <span
+                  className={cn(
+                    "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-white",
+                    isSpeaking && "animate-pulse",
+                  )}
+                  style={{ backgroundColor: dotColor }}
+                />
+              </div>
+
+              {/* Name + role */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate text-xs font-medium text-[#414651]">{participant.name}</p>
+                  {isYou && (
+                    <span className="shrink-0 rounded-full border border-[#d0cfdd] bg-[#fcfcfd] px-1.5 py-px text-[10px] font-medium text-[#545469]">
+                      You
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-[#717680]">{participant.role}</p>
+              </div>
+
+              {/* Status label */}
+              <span className={cn(
+                "shrink-0 text-[11px] font-medium",
+                isSpeaking ? "text-[#067647]" : "text-[#98a2b3]",
+              )}>
+                {isSpeaking ? "Speaking" : "Listening"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LiveTimer() {
+  const [elapsed, setElapsed] = React.useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  const ss = String(elapsed % 60).padStart(2, "0");
+  return (
+    <p className="tabular-nums text-xs font-medium text-[#535862]">
+      {mm}<span className="animate-pulse">:</span>{ss}
+    </p>
+  );
+}
+
+function MeetingConnectingScreen({
+  meeting,
+  participants,
+  onReady,
+}: {
+  meeting: NonNullable<ReturnType<typeof MEETINGS.find>>;
+  participants: ReturnType<typeof normalizeLiveParticipants>;
+  onReady: () => void;
+}) {
+  React.useEffect(() => {
+    const timer = setTimeout(onReady, 2500);
+    return () => clearTimeout(timer);
+  }, [onReady]);
+
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-gradient-to-br from-[#fafafa] to-[#f3f3f7] p-6">
+      {/* Meeting title */}
+      <div className="text-center">
+        <h1 className="text-3xl font-semibold text-[#181d27]">{meeting.title}</h1>
+        <p className="mt-2 text-sm text-[#717680]">Connecting to meeting room...</p>
+      </div>
+
+      {/* Participant avatars preview */}
+      <div className="flex items-center justify-center gap-3">
+        {participants.slice(0, 4).map((p, idx) => (
+          <div
+            key={p.id}
+            className="flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-white text-base font-bold text-[#414651] shadow-md transition-all duration-500 hover:scale-110 animate-[fadeSlideIn_0.3s_ease-out_both]"
+            style={{
+              backgroundColor: p.bg,
+              animationDelay: `${idx * 100}ms`,
+            }}
+          >
+            {p.initials}
+          </div>
+        ))}
+        {participants.length > 4 && (
+          <div className="flex size-14 items-center justify-center rounded-full border-2 border-white bg-[#e9eaeb] text-sm font-bold text-[#414651] shadow-md animate-[fadeSlideIn_0.3s_ease-out_both]" style={{ animationDelay: '400ms' }}>
+            +{participants.length - 4}
+          </div>
+        )}
+      </div>
+
+      {/* Loading animation */}
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex gap-2">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="size-2.5 rounded-full bg-[#8988ab] animate-bounce"
+              style={{
+                animationDelay: `${i * 150}ms`,
+                animationDuration: '1s',
+              }}
+            />
+          ))}
+        </div>
+        <p className="text-sm font-medium text-[#535862]">
+          {participants.length} participants
+        </p>
+      </div>
+
+      {/* Ready indicator */}
+      <div className="flex items-center gap-2 rounded-lg border border-[#e7e7ee] bg-white px-4 py-2">
+        <div className="size-2 animate-pulse rounded-full bg-[#17b26a]" />
+        <span className="text-xs font-semibold text-[#067647]">Ready to join</span>
+      </div>
+    </div>
+  );
+}
+
+function LeaveConfirmDialog({
+  open,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onCancel]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 animate-[fadeSlideIn_0.15s_ease-out]"
+      role="presentation"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="leave-title"
+        className="w-full max-w-sm rounded-2xl border border-[#e9eaeb] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex size-12 items-center justify-center rounded-full bg-[#fff1f0] mb-4">
+          <PhoneOff size={20} className="text-[#d92d20]" />
+        </div>
+        <h2 id="leave-title" className="text-base font-semibold text-[#181d27]">
+          Leave this meeting?
+        </h2>
+        <p className="mt-1 text-sm text-[#535862]">
+          You will be disconnected from the live translation session. You can rejoin later from the meetings page.
+        </p>
+        <div className="mt-6 flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex h-10 flex-1 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex h-10 flex-1 items-center justify-center rounded-lg border-2 border-white/10 bg-[#d92d20] text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#b42318] active:scale-[0.98]"
+          >
+            Leave Meeting
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PiP Transcript Content ───────────────────────────────────────────────────
+// Compact read-only transcript rendered inside the floating Picture-in-Picture window
+
+function PipTranscriptContent({
+  messages,
+  participants,
+  currentUserId,
+  meetingTitle,
+  platform,
+  onClose,
+}: {
+  messages: LiveTranscriptMessage[];
+  participants: ReturnType<typeof normalizeLiveParticipants>;
+  currentUserId: string;
+  meetingTitle: string;
+  platform?: MeetingPlatform;
+  onClose: () => void;
+}) {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [messages.length]);
+
+  return (
+    <div className="flex h-screen flex-col bg-white" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+      {/* Header */}
+      <div className="flex shrink-0 items-center gap-2 border-b border-[#e9eaeb] bg-[#fafafa] px-3 py-2.5">
+        <span className="text-[11px] font-extrabold tracking-tight text-[#48476e]">MOFA</span>
+        {platform === "Teams" && <img src="/teams.png" alt="Teams" className="size-3.5 shrink-0 object-contain" />}
+        {platform === "Beem" && <img src="/beam-logo.png" alt="Beem" className="size-3.5 shrink-0 object-contain" />}
+        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-[#414651]">{meetingTitle}</span>
+        <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-medium text-[#067647]">
+          <span className="size-1.5 animate-pulse rounded-full bg-[#17b26a]" />
+          Live
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          title="Close"
+          className="flex size-5 shrink-0 items-center justify-center rounded text-[#9fa3ae] transition-colors hover:bg-[#f3f3f7] hover:text-[#414651]"
+          aria-label="Close floating transcript"
+        >
+          <X size={12} />
+        </button>
+      </div>
+
+      {/* Live feed label */}
+      <div className="flex shrink-0 items-center justify-between px-3 pb-1 pt-2">
+        <span className="text-[9px] font-medium uppercase tracking-wider text-[#9fa3ae]">Live feed</span>
+        <span className="text-[9px] text-[#9fa3ae]">{messages.length} messages</span>
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 pb-3">
+        <div className="flex flex-col gap-2">
+          {messages.map((message, idx) => {
+            const participant = participants.find((p) => p.id === message.speakerId);
+            if (!participant) return null;
+            const isYou = message.speakerId === currentUserId;
+            const prevMsg = messages[idx - 1];
+            const isSameAsPrev = prevMsg?.speakerId === message.speakerId;
+
+            return (
+              <div
+                key={message.id}
+                className={cn(
+                  "flex gap-1.5",
+                  isYou ? "flex-row-reverse" : "flex-row",
+                  !isSameAsPrev && idx > 0 ? "mt-1" : "",
+                )}
+              >
+                {/* Avatar */}
+                {!isYou && (
+                  isSameAsPrev
+                    ? <div className="size-5 shrink-0" />
+                    : (
+                      <div
+                        className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-[#414651]"
+                        style={{ backgroundColor: participant.bg }}
+                      >
+                        {participant.initials}
+                      </div>
+                    )
+                )}
+
+                <div className={cn("flex max-w-[85%] flex-col gap-0.5", isYou ? "items-end" : "items-start")}>
+                  {/* Name + meta — only first in a consecutive group */}
+                  {!isSameAsPrev && (
+                    <div className={cn("flex flex-wrap items-center gap-1", isYou ? "flex-row-reverse" : "flex-row")}>
+                      <span className="text-[10px] font-semibold text-[#414651]">
+                        {isYou ? "You" : participant.name}
+                      </span>
+                      <span className="text-[9px] text-[#9fa3ae]">{message.time}</span>
+                      {message.language && (
+                        <span className="inline-flex items-center gap-px rounded-full border border-[#e0dde8] bg-white px-1 py-px text-[8px] text-[#717680]">
+                          <Globe size={7} />
+                          {message.language}
+                        </span>
+                      )}
+                      {message.translated && (
+                        <span className="rounded-full border border-[#b2ddff] bg-[#eff8ff] px-1 py-px text-[8px] font-semibold text-[#175cd3]">
+                          Translated
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bubble */}
+                  <div
+                    className={cn(
+                      "px-2.5 py-1.5 text-[12px] leading-[18px]",
+                      isYou
+                        ? "rounded-bl-xl rounded-br-xl rounded-tl-xl border border-[#d0cfdd] bg-[#e7e7ee] text-[#181d27]"
+                        : "rounded-bl-xl rounded-br-xl rounded-tr-xl border border-[#e9eaeb] bg-[#fafafa] text-[#181d27]",
+                    )}
+                  >
+                    {message.text}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="shrink-0 border-t border-[#f0f0f4] px-3 py-1.5 text-center">
+        <span className="text-[9px] text-[#c1c4cd]">Read-only · Powered by MOFA Translation</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Live Meeting Room ────────────────────────────────────────────────────────
+
+function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof MEETINGS.find>> }) {
+  const router = useRouter();
+  const participants = normalizeLiveParticipants(meeting);
+  const [activePanel, setActivePanel] = React.useState<"transcript" | "participants">("transcript");
+  const [showLeaveDialog, setShowLeaveDialog] = React.useState(false);
+
+  // ── Picture-in-Picture / floating popup state ────────────────────────────
+  const [pipWindow, setPipWindow] = React.useState<Window | null>(null);
+  const [pipPopupBlocked, setPipPopupBlocked] = React.useState(false);
+  const isPipOpen = !!pipWindow;
+  // Ref to the polling interval used to detect popup-window close (non-Chrome path)
+  const pipPollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Memoised live messages so both the panel and PiP share the same reference
+  const liveMessages = React.useMemo(() => buildLiveMessages(participants), [participants]);
+
+  // Inject all CSS into the secondary window as inline text — no network fetch,
+  // so styles are available synchronously before the first paint.
+  const injectPipStyles = React.useCallback((win: Window) => {
+    // 1. Base reset — applied first so it can be overridden
+    const base = win.document.createElement("style");
+    base.textContent =
+      "*, *::before, *::after { box-sizing: border-box; } html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #fff; }";
+    win.document.head.appendChild(base);
+
+    // 2. Inline <style> tags (Next.js injects Tailwind here) — clone directly
+    document.querySelectorAll("style").forEach((el) => {
+      win.document.head.appendChild(el.cloneNode(true));
+    });
+
+    // 3. Linked stylesheets — read already-parsed cssRules from memory instead of
+    //    re-fetching over the network, which eliminates the flash of unstyled content.
+    const linkedCss = Array.from(document.styleSheets)
+      .filter((sheet) => !!sheet.href)
+      .flatMap((sheet) => {
+        try {
+          return Array.from(sheet.cssRules).map((r) => r.cssText);
+        } catch {
+          // Cross-origin sheets block cssRules access — fall back to a <link> clone
+          return [];
+        }
+      })
+      .join("\n");
+
+    if (linkedCss) {
+      const inlined = win.document.createElement("style");
+      inlined.textContent = linkedCss;
+      win.document.head.appendChild(inlined);
+    } else {
+      // Fallback for cross-origin sheets: clone the <link> tag (may flash briefly)
+      document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]').forEach((el) => {
+        win.document.head.appendChild(el.cloneNode(true));
+      });
+    }
+  }, []);
+
+  const openPip = React.useCallback(async () => {
+    if ("documentPictureInPicture" in window) {
+      // ── Chrome 116+: true always-on-top Document Picture-in-Picture ──────
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pipWin = await (window as any).documentPictureInPicture.requestWindow({
+          width: 380,
+          height: 540,
+        });
+        injectPipStyles(pipWin);
+        pipWin.addEventListener("pagehide", () => setPipWindow(null));
+        setPipWindow(pipWin);
+      } catch {
+        // User cancelled the browser prompt — do nothing
+      }
+    } else {
+      // ── All other browsers: window.open() floating popup ─────────────────
+      // window.open is only blocked when NOT triggered by a user gesture,
+      // so this click handler ensures it passes the popup-blocker check.
+      const popup = window.open(
+        "",
+        "mofa-transcript-pip",
+        [
+          "width=380",
+          "height=540",
+          "top=80",
+          "left=80",
+          "resizable=yes",
+          "scrollbars=no",
+          "menubar=no",
+          "toolbar=no",
+          "location=no",
+          "status=no",
+        ].join(","),
+      );
+
+      if (!popup) {
+        // Browser popup blocker prevented the window from opening
+        setPipPopupBlocked(true);
+        setTimeout(() => setPipPopupBlocked(false), 4000);
+        return;
+      }
+
+      popup.document.title = "Live Transcript · MOFA";
+      injectPipStyles(popup);
+
+      // Poll every 500 ms to detect when the user closes the popup window
+      // (there is no reliable cross-browser "close" event for child windows)
+      if (pipPollRef.current) clearInterval(pipPollRef.current);
+      pipPollRef.current = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(pipPollRef.current!);
+          pipPollRef.current = null;
+          setPipWindow(null);
+        }
+      }, 500);
+
+      setPipWindow(popup);
+    }
+  }, [injectPipStyles]);
+
+  const closePip = React.useCallback(() => {
+    // Clear the close-detection poll if running
+    if (pipPollRef.current) {
+      clearInterval(pipPollRef.current);
+      pipPollRef.current = null;
+    }
+    pipWindow?.close();
+    setPipWindow(null);
+  }, [pipWindow]);
+
+  // Clean up the poll interval if the component unmounts while PiP is open
+  React.useEffect(() => {
+    return () => {
+      if (pipPollRef.current) clearInterval(pipPollRef.current);
+    };
+  }, []);
+
+  // First participant acts as "You" for the demo
+  const currentUserId = participants[0]?.id ?? "";
+
+  // Pinned participants (always shown in main grid)
+  const [pinnedIds, setPinnedIds] = React.useState<Set<string>>(new Set());
+  const handlePin = React.useCallback((id: string) => {
+    setPinnedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  // Order: You → pinned → others
+  const orderedParticipants = React.useMemo(() => [
+    ...participants.filter((p) => p.id === currentUserId),
+    ...participants.filter((p) => pinnedIds.has(p.id) && p.id !== currentUserId),
+    ...participants.filter((p) => !pinnedIds.has(p.id) && p.id !== currentUserId),
+  ], [participants, currentUserId, pinnedIds]);
+
+  const hasOverflow = orderedParticipants.length > MAX_VISIBLE;
+  const visibleSlots = hasOverflow ? MAX_VISIBLE - 1 : orderedParticipants.length;
+  const visibleParticipants = orderedParticipants.slice(0, visibleSlots);
+  const overflowParticipants = orderedParticipants.slice(visibleSlots);
+
+  // Active speaker — rotate through all participants every 4.5s
+  const [activeSpeakerId, setActiveSpeakerId] = React.useState(
+    () => participants[participants.length - 1]?.id ?? "",
+  );
+  React.useEffect(() => {
+    if (participants.length <= 1) return;
+    let idx = participants.findIndex((p) => p.id === activeSpeakerId);
+    const timer = setInterval(() => {
+      idx = (idx + 1) % participants.length;
+      setActiveSpeakerId(participants[idx].id);
+    }, 4500);
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [participants.length]);
+
+  const handleLeave = React.useCallback(() => {
+    setShowLeaveDialog(false);
+    router.push("/meetings");
+  }, [router]);
+
+  return (
+    <div className="flex h-full min-h-0 w-full flex-col gap-3 pb-6 pt-2">
+      {/* Leave confirmation dialog */}
+      <LeaveConfirmDialog
+        open={showLeaveDialog}
+        onConfirm={handleLeave}
+        onCancel={() => setShowLeaveDialog(false)}
+      />
+
+      {/* Picture-in-Picture transcript portal — renders into the floating window */}
+      {isPipOpen && pipWindow &&
+        createPortal(
+          <PipTranscriptContent
+            messages={liveMessages}
+            participants={participants}
+            currentUserId={currentUserId}
+            meetingTitle={meeting.title}
+            platform={meeting.platform}
+            onClose={closePip}
+          />,
+          pipWindow.document.body,
+        )
+      }
+
+      {/* Title */}
+      <h1 className="shrink-0 text-xl font-medium text-[#414651]">{meeting.title}</h1>
+
+      {/* Two-column body */}
+      <div className="flex min-h-0 flex-1 gap-6">
+        {/* ── Call area ── */}
+        <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#d5d7da] bg-[#fafafa] p-4">
+          {/* Participant grid — flex-wrap so tiles center and wrap naturally */}
+          <div className="flex min-h-0 flex-1 items-center justify-center p-2">
+            <div className="flex flex-wrap justify-center gap-4">
+              {visibleParticipants.map((participant, idx) => (
+                <div
+                  key={participant.id}
+                  className="min-h-[170px] max-h-[240px]"
+                  style={{ flex: `1 1 ${TILE_MIN_W}px`, maxWidth: `${TILE_MAX_W}px` }}
+                >
+                  <LiveParticipantTile
+                    participant={participant}
+                    isYou={participant.id === currentUserId}
+                    isSpeaking={participant.id === activeSpeakerId}
+                    index={idx}
+                  />
+                </div>
+              ))}
+              {/* More participants tile */}
+              {overflowParticipants.length > 0 && (
+                <div style={{ flex: `1 1 ${TILE_MIN_W}px`, maxWidth: `${TILE_MAX_W}px` }}>
+                  <MoreParticipantsTile
+                    participants={overflowParticipants}
+                    onPin={handlePin}
+                    pinnedIds={pinnedIds}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Timer + controls */}
+          <div className="flex shrink-0 flex-col items-center gap-2 pb-1 pt-3">
+            <LiveTimer />
+            <button
+              type="button"
+              onClick={() => setShowLeaveDialog(true)}
+              className="flex size-12 items-center justify-center rounded-full border-2 border-white/10 bg-[#d92d20] text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#b42318] hover:shadow-[0_4px_12px_rgba(217,45,32,0.3)] active:scale-95"
+              aria-label="Leave meeting"
+              title="Leave meeting"
+            >
+              <PhoneOff size={20} />
+            </button>
+          </div>
+        </section>
+
+        {/* ── Transcript / Participants sidebar ── */}
+        <aside className="flex min-h-0 w-[417px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#e9eaeb] bg-white">
+          {/* Segment-style tab bar + pop-out button */}
+          <div className="shrink-0 flex items-center gap-2 p-4">
+            <div className="flex flex-1 rounded-[10px] bg-[#fafafa] border border-[#e9eaeb] p-1">
+              {([
+                { id: "transcript" as const, label: "Transcript" },
+                { id: "participants" as const, label: "Participants" },
+              ]).map((tab) => {
+                const active = tab.id === activePanel;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActivePanel(tab.id)}
+                    className={cn(
+                      "flex h-9 flex-1 items-center justify-center rounded-md text-sm font-semibold transition-all duration-200",
+                      active
+                        ? "bg-white text-[#414651] shadow-[0_1px_3px_rgba(10,13,18,0.1),0_1px_2px_-1px_rgba(10,13,18,0.1)]"
+                        : "text-[#717680] hover:text-[#535862]",
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Pop-out / PiP button */}
+            <div className="group relative shrink-0">
+              <button
+                type="button"
+                onClick={isPipOpen ? closePip : openPip}
+                aria-label={isPipOpen ? "Close floating transcript" : "Pop out transcript"}
+                className={cn(
+                  // size-11 = 44px square, matches the tab pill height (p-1 wrapper + h-9 inner buttons)
+                  "flex size-11 items-center justify-center rounded-[10px] border font-semibold shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200",
+                  isPipOpen
+                    ? "border-[#c8c7d8] bg-[#eeedf5] text-[#48476e] hover:bg-[#e4e3f0] hover:border-[#b8b7cc]"
+                    : "border-[#d5d7da] bg-white text-[#414651] hover:bg-[#f9fafb] hover:border-[#c2c6cd]",
+                )}
+              >
+                {isPipOpen ? <PictureInPicture2 size={18} /> : <PictureInPicture size={18} />}
+              </button>
+
+              {/* Hover tooltip label */}
+              <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 origin-top scale-95 opacity-0 transition-all duration-150 group-hover:scale-100 group-hover:opacity-100">
+                <div className="whitespace-nowrap rounded-lg border border-[#e9eaeb] bg-[#181d27] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg">
+                  {isPipOpen ? "Close floating transcript" : "Pop out transcript"}
+                  {/* Arrow */}
+                  <div className="absolute -top-1 right-3.5 size-2 rotate-45 border-l border-t border-[#e9eaeb] bg-[#181d27]" />
+                </div>
+              </div>
+
+              {/* Popup blocked tooltip — shown when the browser's popup blocker fires */}
+              {pipPopupBlocked && (
+                <div className="absolute right-0 top-full z-50 mt-1.5 w-60 rounded-lg border border-[#e9eaeb] bg-white px-3 py-2.5 shadow-lg animate-[fadeSlideIn_0.15s_ease-out]">
+                  <p className="text-[11px] font-semibold text-[#414651]">Popup blocked</p>
+                  <p className="mt-0.5 text-[11px] leading-[17px] text-[#717680]">
+                    Allow popups for this site in your browser settings, then try again.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {activePanel === "transcript" ? (
+            <LiveTranscriptPanel messages={liveMessages} participants={participants} currentUserId={currentUserId} />
+          ) : (
+            <LiveParticipantsPanel participants={participants} currentUserId={currentUserId} />
+          )}
+        </aside>
+      </div>
+    </div>
+  );
+}
+
 function DownloadMenu() {
   const [open, setOpen] = React.useState(false);
   const [downloaded, setDownloaded] = React.useState<string | null>(null);
@@ -852,8 +1986,10 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
   const [activeTab, setActiveTab] = React.useState<TabId>("summary");
   const [search, setSearch] = React.useState("");
   const [audioProgress, setAudioProgress] = React.useState(0);
+  const [showLiveRoom, setShowLiveRoom] = React.useState(false);
 
   const meeting = MEETINGS.find((m) => m.id === meetingId);
+  const detail = MEETING_DETAILS[meetingId];
 
   const totalSec = React.useMemo(
     () => (meeting?.audioDuration ? parseDuration(meeting.audioDuration) : 0),
@@ -878,22 +2014,24 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
     );
   }
 
-  if (meeting.status === "upcoming" && meeting.platform === "In App") {
-    return <InAppMeetingRoom meeting={meeting} />;
+  if (meeting.status === "upcoming") {
+    const participants = normalizeLiveParticipants(meeting);
+    return showLiveRoom ? (
+      <LiveMeetingRoom meeting={meeting} />
+    ) : (
+      <MeetingConnectingScreen
+        meeting={meeting}
+        participants={participants}
+        onReady={() => setShowLiveRoom(true)}
+      />
+    );
   }
-
-  const detail = MEETING_DETAILS[meetingId];
 
   if (!detail) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-24 text-center">
-        <p className="text-base font-semibold text-[#414651]">No in-app recap yet</p>
-        <p className="max-w-md text-sm text-[#717680]">
-          This meeting is hosted outside MOFA or hasn&apos;t finished. Use{" "}
-          <strong>Join</strong> on the meetings list to open the provider link, or pick a
-          completed meeting to view AI summary and transcript.
-        </p>
-        <Link href="/meetings" className="text-sm font-medium text-[#6f6e8a] underline hover:text-[#414651]">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 py-24">
+        <p className="text-base font-semibold text-[#414651]">Meeting details unavailable</p>
+        <Link href="/meetings" className="text-sm text-[#6f6e8a] underline hover:text-[#414651]">
           Back to meetings
         </Link>
       </div>
@@ -943,7 +2081,7 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
       <div className="flex min-h-0 flex-1 gap-6">
         {/* ── Sidebar ── */}
         <Sidebar
-          meeting={meeting}
+          meeting={meeting as any}
           detail={detail}
           onParticipantClick={handleParticipantClick}
         />
