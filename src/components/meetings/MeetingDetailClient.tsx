@@ -13,7 +13,6 @@ import {
   FileText,
   Globe,
   Hash,
-  Maximize2,
   MessageSquare,
   Mic,
   Monitor,
@@ -51,6 +50,10 @@ import {
   MEETING_DETAILS,
 } from "@/components/meetings/meeting-detail-data";
 import { MEETINGS, type MeetingPlatform } from "@/components/meetings/meetings-data";
+import {
+  useActiveMeeting,
+  type ActiveTranscriptLine,
+} from "@/contexts/ActiveMeetingContext";
 
 // ─── Waveform ─────────────────────────────────────────────────────────────────
 
@@ -1599,88 +1602,29 @@ function PipTranscriptContent({
   );
 }
 
-// ─── Minimized Meeting Overlay ────────────────────────────────────────────────
-// Floating card that appears bottom-left when the user minimises the live room
-
-function MinimizedMeetingOverlay({
-  meeting,
-  onExpand,
-  onLeave,
-}: {
-  meeting: NonNullable<ReturnType<typeof MEETINGS.find>>;
-  onExpand: () => void;
-  onLeave: () => void;
-}) {
-  return (
-    <div className="fixed bottom-6 left-6 z-[200] w-72 overflow-hidden rounded-2xl border border-[#e9eaeb] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.15)] animate-[fadeSlideIn_0.2s_ease-out]">
-      {/* Meeting info row */}
-      <div className="flex items-center gap-2 px-3 py-3">
-        {/* Live pulse */}
-        <span className="size-2 shrink-0 animate-pulse rounded-full bg-[#17b26a]" />
-
-        {/* Platform icon */}
-        {meeting.platform && (
-          <div className="shrink-0">
-            <PlatformIcon platform={meeting.platform} containerSize />
-          </div>
-        )}
-
-        {/* Title */}
-        <p className="min-w-0 flex-1 truncate text-sm font-semibold text-[#414651]">
-          {meeting.title}
-        </p>
-      </div>
-
-      {/* Platform badge row */}
-      {meeting.platform && (
-        <div className="px-3 pb-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e0dde8] bg-[#f8f7fc] px-2 py-0.5 text-[11px] font-medium text-[#535862]">
-            <PlatformIcon platform={meeting.platform} containerSize />
-            {meeting.platform}
-          </span>
-        </div>
-      )}
-
-      {/* Timer + controls */}
-      <div className="flex items-center justify-between border-t border-[#f0f0f4] bg-[#fafafa] px-3 py-2">
-        <LiveTimer />
-        <div className="flex items-center gap-1.5">
-          {/* Expand back */}
-          <button
-            type="button"
-            onClick={onExpand}
-            title="Expand meeting"
-            aria-label="Expand meeting"
-            className="flex size-7 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[#f3f3f7]"
-          >
-            <Maximize2 size={13} />
-          </button>
-          {/* Leave */}
-          <button
-            type="button"
-            onClick={onLeave}
-            title="Leave meeting"
-            aria-label="Leave meeting"
-            className="flex size-7 items-center justify-center rounded-lg border-2 border-white/10 bg-[#d92d20] text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[#b42318] active:scale-95"
-          >
-            <PhoneOff size={13} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// MinimizedMeetingOverlay has been replaced by the global DraggableMinimizedOverlay
+// in ActiveMeetingContext. The overlay now persists across all pages.
 
 // ─── Live Meeting Room ────────────────────────────────────────────────────────
 
 function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof MEETINGS.find>> }) {
   const router = useRouter();
-  const participants = normalizeLiveParticipants(meeting);
+  const { startSession, endSession, minimizeSession, updateLines } = useActiveMeeting();
+  // Memoize so the reference is stable across context-driven re-renders
+  const participants = React.useMemo(() => normalizeLiveParticipants(meeting), [meeting]);
   const [activePanel, setActivePanel] = React.useState<"transcript" | "participants">("transcript");
   const [showLeaveDialog, setShowLeaveDialog] = React.useState(false);
-  const [isMinimized, setIsMinimized] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+
+  // ── Register this meeting in the global context when we enter the live room ──
+  React.useEffect(() => {
+    startSession({ id: meeting.id, title: meeting.title, platform: meeting.platform });
+    // When navigating away without explicitly leaving (e.g. nav-bar click),
+    // auto-minimise so the overlay persists on other pages.
+    return () => {
+      minimizeSession();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meeting.id]);
 
   // ── Picture-in-Picture / floating popup state ────────────────────────────
   const [pipWindow, setPipWindow] = React.useState<Window | null>(null);
@@ -1691,6 +1635,20 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
 
   // Memoised live messages so both the panel and PiP share the same reference
   const liveMessages = React.useMemo(() => buildLiveMessages(participants), [participants]);
+
+  // ── Keep the global context transcript lines in sync ──────────────────────
+  React.useEffect(() => {
+    const lines: ActiveTranscriptLine[] = liveMessages.map((m) => ({
+      id: m.id,
+      speakerName: m.speakerName,
+      initials: m.initials,
+      colorClass: m.colorClass,
+      text: m.text,
+      isYou: m.isYou,
+    }));
+    updateLines(lines);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveMessages]);
 
   // Inject all CSS into the secondary window as inline text — no network fetch,
   // so styles are available synchronously before the first paint.
@@ -1851,9 +1809,10 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
   }, [participants.length]);
 
   const handleLeave = React.useCallback(() => {
+    endSession(); // clear global session — overlay disappears
     setShowLeaveDialog(false);
     router.push("/meetings");
-  }, [router]);
+  }, [endSession, router]);
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-3 pb-6 pt-2">
@@ -1879,42 +1838,30 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
         )
       }
 
-      {/* Minimized overlay — rendered into document.body so it floats above everything */}
-      {mounted && isMinimized && createPortal(
-        <MinimizedMeetingOverlay
-          meeting={meeting}
-          onExpand={() => setIsMinimized(false)}
-          onLeave={() => { setIsMinimized(false); setShowLeaveDialog(true); }}
-        />,
-        document.body,
-      )}
+      {/* Title row */}
+      <div className="flex shrink-0 items-center gap-3">
+        {/* Back button — minimises to global overlay and navigates back */}
+        <button
+          type="button"
+          onClick={() => { minimizeSession(); router.back(); }}
+          title="Back to meetings"
+          aria-label="Back to meetings"
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
+        >
+          <ArrowLeft size={15} />
+        </button>
+        <h1 className="flex-1 text-xl font-medium text-[#414651]">{meeting.title}</h1>
+        {/* Platform badge — after meeting name */}
+        {meeting.platform && (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e0dde8] bg-[#f8f7fc] px-2.5 py-1 text-[11px] font-semibold text-[#535862]">
+            <PlatformIcon platform={meeting.platform} containerSize />
+            {meeting.platform}
+          </span>
+        )}
+      </div>
 
-      {/* Title row — hidden when minimized */}
-      {!isMinimized && (
-        <div className="flex shrink-0 items-center gap-3">
-          {/* Back button — minimises to overlay */}
-          <button
-            type="button"
-            onClick={() => setIsMinimized(true)}
-            title="Back to meetings"
-            aria-label="Back to meetings"
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
-          >
-            <ArrowLeft size={15} />
-          </button>
-          <h1 className="flex-1 text-xl font-medium text-[#414651]">{meeting.title}</h1>
-          {/* Platform badge — after meeting name */}
-          {meeting.platform && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e0dde8] bg-[#f8f7fc] px-2.5 py-1 text-[11px] font-semibold text-[#535862]">
-              <PlatformIcon platform={meeting.platform} containerSize />
-              {meeting.platform}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Two-column body — hidden when minimised */}
-      <div className={cn("flex min-h-0 flex-1 gap-6", isMinimized && "hidden")}>
+      {/* Two-column body */}
+      <div className="flex min-h-0 flex-1 gap-6">
         {/* ── Call area ── */}
         <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#d5d7da] bg-[#fafafa] p-4">
           {/* Participant grid — flex-wrap so tiles center and wrap naturally */}
