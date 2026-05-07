@@ -151,12 +151,12 @@ const PLATFORM_STYLES: Record<
     // eslint-disable-next-line @next/next/no-img-element
     icon: <img src="/teams.png" alt="" className="size-[13px] object-contain" />,
   },
-  Beam: {
+  Beem: {
     bg: "#e8f1fd",
     text: "#1554c0",
     border: "#b8d0fb",
     // eslint-disable-next-line @next/next/no-img-element
-    icon: <img src="/beam-blue.png" alt="" className="size-[13px] object-contain" />,
+    icon: <img src="/beam-logo.png" alt="Beem" className="size-[13px] object-contain" />,
   },
 };
 
@@ -1065,18 +1065,12 @@ function MeetingCard({
                 /* Soon / Live / Ended: show the Join button */
                 meeting.platform === "In App" ? (
                   <ButtonLink
-                    href={meeting.meetingLink ?? "#"}
+                    href={`/meetings/${meeting.id}`}
                     variant="secondary"
                     size="md"
                     className={cn(
                       "gap-2 no-underline",
-                      isLive && "animate-pulse ring-2 ring-[#17b26a]/40",
-                      !meeting.meetingLink && "pointer-events-none opacity-50",
                     )}
-                    rel="noreferrer"
-                    target="_blank"
-                    aria-disabled={!meeting.meetingLink}
-                    title={meeting.meetingLink ? undefined : "Meeting room link not available"}
                   >
                     <Monitor size={16} aria-hidden />
                     Open Meeting Room
@@ -1086,10 +1080,7 @@ function MeetingCard({
                     href={meeting.meetingLink}
                     variant="secondary"
                     size="md"
-                    className={cn(
-                      "gap-2 no-underline",
-                      isLive && "animate-pulse ring-2 ring-[#17b26a]/40",
-                    )}
+                    className="gap-2 no-underline"
                     rel="noreferrer"
                     target="_blank"
                   >

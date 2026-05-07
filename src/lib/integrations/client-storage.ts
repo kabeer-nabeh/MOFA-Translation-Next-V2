@@ -43,15 +43,18 @@ export function clearIntegrationState(id: IntegrationId) {
 const PENDING_KEY = "mofa:integration:pending";
 
 export function setPendingIntegration(id: IntegrationId) {
+  if (typeof window === "undefined") return;
   sessionStorage.setItem(PENDING_KEY, id);
 }
 
 export function getPendingIntegration(): IntegrationId | null {
+  if (typeof window === "undefined") return null;
   const v = sessionStorage.getItem(PENDING_KEY) as IntegrationId | null;
   if (v === "teams" || v === "outlook" || v === "beam") return v;
   return null;
 }
 
 export function clearPendingIntegration() {
+  if (typeof window === "undefined") return;
   sessionStorage.removeItem(PENDING_KEY);
 }

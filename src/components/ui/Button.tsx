@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -18,6 +18,11 @@ export const buttonVariants = cva(
           "hover:bg-[color:var(--mofa-btn-outline-hover)] " +
           "aria-[expanded=true]:bg-[color:var(--mofa-btn-outline-selected)] " +
           "focus-visible:ring-0 focus-visible:shadow-[0_1px_2px_0_rgba(10,13,18,0.05),inset_0_-2px_0_rgba(10,13,18,0.05),0_0_0_2px_var(--mofa-btn-outline-focus-halo)]",
+        tertiary:
+          "rounded-lg border border-transparent bg-transparent font-semibold text-[#6f6e8a] " +
+          "shadow-none " +
+          "hover:bg-[#f3f3f7] hover:text-[#545469] " +
+          "focus-visible:ring-[#6f6e8a]/30",
       },
       size: {
         sm: "h-9 px-3",
@@ -43,4 +48,3 @@ export function Button({ className, variant, size, ...props }: ButtonProps) {
     />
   );
 }
-

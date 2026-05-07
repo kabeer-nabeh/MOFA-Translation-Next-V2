@@ -12,7 +12,7 @@ export function NewMeetingModalTrigger({ label }: { label: string }) {
   return (
     <>
       <Button
-        variant="primary"
+        variant="secondary"
         size="lg"
         className="h-11 gap-2 px-4"
         onClick={() => setOpen(true)}
