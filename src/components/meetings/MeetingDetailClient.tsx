@@ -2042,8 +2042,10 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
   const [audioProgress, setAudioProgress] = React.useState(0);
   const [showLiveRoom, setShowLiveRoom] = React.useState(false);
 
-  const meeting = MEETINGS.find((m) => m.id === meetingId);
-  const detail = MEETING_DETAILS[meetingId];
+  // Map "current" to the live meeting (m8)
+  const resolvedId = meetingId === "current" ? "m8" : meetingId;
+  const meeting = MEETINGS.find((m) => m.id === resolvedId);
+  const detail = MEETING_DETAILS[resolvedId];
 
   const totalSec = React.useMemo(
     () => (meeting?.audioDuration ? parseDuration(meeting.audioDuration) : 0),

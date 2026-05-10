@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { IBM_Plex_Sans } from "next/font/google";
 
 import "./globals.css";
@@ -23,6 +24,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={ibmPlexSans.variable}>
+      <head>
+        <Script
+          src="https://mcp.figma.com/mcp/html-to-design/capture.js"
+          async
+          strategy="afterInteractive"
+        />
+      </head>
       <body
         className={`${ibmPlexSans.className} min-h-dvh bg-white font-sans text-slate-900 antialiased`}
       >

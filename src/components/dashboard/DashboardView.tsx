@@ -115,7 +115,7 @@ export async function DashboardView() {
               platform={currentMeeting.platform}
               startDatetime={currentMeeting.startDatetime}
               endDatetime={currentMeeting.endDatetime}
-              joinAction={{ label: "Join Meeting", href: "/meetings/current" }}
+              joinAction={{ label: "Join Meeting", href: `/meetings/${currentMeeting.id}` }}
             />
           ) : (
             <div className="py-8 text-center text-slate-500">No active meeting currently.</div>
