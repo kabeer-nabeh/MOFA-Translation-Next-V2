@@ -1042,25 +1042,33 @@ function LiveTranscriptPanel({
 
                 {/* Bubble + meta */}
                 <div className={cn("flex max-w-[80%] flex-col gap-2", isYou ? "items-end" : "items-start")}>
-                  {/* Speaker name + time + language + translated badge — only on first message of a group */}
-                  {!isSameAsPrev && (
-                    <div className={cn("flex items-center gap-2", isYou ? "flex-row-reverse pr-1" : "flex-row")}>
-                      <span className="text-xs font-semibold text-[#414651]">
-                        {isYou ? "You" : participant.name}
-                      </span>
-                      <span className="text-[10px] text-[#9fa3ae]">{message.time}</span>
-                    </div>
-                  )}
-
-                  {/* Bubble */}
+                  {/* Bubble — extract hasUnclear/unclearWordsCount first for use in metadata row */}
                   {(() => {
                     const showArabic = targetLang === "Arabic" && !!message.arabicText;
                     const rawText = showArabic ? message.arabicText! : message.text;
                     const hasUnclear = isInApp && !!message.hasUnclear;
                     const displayText = hasUnclear ? stripUnclearMarkers(rawText) : rawText;
                     const unclearWordsCount = hasUnclear ? countUnclearMarkers(rawText) : 0;
+
                     return (
-                      <div className="flex flex-col gap-1">
+                      <>
+                        {/* Speaker name + time + unclear badge — only on first message of a group */}
+                        {!isSameAsPrev && (
+                          <div className={cn("flex items-center gap-2", isYou ? "flex-row-reverse pr-1" : "flex-row")}>
+                            <span className="text-xs font-semibold text-[#414651]">
+                              {isYou ? "You" : participant.name}
+                            </span>
+                            {hasUnclear && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 text-[10px] font-semibold text-[#b45309]">
+                                <AlertTriangle size={9} className="shrink-0" aria-hidden />
+                                {unclearWordsCount} word{unclearWordsCount > 1 ? "s" : ""} unclear
+                              </span>
+                            )}
+                            <span className="text-[10px] text-[#9fa3ae]">{message.time}</span>
+                          </div>
+                        )}
+
+                        {/* Message bubble */}
                         <div
                           dir={showArabic ? "rtl" : undefined}
                           className={cn(
@@ -1089,17 +1097,7 @@ function LiveTranscriptPanel({
                             displayText
                           )}
                         </div>
-
-                        {/* Per-bubble unclear indicator — sits below the bubble */}
-                        {hasUnclear && (
-                          <div className={cn("flex items-center gap-1", isYou ? "justify-end" : "justify-start")}>
-                            <span className="inline-flex items-center gap-1 rounded-full border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 text-[10px] font-semibold text-[#b45309]">
-                              <AlertTriangle size={9} className="shrink-0" aria-hidden />
-                              {unclearWordsCount} word{unclearWordsCount > 1 ? "s" : ""} unclear
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      </>
                     );
                   })()}
                 </div>
