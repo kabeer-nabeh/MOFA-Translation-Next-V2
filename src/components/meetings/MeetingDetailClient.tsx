@@ -1431,6 +1431,28 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
   const [micOn, setMicOn] = React.useState(false);
   const [speakerOn, setSpeakerOn] = React.useState(true);
 
+  // ── Space-bar press-to-talk shortcut (in-app only) ───────────────────────
+  React.useEffect(() => {
+    if (!isInApp) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !e.repeat && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+        e.preventDefault();
+        setMicOn(true);
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        setMicOn(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [isInApp]);
+
   // ── Register this meeting in the global context when we enter the live room ──
   React.useEffect(() => {
     startSession({ id: meeting.id, title: meeting.title, platform: meeting.platform });
@@ -1710,41 +1732,62 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
             </div>
           </div>
 
-          {/* Timer + controls */}
-          <div className="flex shrink-0 flex-col items-center gap-3 pb-1 pt-3">
+          {/* Control bar */}
+          <div className="flex shrink-0 items-center justify-between border-t border-[#ebebef] px-4 pb-3 pt-3">
+            {/* Left: timer */}
             <LiveTimer />
 
-            {/* In-App only: mic + speaker controls */}
-            {isInApp && (
-              <div className="flex items-center gap-3">
-                {/* Mic button */}
-                <div className="flex flex-col items-center gap-1">
-                  <button
-                    type="button"
-                    onPointerDown={() => setMicOn(true)}
-                    onPointerUp={() => setMicOn(false)}
-                    onPointerLeave={() => setMicOn(false)}
-                    aria-label={micOn ? "Microphone active" : "Press to talk"}
-                    title={micOn ? "Hold to speak" : "Press and hold to talk"}
-                    className={cn(
-                      "relative flex size-12 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-95",
-                      micOn
-                        ? "border-[#d92d20]/20 bg-[#d92d20] text-white shadow-[0_4px_12px_rgba(217,45,32,0.35)]"
-                        : "border-[#e9eaeb] bg-white text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7] hover:text-[#414651]",
-                    )}
-                  >
-                    {/* Pulsing ring when active */}
-                    {micOn && (
-                      <span className="absolute inset-0 rounded-full border-2 border-[#d92d20] animate-ping opacity-40" />
-                    )}
-                    {micOn ? <Mic size={18} aria-hidden /> : <MicOff size={18} aria-hidden />}
-                  </button>
+            {/* Centre: mic + speaker (in-app only) */}
+            {isInApp ? (
+              <div className="flex items-center gap-4">
+                {/* Mic — press to talk */}
+                <div className="group flex flex-col items-center gap-1">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onPointerDown={() => setMicOn(true)}
+                      onPointerUp={() => setMicOn(false)}
+                      onPointerLeave={() => setMicOn(false)}
+                      aria-label={micOn ? "Microphone active" : "Press to talk"}
+                      title={micOn ? "Hold to speak" : "Press and hold to talk"}
+                      className={cn(
+                        "relative flex size-11 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-95",
+                        micOn
+                          ? "border-[#d92d20]/20 bg-[#d92d20] text-white shadow-[0_4px_12px_rgba(217,45,32,0.35)]"
+                          : "border-[#e9eaeb] bg-white text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7] hover:text-[#414651]",
+                      )}
+                    >
+                      {micOn && (
+                        <span className="absolute inset-0 rounded-full border-2 border-[#d92d20] animate-ping opacity-40" />
+                      )}
+                      {micOn ? <Mic size={16} aria-hidden /> : <MicOff size={16} aria-hidden />}
+                    </button>
+
+                    {/* Shortcut tooltip — hover only, hidden while mic is active */}
+                    <div
+                      className={cn(
+                        "pointer-events-none absolute bottom-full left-1/2 mb-3 -translate-x-1/2 flex flex-col items-center transition-opacity duration-150",
+                        micOn ? "opacity-0" : "opacity-0 group-hover:opacity-100",
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5 rounded-lg bg-[#18181b] px-2.5 py-1.5 shadow-xl ring-1 ring-white/10">
+                        <span className="whitespace-nowrap text-[11px] font-medium text-white/70">Hold</span>
+                        <kbd className="inline-flex items-center rounded-[5px] border border-white/20 bg-white/15 px-1.5 py-0.5 font-sans text-[11px] font-semibold leading-none tracking-wide text-white shadow-[inset_0_-1px_0_rgba(0,0,0,0.3)]">
+                          Space
+                        </kbd>
+                        <span className="whitespace-nowrap text-[11px] font-medium text-white/70">to talk</span>
+                      </div>
+                      {/* Caret */}
+                      <div className="h-2 w-2 -translate-y-px rotate-45 bg-[#18181b] ring-1 ring-white/10 [clip-path:polygon(0_50%,50%_100%,100%_50%)]" />
+                    </div>
+                  </div>
+
                   <span className={cn("text-[10px] font-medium", micOn ? "text-[#d92d20]" : "text-[#9fa3ae]")}>
                     {micOn ? "Live" : "Muted"}
                   </span>
                 </div>
 
-                {/* Speaker button */}
+                {/* Speaker */}
                 <div className="flex flex-col items-center gap-1">
                   <button
                     type="button"
@@ -1752,22 +1795,25 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
                     aria-label={speakerOn ? "Mute speaker" : "Unmute speaker"}
                     title={speakerOn ? "Mute speaker output" : "Unmute speaker output"}
                     className={cn(
-                      "flex size-12 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-95",
+                      "flex size-11 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-95",
                       speakerOn
                         ? "border-[#e9eaeb] bg-white text-[#48476e] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7]"
                         : "border-[#e9eaeb] bg-white text-[#9fa3ae] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7]",
                     )}
                   >
-                    {speakerOn ? <Volume2 size={18} aria-hidden /> : <VolumeX size={18} aria-hidden />}
+                    {speakerOn ? <Volume2 size={16} aria-hidden /> : <VolumeX size={16} aria-hidden />}
                   </button>
                   <span className="text-[10px] font-medium text-[#9fa3ae]">
                     {speakerOn ? "Speaker" : "Silent"}
                   </span>
                 </div>
               </div>
+            ) : (
+              /* Spacer to keep leave button right-aligned on non-in-app meetings */
+              <div />
             )}
 
-            {/* Leave button */}
+            {/* Right: leave */}
             <button
               type="button"
               onClick={() => setShowLeaveDialog(true)}
