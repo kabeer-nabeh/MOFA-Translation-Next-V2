@@ -255,7 +255,6 @@ export function AnalyticsChartsClient() {
                 fillOpacity={1}
               />
               <Line type="monotone" dataKey="stt" name="STT" stroke="#16a34a" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="tts" name="TTS" stroke="#9333ea" strokeWidth={2} dot={false} />
               <Line
                 type="monotone"
                 dataKey="translation"
@@ -319,9 +318,9 @@ function LatencyLegend({
   payload?: Array<{ value?: string; color?: string }>;
 }) {
   const items = (payload ?? [])
-    .filter((p) => p.value && ["STT", "TTS", "Total", "Translation"].includes(p.value))
+    .filter((p) => p.value && ["STT", "Total", "Translation"].includes(p.value))
     .sort((a, b) => {
-      const order = ["STT", "TTS", "Total", "Translation"];
+      const order = ["STT", "Total", "Translation"];
       return order.indexOf(a.value ?? "") - order.indexOf(b.value ?? "");
     });
 

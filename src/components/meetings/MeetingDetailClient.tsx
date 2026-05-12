@@ -15,8 +15,10 @@ import {
   Hash,
   MessageSquare,
   Mic,
+  MicOff,
   Monitor,
   MoreVertical,
+  LogOut,
   PhoneOff,
   Pause,
   PictureInPicture,
@@ -57,204 +59,10 @@ import {
 
 // ─── Waveform ─────────────────────────────────────────────────────────────────
 
-function generateWaveform(seed: string, barCount = 160): number[] {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
-  }
-  const bars: number[] = [];
-  for (let i = 0; i < barCount; i++) {
-    h ^= h << 13;
-    h ^= h >> 17;
-    h ^= h << 5;
-    bars.push(Math.abs(h % 30) + 4);
-  }
-  return bars;
-}
-
-const BAR_W = 0.55;
-const BAR_GAP = 1.85;
-const SVG_H = 32;
-
-function InteractiveWaveform({
-  bars,
-  progress,
-  onSeek,
-}: {
-  bars: number[];
-  progress: number;
-  onSeek: (p: number) => void;
-}) {
-  const svgRef = React.useRef<SVGSVGElement>(null);
-  const dragging = React.useRef(false);
-
-  const posToProgress = React.useCallback((clientX: number) => {
-    if (!svgRef.current) return 0;
-    const rect = svgRef.current.getBoundingClientRect();
-    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-  }, []);
-
-  return (
-    <svg
-      ref={svgRef}
-      className="h-8 w-full cursor-pointer"
-      viewBox={`0 0 ${bars.length * BAR_GAP} ${SVG_H}`}
-      preserveAspectRatio="none"
-      aria-hidden
-      onPointerDown={(e) => {
-        dragging.current = true;
-        (e.target as Element).setPointerCapture(e.pointerId);
-        onSeek(posToProgress(e.clientX));
-      }}
-      onPointerMove={(e) => { if (dragging.current) onSeek(posToProgress(e.clientX)); }}
-      onPointerUp={() => { dragging.current = false; }}
-      style={{ touchAction: "none" }}
-    >
-      {bars.map((h, i) => {
-        const x = i * BAR_GAP + 0.5;
-        const y = (SVG_H - h) / 2;
-        const filled = i / bars.length <= progress;
-        return <rect key={i} x={x} y={y} width={BAR_W} height={h} rx={0.3} fill={filled ? "#48476e" : "#d5d3e8"} />;
-      })}
-    </svg>
-  );
-}
-
-// ─── Audio Player ─────────────────────────────────────────────────────────────
-
-function parseDuration(d: string): number {
-  const parts = d.split(":").map(Number);
-  if (parts.length === 2) return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
-  if (parts.length === 3) return (parts[0] ?? 0) * 3600 + (parts[1] ?? 0) * 60 + (parts[2] ?? 0);
-  return 0;
-}
-
-function fmtTime(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-}
-
 function parseTimestamp(ts: string): number {
   const parts = ts.split(":").map(Number);
   if (parts.length === 2) return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
   return 0;
-}
-
-const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
-
-function AudioPlayer({
-  duration,
-  meetingId,
-  progress,
-  onProgressChange,
-}: {
-  duration: string;
-  meetingId: string;
-  progress: number;
-  onProgressChange: React.Dispatch<React.SetStateAction<number>>;
-}) {
-  const totalSec = React.useMemo(() => parseDuration(duration), [duration]);
-  const bars = React.useMemo(() => generateWaveform(meetingId, 200), [meetingId]);
-
-  const [playing, setPlaying] = React.useState(false);
-  const [muted, setMuted] = React.useState(false);
-  const [speed, setSpeed] = React.useState<number>(1);
-  const [speedMenuOpen, setSpeedMenuOpen] = React.useState(false);
-  const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
-  const speedMenuRef = React.useRef<HTMLDivElement>(null);
-
-  const startPlayback = React.useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      onProgressChange((prev) => {
-        if (prev >= 1) {
-          clearInterval(intervalRef.current!);
-          intervalRef.current = null;
-          setPlaying(false);
-          return 0;
-        }
-        return Math.min(1, prev + (0.05 * speed) / totalSec);
-      });
-    }, 50);
-  }, [speed, totalSec, onProgressChange]);
-
-  const toggle = () => {
-    setPlaying((p) => {
-      if (!p) { startPlayback(); }
-      else { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } }
-      return !p;
-    });
-  };
-
-  React.useEffect(() => { if (playing) startPlayback(); }, [speed]); // eslint-disable-line
-  React.useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
-  React.useEffect(() => {
-    if (!speedMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (speedMenuRef.current && !speedMenuRef.current.contains(e.target as Node)) setSpeedMenuOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [speedMenuOpen]);
-
-  const skip = (delta: number) => onProgressChange((p) => Math.max(0, Math.min(1, p + delta / totalSec)));
-  const elapsed = fmtTime(progress * totalSec);
-  const total = fmtTime(totalSec);
-
-  return (
-    <div className="flex items-center gap-3 bg-white px-6 py-3 border-b border-[#e9eaeb]">
-      <button type="button" onClick={toggle}
-        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#48476e] text-white transition hover:bg-[#3f3e63] active:scale-95"
-        aria-label={playing ? "Pause" : "Play"}>
-        {playing ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" className="ml-0.5" />}
-      </button>
-
-      <button type="button" onClick={() => skip(-10)}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
-        aria-label="Rewind 10s">
-        <SkipBack size={14} />
-      </button>
-
-      <div className="min-w-0 flex-1">
-        <InteractiveWaveform bars={bars} progress={progress} onSeek={onProgressChange} />
-      </div>
-
-      <button type="button" onClick={() => skip(10)}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
-        aria-label="Forward 10s">
-        <SkipForward size={14} />
-      </button>
-
-      <span className="shrink-0 tabular-nums text-xs font-medium text-[#717680]">{elapsed} / {total}</span>
-
-      <div className="relative" ref={speedMenuRef}>
-        <button type="button" onClick={() => setSpeedMenuOpen((v) => !v)}
-          className="flex h-7 items-center justify-center rounded-md border border-[#e0dde8] bg-[#f8f8fb] px-1.5 text-[11px] font-semibold text-[#545469] transition hover:bg-[#eeedf5]"
-          aria-label="Playback speed">
-          {speed}x
-        </button>
-        {speedMenuOpen && (
-          <div className="absolute bottom-full right-0 z-50 mb-1 min-w-[56px] overflow-hidden rounded-lg border border-[#e9eaeb] bg-white py-1 shadow-lg">
-            {SPEED_OPTIONS.map((s) => (
-              <button key={s} type="button"
-                className={cn("flex w-full items-center justify-center px-2 py-1.5 text-xs",
-                  s === speed ? "bg-[#f3f3f7] font-semibold text-[#545469]" : "text-[#717680] hover:bg-[#f8f8fb]")}
-                onClick={() => { setSpeed(s); setSpeedMenuOpen(false); }}>
-                {s}x
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <button type="button" onClick={() => setMuted((m) => !m)}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
-        aria-label={muted ? "Unmute" : "Mute"}>
-        {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
-      </button>
-    </div>
-  );
 }
 
 // ─── Platform icon ────────────────────────────────────────────────────────────
@@ -372,7 +180,7 @@ function Sidebar({
         <p className="px-4 pt-4 pb-3 text-xs font-semibold uppercase tracking-wider text-[#717680]">Keywords</p>
         <div className="flex flex-wrap gap-1.5 px-4 pb-4 overflow-y-auto max-h-32">
           {detail.keywords.map((kw) => (
-            <span key={kw}
+            <span key={kw} dir="rtl"
               className="rounded-full border border-[#e0dde8] bg-[#f3f3f7] px-2 py-0.5 text-[11px] font-medium text-[#545469]">
               {kw}
             </span>
@@ -491,7 +299,7 @@ function AISummaryTab({ detail }: { detail: MeetingDetail }) {
           <Sparkles size={16} className="text-[#48476e]" aria-hidden />
           <h2 className="text-sm font-semibold text-[#414651]">Executive Summary</h2>
         </div>
-        <p className="leading-8 text-sm text-[#535862]" dir="auto">{detail.executiveSummary}</p>
+        <p className="leading-8 text-sm text-[#535862]" dir="rtl">{detail.executiveSummary}</p>
       </section>
 
       <div className="border-t border-[#f0f0f4]" />
@@ -503,7 +311,7 @@ function AISummaryTab({ detail }: { detail: MeetingDetail }) {
         </div>
         <div className="flex flex-wrap gap-2">
           {detail.keywords.map((kw) => (
-            <span key={kw}
+            <span key={kw} dir="rtl"
               className="rounded-full border border-[#e0dde8] bg-[#f3f3f7] px-3 py-1 text-sm font-medium text-[#545469]">
               {kw}
             </span>
@@ -531,18 +339,10 @@ function AISummaryTab({ detail }: { detail: MeetingDetail }) {
 function TranscriptTab({
   entries,
   search,
-  audioProgress,
-  totalSec,
-  onSeek,
 }: {
   entries: TranscriptEntry[];
   search: string;
-  audioProgress: number;
-  totalSec: number;
-  onSeek: (p: number) => void;
 }) {
-  const currentSec = audioProgress * totalSec;
-
   const filtered = React.useMemo(() => {
     if (!search.trim()) return entries;
     const q = search.toLowerCase();
@@ -550,14 +350,6 @@ function TranscriptTab({
       (e) => e.text.toLowerCase().includes(q) || e.speakerName.toLowerCase().includes(q),
     );
   }, [entries, search]);
-
-  const activeEntryIdx = React.useMemo(() => {
-    if (totalSec === 0) return -1;
-    for (let i = filtered.length - 1; i >= 0; i--) {
-      if (parseTimestamp(filtered[i]?.timestamp ?? "99:99") <= currentSec) return i;
-    }
-    return -1;
-  }, [filtered, currentSec, totalSec]);
 
   if (filtered.length === 0) {
     return (
@@ -569,40 +361,53 @@ function TranscriptTab({
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-1">
       {filtered.map((entry, idx) => {
         const prevSpeaker = idx > 0 ? filtered[idx - 1]?.speakerId : null;
         const showHeader = entry.speakerId !== prevSpeaker;
-        const isActive = idx === activeEntryIdx;
-        const entrySec = parseTimestamp(entry.timestamp);
         return (
-          <div key={entry.id} className={cn("group", showHeader && idx > 0 && "mt-5")}>
+          <div key={entry.id} className={cn(showHeader && idx > 0 && "mt-5")}>
             {showHeader && (
-              <div className="mb-1.5 flex items-center gap-2">
-                <div className="flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-[#414651]"
-                  style={{ backgroundColor: entry.speakerBg }}>
+              <div className="mb-2 flex items-center gap-2">
+                <div
+                  className="flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-[#414651]"
+                  style={{ backgroundColor: entry.speakerBg }}
+                >
                   {entry.speakerInitials}
                 </div>
                 <span className="text-xs font-semibold text-[#414651]">{entry.speakerName}</span>
+                <span className="text-[11px] tabular-nums text-[#b0b3bb]">{entry.timestamp}</span>
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => onSeek(entrySec / totalSec)}
-              className={cn(
-                "ml-8 flex w-full items-start gap-3 rounded-xl px-4 py-2.5 text-left transition-colors",
-                isActive
-                  ? "bg-[#eeedf5] ring-1 ring-[#c8c7d8]"
-                  : "hover:bg-[#f9f9fc]",
+
+            {/* Card: EN original + AR translation */}
+            <div className="ml-8 overflow-hidden rounded-xl border border-[#e9eaeb] bg-white">
+              {/* English row */}
+              <div className="flex items-start gap-2.5 px-4 py-3">
+                <span className="mt-[3px] shrink-0 rounded-[4px] bg-[#e8f0fa] px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-wide text-[#4a72a8]">
+                  EN
+                </span>
+                <p className="flex-1 text-sm leading-6 text-[#414651]">
+                  {search.trim() ? <HighlightedText text={entry.text} query={search} /> : entry.text}
+                </p>
+              </div>
+
+              {/* Arabic translation row */}
+              {entry.arabicTranslation && (
+                <div className="flex items-start gap-2.5 border-t border-[#f0eff6] bg-[#faf9fd] px-4 py-3">
+                  <span className="mt-[3px] shrink-0 rounded-[4px] bg-[#ede8f8] px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-wide text-[#6b40b0]">
+                    AR
+                  </span>
+                  <p
+                    dir="rtl"
+                    className="flex-1 text-sm leading-7 text-[#535862]"
+                    style={{ fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" }}
+                  >
+                    {entry.arabicTranslation}
+                  </p>
+                </div>
               )}
-            >
-              <span className="mt-0.5 shrink-0 tabular-nums text-[11px] font-medium text-[#a4a7ae] group-hover:text-[#717680]">
-                {entry.timestamp}
-              </span>
-              <p className={cn("flex-1 text-sm leading-6", isActive ? "text-[#414651] font-medium" : "text-[#535862]")}>
-                {search.trim() ? <HighlightedText text={entry.text} query={search} /> : entry.text}
-              </p>
-            </button>
+            </div>
           </div>
         );
       })}
@@ -811,6 +616,7 @@ type LiveTranscriptMessage = {
   id: string;
   speakerId: string;
   text: string;
+  arabicText?: string;
   time: string;
   translated?: boolean;
   language?: string;
@@ -820,14 +626,14 @@ type LiveTranscriptMessage = {
 function buildLiveMessages(participants: ReturnType<typeof normalizeLiveParticipants>): LiveTranscriptMessage[] {
   const pid = (idx: number) => participants[idx]?.id ?? "p1";
   return [
-    { id: "l1", speakerId: pid(1), time: "6:02 PM", language: "Arabic", text: "We have the ambassadorial briefing in ten minutes, so let's lock the agenda and assignments." },
-    { id: "l2", speakerId: pid(1), time: "6:02 PM", language: "Arabic", translated: true, text: "Please make sure all interpreter channels are active before we begin." },
-    { id: "l3", speakerId: pid(0), time: "6:03 PM", language: "English", text: "Agreed. I've reviewed the latest briefing notes — everything looks good on my end." },
-    { id: "l4", speakerId: pid(2), time: "6:04 PM", language: "English", text: "I'll cover the opening context and hand over to the diplomatic coordination updates." },
-    { id: "l5", speakerId: pid(1), time: "6:06 PM", language: "Arabic", translated: true, text: "Engineering is ready. The live translation path for Arabic and English is stable on both channels." },
-    { id: "l6", speakerId: pid(3), time: "6:08 PM", language: "English", text: "From the client side, the main concern is keeping terminology consistent during the security segment." },
-    { id: "l7", speakerId: pid(0), time: "6:09 PM", language: "English", text: "Good point. Let me flag that with the translation team before we start." },
-    { id: "l8", speakerId: pid(2), time: "6:10 PM", language: "English", text: "I am monitoring the interpreter panel and participant language preferences right now." },
+    { id: "l1", speakerId: pid(1), time: "6:02 PM", language: "Arabic", text: "We have the ambassadorial briefing in ten minutes, so let's lock the agenda and assignments.", arabicText: "لدينا الإحاطة السفارية في غضون عشر دقائق، لذا دعنا نحدد جدول الأعمال والمهام." },
+    { id: "l2", speakerId: pid(1), time: "6:02 PM", language: "Arabic", translated: true, text: "Please make sure all interpreter channels are active before we begin.", arabicText: "يرجى التأكد من أن جميع قنوات المترجمين نشطة قبل أن نبدأ." },
+    { id: "l3", speakerId: pid(0), time: "6:03 PM", language: "English", text: "Agreed. I've reviewed the latest briefing notes — everything looks good on my end.", arabicText: "موافق. لقد راجعت أحدث ملاحظات الإحاطة — كل شيء يبدو جيداً من جهتي." },
+    { id: "l4", speakerId: pid(2), time: "6:04 PM", language: "English", text: "I'll cover the opening context and hand over to the diplomatic coordination updates.", arabicText: "سأتناول السياق الافتتاحي ثم أنتقل إلى تحديثات التنسيق الدبلوماسي." },
+    { id: "l5", speakerId: pid(1), time: "6:06 PM", language: "Arabic", translated: true, text: "Engineering is ready. The live translation path for Arabic and English is stable on both channels.", arabicText: "الفريق الهندسي جاهز. مسار الترجمة الفورية للعربية والإنجليزية مستقر على كلا القناتين." },
+    { id: "l6", speakerId: pid(3), time: "6:08 PM", language: "English", text: "From the client side, the main concern is keeping terminology consistent during the security segment.", arabicText: "من جانب العميل، يتمحور الاهتمام الرئيسي حول الحفاظ على اتساق المصطلحات خلال مقطع الأمن." },
+    { id: "l7", speakerId: pid(0), time: "6:09 PM", language: "English", text: "Good point. Let me flag that with the translation team before we start.", arabicText: "نقطة جيدة. دعني أشير إلى ذلك مع فريق الترجمة قبل أن نبدأ." },
+    { id: "l8", speakerId: pid(2), time: "6:10 PM", language: "English", text: "I am monitoring the interpreter panel and participant language preferences right now.", arabicText: "أراقب لوحة المترجمين وتفضيلات اللغة للمشاركين الآن." },
   ];
 }
 
@@ -1009,7 +815,7 @@ function LiveTranscriptPanel({
   const [showScrollBtn, setShowScrollBtn] = React.useState(false);
 
   // ── Language state ───────────────────────────────────────────────────────
-  const [targetLang, setTargetLang] = React.useState("English");
+  const [targetLang, setTargetLang] = React.useState("Arabic");
   const [showLangMenu, setShowLangMenu] = React.useState(false);
   const langMenuRef = React.useRef<HTMLDivElement>(null);
 
@@ -1185,47 +991,45 @@ function LiveTranscriptPanel({
                         {isYou ? "You" : participant.name}
                       </span>
                       <span className="text-[10px] text-[#9fa3ae]">{message.time}</span>
-                      {message.language && (
-                        <span className="inline-flex items-center gap-0.5 rounded-full border border-[#e0dde8] bg-white px-1.5 py-px text-[9px] font-medium text-[#717680]">
-                          <Globe size={9} />
-                          {message.language}
-                        </span>
-                      )}
-                      {message.translated && (
-                        <span className="inline-flex items-center rounded-full border border-[#b2ddff] bg-[#eff8ff] px-1 py-px text-[9px] font-semibold text-[#175cd3]">
-                          Translated
-                        </span>
-                      )}
                     </div>
                   )}
 
                   {/* Bubble */}
-                  <div
-                    className={cn(
-                      "relative border px-3 py-2 text-sm leading-6 text-[#181d27] transition-colors duration-200",
-                      isYou
-                        ? "rounded-bl-lg rounded-br-lg rounded-tl-lg border-[#d0cfdd] bg-[#e7e7ee] hover:bg-[#dfdfe8]"
-                        : "rounded-bl-lg rounded-br-lg rounded-tr-lg border-[#e9eaeb] bg-[#fafafa] hover:bg-[#f3f3f7]",
-                    )}
-                  >
-                    {isLastMsg ? (
-                      <>
-                        {lastMsgWords.slice(0, revealedCount).map((word, wordIdx) => (
-                          <React.Fragment key={wordIdx}>
-                            <span className="animate-[wordPop_0.15s_ease-out_both]">
-                              {word}
-                            </span>
-                            {wordIdx < lastMsgWords.length - 1 ? " " : ""}
-                          </React.Fragment>
-                        ))}
-                        {revealedCount < lastMsgWords.length && (
-                          <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse rounded-sm bg-[#9fa3ae] align-middle" />
+                  {(() => {
+                    const showArabic = targetLang === "Arabic" && !!message.arabicText;
+                    const displayText = showArabic ? message.arabicText! : message.text;
+                    return (
+                      <div
+                        dir={showArabic ? "rtl" : undefined}
+                        className={cn(
+                          "relative border px-3 py-2 text-sm leading-7 text-[#181d27] transition-colors duration-200",
+                          showArabic && "text-right",
+                          isYou
+                            ? "rounded-bl-lg rounded-br-lg rounded-tl-lg border-[#d0cfdd] bg-[#e7e7ee] hover:bg-[#dfdfe8]"
+                            : "rounded-bl-lg rounded-br-lg rounded-tr-lg border-[#e9eaeb] bg-[#fafafa] hover:bg-[#f3f3f7]",
                         )}
-                      </>
-                    ) : (
-                      message.text
-                    )}
-                  </div>
+                        style={showArabic ? { fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" } : undefined}
+                      >
+                        {isLastMsg && !showArabic ? (
+                          <>
+                            {lastMsgWords.slice(0, revealedCount).map((word, wordIdx) => (
+                              <React.Fragment key={wordIdx}>
+                                <span className="animate-[wordPop_0.15s_ease-out_both]">
+                                  {word}
+                                </span>
+                                {wordIdx < lastMsgWords.length - 1 ? " " : ""}
+                              </React.Fragment>
+                            ))}
+                            {revealedCount < lastMsgWords.length && (
+                              <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse rounded-sm bg-[#9fa3ae] align-middle" />
+                            )}
+                          </>
+                        ) : (
+                          displayText
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -1435,14 +1239,14 @@ function LeaveConfirmDialog({
         className="w-full max-w-sm rounded-2xl border border-[#e9eaeb] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="flex size-12 items-center justify-center rounded-full bg-[#fff1f0] mb-4">
-          <PhoneOff size={20} className="text-[#d92d20]" />
+        <div className="flex size-12 items-center justify-center rounded-full bg-[#f3f3f7] mb-4">
+          <LogOut size={20} className="text-[#48476e]" />
         </div>
         <h2 id="leave-title" className="text-base font-semibold text-[#181d27]">
-          Leave this meeting?
+          Leave MOFA Translation view?
         </h2>
         <p className="mt-1 text-sm text-[#535862]">
-          You will be disconnected from the live translation session. You can rejoin later from the meetings page.
+          This closes the live translation panel only. Your call on <span className="font-medium text-[#414651]">Beem or Teams</span> will continue uninterrupted — you can rejoin the translation view anytime from the meetings page.
         </p>
         <div className="mt-6 flex gap-3">
           <button
@@ -1450,14 +1254,15 @@ function LeaveConfirmDialog({
             onClick={onCancel}
             className="flex h-10 flex-1 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
           >
-            Cancel
+            Stay
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="flex h-10 flex-1 items-center justify-center rounded-lg border-2 border-white/10 bg-[#d92d20] text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#b42318] active:scale-[0.98]"
+            className="flex h-10 flex-1 items-center gap-2 justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f3f3f7] active:scale-[0.98]"
           >
-            Leave Meeting
+            <LogOut size={14} aria-hidden />
+            Leave View
           </button>
         </div>
       </div>
@@ -1577,16 +1382,24 @@ function PipTranscriptContent({
                   )}
 
                   {/* Bubble */}
-                  <div
-                    className={cn(
-                      "px-2.5 py-1.5 text-[12px] leading-[18px]",
-                      isYou
-                        ? "rounded-bl-xl rounded-br-xl rounded-tl-xl border border-[#d0cfdd] bg-[#e7e7ee] text-[#181d27]"
-                        : "rounded-bl-xl rounded-br-xl rounded-tr-xl border border-[#e9eaeb] bg-[#fafafa] text-[#181d27]",
-                    )}
-                  >
-                    {message.text}
-                  </div>
+                  {(() => {
+                    const showArabic = targetLang === "Arabic" && !!message.arabicText;
+                    return (
+                      <div
+                        dir={showArabic ? "rtl" : undefined}
+                        className={cn(
+                          "px-2.5 py-1.5 text-[12px] leading-[18px]",
+                          showArabic && "text-right",
+                          isYou
+                            ? "rounded-bl-xl rounded-br-xl rounded-tl-xl border border-[#d0cfdd] bg-[#e7e7ee] text-[#181d27]"
+                            : "rounded-bl-xl rounded-br-xl rounded-tr-xl border border-[#e9eaeb] bg-[#fafafa] text-[#181d27]",
+                        )}
+                        style={showArabic ? { fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" } : undefined}
+                      >
+                        {showArabic ? message.arabicText : message.text}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -1614,6 +1427,9 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
   const participants = React.useMemo(() => normalizeLiveParticipants(meeting), [meeting]);
   const [activePanel, setActivePanel] = React.useState<"transcript" | "participants">("transcript");
   const [showLeaveDialog, setShowLeaveDialog] = React.useState(false);
+  const isInApp = meeting.platform === "In App";
+  const [micOn, setMicOn] = React.useState(false);
+  const [speakerOn, setSpeakerOn] = React.useState(true);
 
   // ── Register this meeting in the global context when we enter the live room ──
   React.useEffect(() => {
@@ -1895,16 +1711,72 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
           </div>
 
           {/* Timer + controls */}
-          <div className="flex shrink-0 flex-col items-center gap-2 pb-1 pt-3">
+          <div className="flex shrink-0 flex-col items-center gap-3 pb-1 pt-3">
             <LiveTimer />
+
+            {/* In-App only: mic + speaker controls */}
+            {isInApp && (
+              <div className="flex items-center gap-3">
+                {/* Mic button */}
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onPointerDown={() => setMicOn(true)}
+                    onPointerUp={() => setMicOn(false)}
+                    onPointerLeave={() => setMicOn(false)}
+                    aria-label={micOn ? "Microphone active" : "Press to talk"}
+                    title={micOn ? "Hold to speak" : "Press and hold to talk"}
+                    className={cn(
+                      "relative flex size-12 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-95",
+                      micOn
+                        ? "border-[#d92d20]/20 bg-[#d92d20] text-white shadow-[0_4px_12px_rgba(217,45,32,0.35)]"
+                        : "border-[#e9eaeb] bg-white text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7] hover:text-[#414651]",
+                    )}
+                  >
+                    {/* Pulsing ring when active */}
+                    {micOn && (
+                      <span className="absolute inset-0 rounded-full border-2 border-[#d92d20] animate-ping opacity-40" />
+                    )}
+                    {micOn ? <Mic size={18} aria-hidden /> : <MicOff size={18} aria-hidden />}
+                  </button>
+                  <span className={cn("text-[10px] font-medium", micOn ? "text-[#d92d20]" : "text-[#9fa3ae]")}>
+                    {micOn ? "Live" : "Muted"}
+                  </span>
+                </div>
+
+                {/* Speaker button */}
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSpeakerOn((v) => !v)}
+                    aria-label={speakerOn ? "Mute speaker" : "Unmute speaker"}
+                    title={speakerOn ? "Mute speaker output" : "Unmute speaker output"}
+                    className={cn(
+                      "flex size-12 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-95",
+                      speakerOn
+                        ? "border-[#e9eaeb] bg-white text-[#48476e] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7]"
+                        : "border-[#e9eaeb] bg-white text-[#9fa3ae] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7]",
+                    )}
+                  >
+                    {speakerOn ? <Volume2 size={18} aria-hidden /> : <VolumeX size={18} aria-hidden />}
+                  </button>
+                  <span className="text-[10px] font-medium text-[#9fa3ae]">
+                    {speakerOn ? "Speaker" : "Silent"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Leave button */}
             <button
               type="button"
               onClick={() => setShowLeaveDialog(true)}
-              className="flex size-12 items-center justify-center rounded-full border-2 border-white/10 bg-[#d92d20] text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#b42318] hover:shadow-[0_4px_12px_rgba(217,45,32,0.3)] active:scale-95"
-              aria-label="Leave meeting"
-              title="Leave meeting"
+              className="flex h-8 items-center gap-1.5 rounded-full border border-[#e9eaeb] bg-white px-4 text-[12px] font-semibold text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f3f3f7] hover:text-[#414651] active:scale-95"
+              aria-label="Leave MOFA view"
+              title={isInApp ? "Leave meeting" : "Leave MOFA view — your call on Beem/Teams continues"}
             >
-              <PhoneOff size={20} />
+              <LogOut size={12} aria-hidden />
+              Leave
             </button>
           </div>
         </section>
@@ -2039,18 +1911,12 @@ function DownloadMenu() {
 export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
   const [activeTab, setActiveTab] = React.useState<TabId>("summary");
   const [search, setSearch] = React.useState("");
-  const [audioProgress, setAudioProgress] = React.useState(0);
   const [showLiveRoom, setShowLiveRoom] = React.useState(false);
 
   // Map "current" to the live meeting (m8)
   const resolvedId = meetingId === "current" ? "m8" : meetingId;
   const meeting = MEETINGS.find((m) => m.id === resolvedId);
   const detail = MEETING_DETAILS[resolvedId];
-
-  const totalSec = React.useMemo(
-    () => (meeting?.audioDuration ? parseDuration(meeting.audioDuration) : 0),
-    [meeting],
-  );
 
   const handleParticipantClick = (id: string) => {
     setActiveTab("participants");
@@ -2104,32 +1970,21 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col pt-2">
-      {/* Back nav + actions */}
-      <div className="mb-5 flex items-center justify-between">
+      {/* Header row: back + title + actions */}
+      <div className="mb-5 flex items-center gap-3">
         <Link href="/meetings"
-          className="inline-flex items-center gap-1.5 text-sm text-[#717680] transition hover:text-[#414651]">
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#e7e7ee] bg-white text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]">
           <ArrowLeft size={15} />
-          Back to Meetings
         </Link>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" className="gap-2">
+        <h1 className="flex-1 truncate text-xl font-semibold text-[#414651]">{meeting.title}</h1>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <Button variant="tertiary" size="sm" className="gap-1.5">
             <Share2 size={14} aria-hidden />
             Share
           </Button>
-          <button type="button"
-            className="flex size-8 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-[#717680] transition hover:bg-[#f3f3f7]">
+          <Button variant="tertiary" size="sm" className="w-9 px-0">
             <MoreVertical size={15} />
-          </button>
-        </div>
-      </div>
-
-      {/* Page header */}
-      <div className="mb-5">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="text-xl font-semibold text-[#414651]">{meeting.title}</h1>
-          <span className="rounded-md border border-[#abefc6] bg-[#ecfdf3] px-2.5 py-0.5 text-sm font-medium text-[#067647]">
-            Completed
-          </span>
+          </Button>
         </div>
       </div>
 
@@ -2144,16 +1999,6 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
 
         {/* ── Main content ── */}
         <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-[#e9eaeb] bg-white overflow-hidden">
-          {/* Sticky audio player */}
-          <div className="shrink-0">
-            <AudioPlayer
-              duration={meeting.audioDuration ?? "00:00"}
-              meetingId={meeting.id}
-              progress={audioProgress}
-              onProgressChange={setAudioProgress}
-            />
-          </div>
-
           {/* Toolbar: search (transcript only) + download */}
           <div className="flex shrink-0 items-center justify-between gap-4 px-5 py-3">
             <div className={cn("relative flex-1 max-w-xs transition-all", activeTab !== "transcript" && "opacity-40 pointer-events-none")}>
@@ -2210,9 +2055,6 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
               <TranscriptTab
                 entries={detail.transcript}
                 search={search}
-                audioProgress={audioProgress}
-                totalSec={totalSec}
-                onSeek={setAudioProgress}
               />
             )}
             {activeTab === "participants" && <ParticipantsTab detail={detail} />}

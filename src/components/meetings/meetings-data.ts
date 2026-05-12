@@ -115,7 +115,7 @@ export const MEETINGS: Meeting[] = [
   // ── Completed ──────────────────────────────────────────────────────────────
   {
     id: "m1",
-    title: "AmplifAI Project - Client Feedback Discussion",
+    title: "MOFA Live Translation - System Performance Review",
     date: "Dec 24, 2025",
     timeRange: "9:00 AM - 9:30 AM",
     host: "Suliman Alawi",

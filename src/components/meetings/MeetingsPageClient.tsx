@@ -15,16 +15,10 @@ import {
   Link2,
   Monitor,
   MoreVertical,
-  Pause,
-  Play,
   Plus,
   Search,
-  SkipBack,
-  SkipForward,
   User,
   Video,
-  Volume2,
-  VolumeX,
   XCircle,
 } from "lucide-react";
 
@@ -39,97 +33,6 @@ import { NewMeetingModal } from "@/components/meetings/NewMeetingModal";
 import { Button } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { cn } from "@/lib/utils";
-
-// ─── Waveform SVG ────────────────────────────────────────────────────────────
-
-/** Seed-based pseudo-random waveform so each meeting gets a unique but stable pattern */
-function generateWaveform(seed: string, barCount = 125): number[] {
-  // simple hash from string
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
-  }
-  const bars: number[] = [];
-  for (let i = 0; i < barCount; i++) {
-    // xorshift-style PRNG
-    h ^= h << 13;
-    h ^= h >> 17;
-    h ^= h << 5;
-    const v = Math.abs(h % 28) + 2; // range 2–30
-    bars.push(v);
-  }
-  return bars;
-}
-
-const BAR_W = 0.6;
-const BAR_GAP = 1.8;
-const SVG_H = 32;
-
-function InteractiveWaveform({
-  bars,
-  progress,
-  onSeek,
-}: {
-  bars: number[];
-  progress: number;
-  onSeek: (p: number) => void;
-}) {
-  const svgRef = React.useRef<SVGSVGElement>(null);
-  const dragging = React.useRef(false);
-
-  const posToProgress = React.useCallback(
-    (clientX: number) => {
-      if (!svgRef.current) return 0;
-      const rect = svgRef.current.getBoundingClientRect();
-      return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    },
-    [],
-  );
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    dragging.current = true;
-    (e.target as Element).setPointerCapture(e.pointerId);
-    onSeek(posToProgress(e.clientX));
-  };
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!dragging.current) return;
-    onSeek(posToProgress(e.clientX));
-  };
-  const handlePointerUp = () => {
-    dragging.current = false;
-  };
-
-  return (
-    <svg
-      ref={svgRef}
-      className="h-8 w-full cursor-pointer"
-      viewBox={`0 0 ${bars.length * BAR_GAP} ${SVG_H}`}
-      preserveAspectRatio="none"
-      aria-hidden
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      style={{ touchAction: "none" }}
-    >
-      {bars.map((h, i) => {
-        const x = i * BAR_GAP + 0.5;
-        const y = (SVG_H - h) / 2;
-        const filled = i / bars.length <= progress;
-        return (
-          <rect
-            key={i}
-            x={x}
-            y={y}
-            width={BAR_W}
-            height={h}
-            rx={0.3}
-            fill={filled ? "#545469" : "#c8c7d8"}
-          />
-        );
-      })}
-    </svg>
-  );
-}
 
 // ─── Platform Badge ───────────────────────────────────────────────────────────
 
@@ -174,23 +77,6 @@ function PlatformBadge({ platform }: { platform: MeetingPlatform }) {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Parse "mm:ss" → total seconds */
-function parseDuration(d: string): number {
-  const parts = d.split(":").map(Number);
-  if (parts.length === 2) return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
-  if (parts.length === 3) return (parts[0] ?? 0) * 3600 + (parts[1] ?? 0) * 60 + (parts[2] ?? 0);
-  return 0;
-}
-
-/** Format seconds → "mm:ss" */
-function fmtTime(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-}
-
-const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
 // ─── Relative Meeting Time ───────────────────────────────────────────────────
 
@@ -383,165 +269,6 @@ function RelativeTimeChip({ time }: { time: RelativeMeetingTime }) {
     <span className="inline-flex items-center rounded-md border border-[#d5d3e8] bg-white px-2 py-0.5 text-xs font-semibold text-[#545469]">
       {time.label}
     </span>
-  );
-}
-
-// ─── Audio Player ────────────────────────────────────────────────────────────
-
-function AudioPlayer({ duration, meetingId }: { duration: string; meetingId: string }) {
-  const totalSec = React.useMemo(() => parseDuration(duration), [duration]);
-  const bars = React.useMemo(() => generateWaveform(meetingId), [meetingId]);
-
-  const [playing, setPlaying] = React.useState(false);
-  const [progress, setProgress] = React.useState(0); // 0‑1
-  const [muted, setMuted] = React.useState(false);
-  const [speed, setSpeed] = React.useState<number>(1);
-  const [speedMenuOpen, setSpeedMenuOpen] = React.useState(false);
-  const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
-  const speedMenuRef = React.useRef<HTMLDivElement>(null);
-
-  // ── playback tick ──
-  const startPlayback = React.useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 1) {
-          clearInterval(intervalRef.current!);
-          intervalRef.current = null;
-          setPlaying(false);
-          return 0;
-        }
-        // each tick = 50ms real time; advance by speed factor
-        return Math.min(1, prev + (0.05 * speed) / totalSec);
-      });
-    }, 50);
-  }, [speed, totalSec]);
-
-  const toggle = () => {
-    setPlaying((p) => {
-      if (!p) {
-        startPlayback();
-      } else {
-        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-      }
-      return !p;
-    });
-  };
-
-  // re-sync interval when speed changes mid-play
-  React.useEffect(() => {
-    if (playing) startPlayback();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [speed]);
-
-  React.useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
-
-  // ── seek via waveform ──
-  const handleSeek = React.useCallback((p: number) => setProgress(p), []);
-
-  // ── skip ±10s ──
-  const skip = (delta: number) => {
-    setProgress((prev) => Math.max(0, Math.min(1, prev + delta / totalSec)));
-  };
-
-  // close speed menu on outside click
-  React.useEffect(() => {
-    if (!speedMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (speedMenuRef.current && !speedMenuRef.current.contains(e.target as Node)) {
-        setSpeedMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [speedMenuOpen]);
-
-  const elapsed = fmtTime(progress * totalSec);
-  const total = fmtTime(totalSec);
-
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-[#e9eaeb] bg-white px-4 py-3">
-      {/* Play / Pause */}
-      <button
-        type="button"
-        onClick={toggle}
-        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#48476e] text-white transition hover:bg-[#3f3e63] active:scale-95"
-        aria-label={playing ? "Pause" : "Play"}
-      >
-        {playing ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" className="ml-0.5" />}
-      </button>
-
-      {/* Rewind 10s */}
-      <button
-        type="button"
-        onClick={() => skip(-10)}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
-        aria-label="Rewind 10 seconds"
-      >
-        <SkipBack size={14} />
-      </button>
-
-      {/* Waveform (clickable + draggable) */}
-      <div className="min-w-0 flex-1">
-        <InteractiveWaveform bars={bars} progress={progress} onSeek={handleSeek} />
-      </div>
-
-      {/* Forward 10s */}
-      <button
-        type="button"
-        onClick={() => skip(10)}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
-        aria-label="Forward 10 seconds"
-      >
-        <SkipForward size={14} />
-      </button>
-
-      {/* Elapsed / Total */}
-      <span className="shrink-0 tabular-nums text-xs font-medium text-[#717680]">
-        {elapsed} / {total}
-      </span>
-
-      {/* Speed */}
-      <div className="relative" ref={speedMenuRef}>
-        <button
-          type="button"
-          onClick={() => setSpeedMenuOpen((v) => !v)}
-          className="flex h-7 items-center justify-center rounded-md border border-[#e0dde8] bg-[#f8f8fb] px-1.5 text-[11px] font-semibold text-[#545469] transition hover:bg-[#eeedf5]"
-          aria-label="Playback speed"
-        >
-          {speed}x
-        </button>
-        {speedMenuOpen && (
-          <div className="absolute bottom-full right-0 mb-1 z-50 min-w-[56px] overflow-hidden rounded-lg border border-[#e9eaeb] bg-white py-1 shadow-lg">
-            {SPEED_OPTIONS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                className={cn(
-                  "flex w-full items-center justify-center px-2 py-1.5 text-xs",
-                  s === speed
-                    ? "bg-[#f3f3f7] font-semibold text-[#545469]"
-                    : "text-[#717680] hover:bg-[#f8f8fb]",
-                )}
-                onClick={() => { setSpeed(s); setSpeedMenuOpen(false); }}
-              >
-                {s}x
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Mute / Unmute */}
-      <button
-        type="button"
-        onClick={() => setMuted((m) => !m)}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
-        aria-label={muted ? "Unmute" : "Mute"}
-      >
-        {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
-      </button>
-    </div>
   );
 }
 
@@ -953,10 +680,6 @@ function MeetingCard({
             <MoreMenu open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} meeting={meeting} />
           </div>
         </div>
-
-        {meeting.audioDuration && (
-          <AudioPlayer duration={meeting.audioDuration} meetingId={meeting.id} />
-        )}
 
         <div className="flex items-center justify-between gap-4">
           <ParticipantAvatars participants={meeting.participants} total={meeting.participantCount} />

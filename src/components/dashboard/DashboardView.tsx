@@ -17,7 +17,7 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { NewMeetingModalTrigger } from "@/components/meetings/NewMeetingModalTrigger";
 import type { Meeting, CalendarBadgeDate } from "@/types/meeting";
 
-import { getCurrentMeeting, getUpcomingMeetings } from "@/lib/services/meetings";
+import { getLiveMeetings, getUpcomingMeetings } from "@/lib/services/meetings";
 
 const logoSrc =
   "https://www.figma.com/api/mcp/asset/07071394-f040-458b-a0ba-f05352719e1a";
@@ -71,8 +71,11 @@ function getMeetingSubtitle(meeting: Meeting | null): string {
 /** Production-ready MOFA home dashboard */
 export async function DashboardView() {
   // Fetch data cleanly from the service
-  const currentMeeting = await getCurrentMeeting();
-  const upcomingMeetings = await getUpcomingMeetings();
+  const [liveMeetings, upcomingMeetings] = await Promise.all([
+    getLiveMeetings(),
+    getUpcomingMeetings(),
+  ]);
+  const currentMeeting = liveMeetings[0] ?? null;
 
   return (
     <div className="min-h-dvh bg-white">
@@ -105,18 +108,23 @@ export async function DashboardView() {
             primaryAction={<NewMeetingModalTrigger label="New Meeting" />}
           />
 
-          {currentMeeting ? (
-            <MeetingCard
-              date={extractDateBadge(currentMeeting.startLabel)}
-              title={currentMeeting.title}
-              dateTimeLabel={`${currentMeeting.startLabel} • ${currentMeeting.timeRangeLabel}`}
-              hostLabel={`Host: ${currentMeeting.hostName}`}
-              languageLabel={`Language: ${currentMeeting.languages.join(", ")}`}
-              platform={currentMeeting.platform}
-              startDatetime={currentMeeting.startDatetime}
-              endDatetime={currentMeeting.endDatetime}
-              joinAction={{ label: "Join Meeting", href: `/meetings/${currentMeeting.id}` }}
-            />
+          {liveMeetings.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              {liveMeetings.map((m) => (
+                <MeetingCard
+                  key={m.id}
+                  date={extractDateBadge(m.startLabel)}
+                  title={m.title}
+                  dateTimeLabel={`${m.startLabel} • ${m.timeRangeLabel}`}
+                  hostLabel={`Host: ${m.hostName}`}
+                  languageLabel={`Language: ${m.languages.join(", ")}`}
+                  platform={m.platform}
+                  startDatetime={m.startDatetime}
+                  endDatetime={m.endDatetime}
+                  joinAction={{ label: "Join Meeting", href: `/meetings/${m.id}` }}
+                />
+              ))}
+            </div>
           ) : (
             <div className="py-8 text-center text-slate-500">No active meeting currently.</div>
           )}

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { IBM_Plex_Sans } from "next/font/google";
+import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic } from "next/font/google";
 
 import "./globals.css";
 import { ActiveMeetingProvider } from "@/contexts/ActiveMeetingContext";
@@ -10,6 +10,13 @@ const ibmPlexSans = IBM_Plex_Sans({
   weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-ibm-plex-sans",
+});
+
+const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-ibm-plex-sans-arabic",
 });
 
 export const metadata: Metadata = {
@@ -23,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={ibmPlexSans.variable}>
+    <html lang="en" className={`${ibmPlexSans.variable} ${ibmPlexSansArabic.variable}`}>
       <head>
         <Script
           src="https://mcp.figma.com/mcp/html-to-design/capture.js"
