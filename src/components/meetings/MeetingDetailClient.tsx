@@ -1770,15 +1770,15 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
                         micOn ? "opacity-0" : "opacity-0 group-hover:opacity-100",
                       )}
                     >
-                      <div className="flex items-center gap-1.5 rounded-lg bg-[#18181b] px-2.5 py-1.5 shadow-xl ring-1 ring-white/10">
+                      <div className="relative flex items-center gap-1.5 rounded-lg bg-[#18181b] px-2.5 py-1.5 shadow-xl ring-1 ring-white/10">
                         <span className="whitespace-nowrap text-[11px] font-medium text-white/70">Hold</span>
                         <kbd className="inline-flex items-center rounded-[5px] border border-white/20 bg-white/15 px-1.5 py-0.5 font-sans text-[11px] font-semibold leading-none tracking-wide text-white shadow-[inset_0_-1px_0_rgba(0,0,0,0.3)]">
                           Space
                         </kbd>
                         <span className="whitespace-nowrap text-[11px] font-medium text-white/70">to talk</span>
+                        {/* Arrow — sits inside pill, lower-half peeks out to form a sharp caret */}
+                        <div className="absolute -bottom-[6px] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#18181b]" />
                       </div>
-                      {/* Caret */}
-                      <div className="h-2 w-2 -translate-y-px rotate-45 bg-[#18181b] ring-1 ring-white/10 [clip-path:polygon(0_50%,50%_100%,100%_50%)]" />
                     </div>
                   </div>
 
