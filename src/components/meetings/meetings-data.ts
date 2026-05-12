@@ -105,9 +105,9 @@ const M6_END   = _isoFromNow(80);
 const M8_START = _isoFromNow(-15);
 const M8_END   = _isoFromNow(45);
 
-// m9 — Missed: yesterday 9–10 AM
-const M9_START = _isoAt(-1, 9, 0);
-const M9_END   = _isoAt(-1, 10, 0);
+// m9 — In App Live: started 5 min ago, ends in 55 min
+const M9_START = _isoFromNow(-5);
+const M9_END   = _isoFromNow(55);
 
 // ─── Meetings ─────────────────────────────────────────────────────────────────
 
