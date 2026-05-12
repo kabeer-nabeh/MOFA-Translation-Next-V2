@@ -1054,17 +1054,19 @@ function LiveTranscriptPanel({
                       <>
                         {/* Speaker name + time + unclear badge — only on first message of a group */}
                         {!isSameAsPrev && (
-                          <div className={cn("flex items-center gap-2", isYou ? "flex-row-reverse pr-1" : "flex-row")}>
-                            <span className="text-xs font-semibold text-[#414651]">
-                              {isYou ? "You" : participant.name}
-                            </span>
+                          <div className={cn("flex items-center justify-between gap-2", isYou ? "flex-row-reverse" : "flex-row")}>
+                            <div className={cn("flex items-center gap-2", isYou ? "flex-row-reverse" : "flex-row")}>
+                              <span className="text-xs font-semibold text-[#414651]">
+                                {isYou ? "You" : participant.name}
+                              </span>
+                              <span className="text-[10px] text-[#9fa3ae]">{message.time}</span>
+                            </div>
                             {hasUnclear && (
                               <span className="inline-flex items-center gap-1 rounded-full border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 text-[10px] font-semibold text-[#b45309]">
                                 <AlertTriangle size={9} className="shrink-0" aria-hidden />
                                 {unclearWordsCount} word{unclearWordsCount > 1 ? "s" : ""} unclear
                               </span>
                             )}
-                            <span className="text-[10px] text-[#9fa3ae]">{message.time}</span>
                           </div>
                         )}
 
