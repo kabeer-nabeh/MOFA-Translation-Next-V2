@@ -1236,7 +1236,19 @@ function MicrophoneTestScreen({
         {/* Stage 1: Mic detection */}
         <div className="rounded-lg border border-[#e9eaeb] bg-white p-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-[#414651]">Microphone detection</span>
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "flex size-8 items-center justify-center rounded-lg",
+                status === "checking" ? "bg-[#f3f3f7]" : status === "failed" ? "bg-[#fee2e2]" : "bg-[#dcfce7]"
+              )}>
+                {status === "failed" ? (
+                  <Mic size={16} className="text-[#d92d20]" />
+                ) : (
+                  <Mic size={16} className={status === "checking" ? "text-[#717680]" : "text-[#17b26a]"} />
+                )}
+              </div>
+              <span className="text-sm font-medium text-[#414651]">Microphone detection</span>
+            </div>
             {status === "checking" ? (
               <div className="flex gap-1">
                 {[0, 1, 2].map((i) => (
@@ -1262,7 +1274,15 @@ function MicrophoneTestScreen({
         {status !== "failed" && (
           <div className="rounded-lg border border-[#e9eaeb] bg-white p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-[#414651]">Volume level</span>
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "flex size-8 items-center justify-center rounded-lg",
+                  volumeLevel > 30 ? "bg-[#dcfce7]" : "bg-[#fef3c7]"
+                )}>
+                  <Volume2 size={16} className={volumeLevel > 30 ? "text-[#17b26a]" : "text-[#f59e0b]"} />
+                </div>
+                <span className="text-sm font-medium text-[#414651]">Volume level</span>
+              </div>
               <span className="text-xs text-[#717680]">{Math.round(volumeLevel)}%</span>
             </div>
             {/* Volume bar */}
