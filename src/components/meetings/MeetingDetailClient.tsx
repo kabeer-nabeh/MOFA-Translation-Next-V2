@@ -625,27 +625,14 @@ type LiveTranscriptMessage = {
   hasUnclear?: boolean;
 };
 
-/**
- * Renders transcript text, converting [unclear] tokens into styled amber badges.
- * Returns an array of React nodes safe to render inside a bubble.
- */
-function renderWithUnclearMarkers(text: string): React.ReactNode {
-  const parts = text.split(/(\[unclear\])/gi);
-  return parts.map((part, i) => {
-    if (part.toLowerCase() === "[unclear]") {
-      return (
-        <span
-          key={i}
-          className="mx-0.5 inline-flex items-center gap-0.5 rounded border border-[#f59e0b]/40 bg-[#fef3c7] px-1 py-0.5 align-middle font-sans text-[11px] font-semibold leading-none text-[#b45309]"
-          title="Audio quality too low — word not captured"
-        >
-          <AlertTriangle size={9} className="shrink-0" aria-hidden />
-          unclear
-        </span>
-      );
-    }
-    return <React.Fragment key={i}>{part}</React.Fragment>;
-  });
+/** Counts [unclear] tokens in a string */
+function countUnclearMarkers(text: string): number {
+  return (text.match(/\[unclear\]/gi) ?? []).length;
+}
+
+/** Strips [unclear] tokens from text, replacing with a subtle ellipsis placeholder */
+function stripUnclearMarkers(text: string): string {
+  return text.replace(/\[unclear\]/gi, "· · ·");
 }
 
 /** Messages use relative participant indices: the first participant (index 0) = "You" */
@@ -921,17 +908,47 @@ function LiveTranscriptPanel({
   // Detect if any visible messages have unclear markers (in-app only)
   const unclearCount = isInApp ? messages.filter((m) => m.hasUnclear).length : 0;
 
+  // Toast state — auto-dismiss after 5 s
+  const [toastVisible, setToastVisible] = React.useState(false);
+  const [toastDismissed, setToastDismissed] = React.useState(false);
+
+  React.useEffect(() => {
+    if (unclearCount > 0 && !toastDismissed) {
+      setToastVisible(true);
+      const timer = setTimeout(() => setToastVisible(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [unclearCount, toastDismissed]);
+
+  const dismissToast = () => {
+    setToastVisible(false);
+    setToastDismissed(true);
+  };
+
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-      {/* Audio quality alert banner — in-app only, shown when unclear markers exist */}
-      {isInApp && unclearCount > 0 && (
-        <div className="flex shrink-0 items-center gap-2 border-b border-[#fde68a] bg-[#fffbeb] px-4 py-2">
+      {/* Audio quality toast — slides in from top, auto-dismisses after 5s */}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-3 pt-2 transition-all duration-300",
+          toastVisible ? "translate-y-0 opacity-100 pointer-events-auto" : "-translate-y-2 opacity-0",
+        )}
+      >
+        <div className="flex w-full max-w-sm items-center gap-2 rounded-lg border border-[#fde68a] bg-[#fffbeb] px-3 py-2 shadow-md">
           <AlertTriangle size={13} className="shrink-0 text-[#f59e0b]" />
           <span className="flex-1 text-[11px] font-medium text-[#92400e]">
-            {unclearCount} segment{unclearCount > 1 ? "s" : ""} with low audio quality detected — ask the speaker to repeat if needed
+            {unclearCount} segment{unclearCount > 1 ? "s" : ""} with low audio quality — ask the speaker to repeat
           </span>
+          <button
+            type="button"
+            onClick={dismissToast}
+            aria-label="Dismiss alert"
+            className="pointer-events-auto ml-1 flex size-4 shrink-0 items-center justify-center rounded text-[#b45309] hover:bg-[#fde68a]/50"
+          >
+            <X size={11} />
+          </button>
         </div>
-      )}
+      </div>
 
       {/* Compact language bar — single row, minimal height */}
       <div className="flex shrink-0 items-center gap-2 border-b border-[#f0f0f4] bg-white px-4 pb-2.5 pt-0">
@@ -1038,39 +1055,49 @@ function LiveTranscriptPanel({
                   {/* Bubble */}
                   {(() => {
                     const showArabic = targetLang === "Arabic" && !!message.arabicText;
-                    const displayText = showArabic ? message.arabicText! : message.text;
+                    const rawText = showArabic ? message.arabicText! : message.text;
                     const hasUnclear = isInApp && !!message.hasUnclear;
+                    const displayText = hasUnclear ? stripUnclearMarkers(rawText) : rawText;
+                    const unclearWordsCount = hasUnclear ? countUnclearMarkers(rawText) : 0;
                     return (
-                      <div
-                        dir={showArabic ? "rtl" : undefined}
-                        className={cn(
-                          "relative border px-3 py-2 text-sm leading-7 text-[#181d27] transition-colors duration-200",
-                          showArabic && "text-right",
-                          hasUnclear && "border-[#fde68a]",
-                          isYou
-                            ? "rounded-bl-lg rounded-br-lg rounded-tl-lg border-[#d0cfdd] bg-[#e7e7ee] hover:bg-[#dfdfe8]"
-                            : "rounded-bl-lg rounded-br-lg rounded-tr-lg border-[#e9eaeb] bg-[#fafafa] hover:bg-[#f3f3f7]",
-                        )}
-                        style={showArabic ? { fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" } : undefined}
-                      >
-                        {isLastMsg && !showArabic ? (
-                          <>
-                            {lastMsgWords.slice(0, revealedCount).map((word, wordIdx) => (
-                              <React.Fragment key={wordIdx}>
-                                <span className="animate-[wordPop_0.15s_ease-out_both]">
-                                  {word}
-                                </span>
-                                {wordIdx < lastMsgWords.length - 1 ? " " : ""}
-                              </React.Fragment>
-                            ))}
-                            {revealedCount < lastMsgWords.length && (
-                              <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse rounded-sm bg-[#9fa3ae] align-middle" />
-                            )}
-                          </>
-                        ) : hasUnclear ? (
-                          renderWithUnclearMarkers(displayText)
-                        ) : (
-                          displayText
+                      <div className="flex flex-col gap-1">
+                        <div
+                          dir={showArabic ? "rtl" : undefined}
+                          className={cn(
+                            "relative border px-3 py-2 text-sm leading-7 text-[#181d27] transition-colors duration-200",
+                            showArabic && "text-right",
+                            hasUnclear && "border-[#fde68a]",
+                            isYou
+                              ? "rounded-bl-lg rounded-br-lg rounded-tl-lg border-[#d0cfdd] bg-[#e7e7ee] hover:bg-[#dfdfe8]"
+                              : "rounded-bl-lg rounded-br-lg rounded-tr-lg border-[#e9eaeb] bg-[#fafafa] hover:bg-[#f3f3f7]",
+                          )}
+                          style={showArabic ? { fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" } : undefined}
+                        >
+                          {isLastMsg && !showArabic ? (
+                            <>
+                              {lastMsgWords.slice(0, revealedCount).map((word, wordIdx) => (
+                                <React.Fragment key={wordIdx}>
+                                  <span className="animate-[wordPop_0.15s_ease-out_both]">{word}</span>
+                                  {wordIdx < lastMsgWords.length - 1 ? " " : ""}
+                                </React.Fragment>
+                              ))}
+                              {revealedCount < lastMsgWords.length && (
+                                <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse rounded-sm bg-[#9fa3ae] align-middle" />
+                              )}
+                            </>
+                          ) : (
+                            displayText
+                          )}
+                        </div>
+
+                        {/* Per-bubble unclear indicator — sits below the bubble */}
+                        {hasUnclear && (
+                          <div className={cn("flex items-center gap-1", isYou ? "justify-end" : "justify-start")}>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 text-[10px] font-semibold text-[#b45309]">
+                              <AlertTriangle size={9} className="shrink-0" aria-hidden />
+                              {unclearWordsCount} word{unclearWordsCount > 1 ? "s" : ""} unclear
+                            </span>
+                          </div>
                         )}
                       </div>
                     );
