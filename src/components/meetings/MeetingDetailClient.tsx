@@ -1137,6 +1137,237 @@ function LiveTimer() {
   );
 }
 
+// ─── Microphone Test Screen (In-App meetings only) ───────────────────────────
+
+type MicTestStatus = "idle" | "checking" | "passed" | "failed" | "testing-volume";
+
+function MicrophoneTestScreen({
+  meeting,
+  participants,
+  onReady,
+}: {
+  meeting: NonNullable<ReturnType<typeof MEETINGS.find>>;
+  participants: ReturnType<typeof normalizeLiveParticipants>;
+  onReady: () => void;
+}) {
+  const [status, setStatus] = React.useState<MicTestStatus>("checking");
+  const [volumeLevel, setVolumeLevel] = React.useState(0);
+  const [showSkipWarning, setShowSkipWarning] = React.useState(false);
+  const streamRef = React.useRef<MediaStream | null>(null);
+  const analyzerRef = React.useRef<AnalyserNode | null>(null);
+  const animationFrameRef = React.useRef<number | null>(null);
+
+  // Start mic detection and volume test
+  React.useEffect(() => {
+    const startTest = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamRef.current = stream;
+
+        // Create audio context for volume detection
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const analyzer = audioCtx.createAnalyser();
+        analyzerRef.current = analyzer;
+
+        const source = audioCtx.createMediaStreamSource(stream);
+        source.connect(analyzer);
+
+        // Move to volume testing phase
+        setStatus("testing-volume");
+
+        // Monitor volume levels
+        const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+        const checkVolume = () => {
+          analyzer.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+          setVolumeLevel(Math.min(100, (average / 256) * 100));
+          animationFrameRef.current = requestAnimationFrame(checkVolume);
+        };
+        checkVolume();
+      } catch (error) {
+        setStatus("failed");
+        cleanupStream();
+      }
+    };
+
+    startTest();
+    return () => cleanupStream();
+  }, []);
+
+  const cleanupStream = () => {
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const handleProceed = () => {
+    if (status === "testing-volume") {
+      setStatus("passed");
+      cleanupStream();
+      setTimeout(onReady, 500);
+    }
+  };
+
+  const handleRetry = () => {
+    cleanupStream();
+    setStatus("checking");
+    setVolumeLevel(0);
+    setShowSkipWarning(false);
+  };
+
+  const handleSkip = () => {
+    cleanupStream();
+    setShowSkipWarning(false);
+    onReady();
+  };
+
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-gradient-to-br from-[#fafafa] to-[#f3f3f7] p-6">
+      {/* Title */}
+      <div className="text-center">
+        <h1 className="text-2xl font-semibold text-[#181d27]">Microphone Test</h1>
+        <p className="mt-1 text-sm text-[#717680]">Checking your audio setup before we start</p>
+      </div>
+
+      {/* Test stages */}
+      <div className="w-full max-w-sm space-y-4">
+        {/* Stage 1: Mic detection */}
+        <div className="rounded-lg border border-[#e9eaeb] bg-white p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-[#414651]">Microphone detection</span>
+            {status === "checking" ? (
+              <div className="flex gap-1">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="size-1.5 rounded-full bg-[#8988ab] animate-bounce"
+                    style={{ animationDelay: `${i * 150}ms` }}
+                  />
+                ))}
+              </div>
+            ) : status === "failed" ? (
+              <span className="text-xs font-semibold text-[#d92d20]">✗ Not found</span>
+            ) : (
+              <span className="text-xs font-semibold text-[#17b26a]">✓ Connected</span>
+            )}
+          </div>
+          {status === "failed" && (
+            <p className="mt-2 text-xs text-[#717680]">No microphone detected. Please connect a microphone and try again.</p>
+          )}
+        </div>
+
+        {/* Stage 2: Volume test */}
+        {status !== "failed" && (
+          <div className="rounded-lg border border-[#e9eaeb] bg-white p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-[#414651]">Volume level</span>
+              <span className="text-xs text-[#717680]">{Math.round(volumeLevel)}%</span>
+            </div>
+            {/* Volume bar */}
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[#e9eaeb]">
+              <div
+                className={cn(
+                  "h-full transition-all duration-100",
+                  volumeLevel > 30 ? "bg-[#17b26a]" : "bg-[#f59e0b]",
+                )}
+                style={{ width: `${volumeLevel}%` }}
+              />
+            </div>
+            <p className="mt-2 text-xs text-[#717680]">
+              {volumeLevel < 10
+                ? "Speak into your microphone to test volume"
+                : volumeLevel < 30
+                  ? "⚠️ Volume is low for translation quality"
+                  : "✓ Volume level is good"}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Action buttons */}
+      {status === "failed" ? (
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#48476e] bg-[#48476e] px-4 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#3d3c52] active:scale-[0.98]"
+          >
+            Retry Test
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSkipWarning(true)}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#d5d7da] bg-white px-4 text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+          >
+            Skip for now
+          </button>
+        </div>
+      ) : status === "passed" ? (
+        <div className="flex items-center gap-2 rounded-lg border border-[#e7e7ee] bg-white px-4 py-2 animate-[fadeSlideIn_0.3s_ease-out]">
+          <div className="size-2 rounded-full bg-[#17b26a]" />
+          <span className="text-xs font-semibold text-[#067647]">Ready to enter meeting</span>
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleProceed}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#48476e] bg-[#48476e] px-6 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#3d3c52] active:scale-[0.98]"
+          >
+            Proceed to Meeting
+          </button>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#d5d7da] bg-white px-4 text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+          >
+            Retry Test
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSkipWarning(true)}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#d5d7da] bg-white px-4 text-sm font-semibold text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+          >
+            Skip
+          </button>
+        </div>
+      )}
+
+      {/* Skip confirmation warning */}
+      {showSkipWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 animate-[fadeSlideIn_0.15s_ease-out]">
+          <div className="w-full max-w-xs rounded-2xl border border-[#e9eaeb] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]">
+            <h3 className="text-base font-semibold text-[#181d27]">Skip microphone test?</h3>
+            <p className="mt-2 text-sm text-[#535862]">
+              Skipping this test may affect translation quality. Make sure your microphone is working properly before proceeding.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowSkipWarning(false)}
+                className="flex h-9 flex-1 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all hover:bg-[#f8f8fb] active:scale-[0.98]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="flex h-9 flex-1 items-center justify-center rounded-lg border border-[#f59e0b] bg-[#fff7ed] text-sm font-semibold text-[#b45309] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all hover:bg-[#fef3c7] active:scale-[0.98]"
+              >
+                Skip anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Connecting Screen (Teams/Beem or post-test) ────────────────────────────
+
 function MeetingConnectingScreen({
   meeting,
   participants,
@@ -1146,10 +1377,30 @@ function MeetingConnectingScreen({
   participants: ReturnType<typeof normalizeLiveParticipants>;
   onReady: () => void;
 }) {
+  const [showMicTest, setShowMicTest] = React.useState(meeting.platform === "In App");
+  const isInApp = meeting.platform === "In App";
+
+  // Auto-proceed for non-in-app meetings
   React.useEffect(() => {
-    const timer = setTimeout(onReady, 2500);
-    return () => clearTimeout(timer);
-  }, [onReady]);
+    if (!isInApp) {
+      const timer = setTimeout(onReady, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [isInApp, onReady]);
+
+  // Show mic test for in-app, or skip to connecting screen
+  if (isInApp && showMicTest) {
+    return (
+      <MicrophoneTestScreen
+        meeting={meeting}
+        participants={participants}
+        onReady={() => {
+          setShowMicTest(false);
+          setTimeout(onReady, 500);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-gradient-to-br from-[#fafafa] to-[#f3f3f7] p-6">
