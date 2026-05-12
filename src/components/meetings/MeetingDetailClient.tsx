@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Bot,
@@ -620,7 +621,32 @@ type LiveTranscriptMessage = {
   time: string;
   translated?: boolean;
   language?: string;
+  /** True if this message contains [unclear] audio quality markers */
+  hasUnclear?: boolean;
 };
+
+/**
+ * Renders transcript text, converting [unclear] tokens into styled amber badges.
+ * Returns an array of React nodes safe to render inside a bubble.
+ */
+function renderWithUnclearMarkers(text: string): React.ReactNode {
+  const parts = text.split(/(\[unclear\])/gi);
+  return parts.map((part, i) => {
+    if (part.toLowerCase() === "[unclear]") {
+      return (
+        <span
+          key={i}
+          className="mx-0.5 inline-flex items-center gap-0.5 rounded border border-[#f59e0b]/40 bg-[#fef3c7] px-1 py-0.5 align-middle font-sans text-[11px] font-semibold leading-none text-[#b45309]"
+          title="Audio quality too low — word not captured"
+        >
+          <AlertTriangle size={9} className="shrink-0" aria-hidden />
+          unclear
+        </span>
+      );
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+}
 
 /** Messages use relative participant indices: the first participant (index 0) = "You" */
 function buildLiveMessages(participants: ReturnType<typeof normalizeLiveParticipants>): LiveTranscriptMessage[] {
@@ -629,9 +655,9 @@ function buildLiveMessages(participants: ReturnType<typeof normalizeLiveParticip
     { id: "l1", speakerId: pid(1), time: "6:02 PM", language: "Arabic", text: "We have the ambassadorial briefing in ten minutes, so let's lock the agenda and assignments.", arabicText: "لدينا الإحاطة السفارية في غضون عشر دقائق، لذا دعنا نحدد جدول الأعمال والمهام." },
     { id: "l2", speakerId: pid(1), time: "6:02 PM", language: "Arabic", translated: true, text: "Please make sure all interpreter channels are active before we begin.", arabicText: "يرجى التأكد من أن جميع قنوات المترجمين نشطة قبل أن نبدأ." },
     { id: "l3", speakerId: pid(0), time: "6:03 PM", language: "English", text: "Agreed. I've reviewed the latest briefing notes — everything looks good on my end.", arabicText: "موافق. لقد راجعت أحدث ملاحظات الإحاطة — كل شيء يبدو جيداً من جهتي." },
-    { id: "l4", speakerId: pid(2), time: "6:04 PM", language: "English", text: "I'll cover the opening context and hand over to the diplomatic coordination updates.", arabicText: "سأتناول السياق الافتتاحي ثم أنتقل إلى تحديثات التنسيق الدبلوماسي." },
+    { id: "l4", speakerId: pid(2), time: "6:04 PM", language: "English", text: "I'll cover the opening context and hand over to the [unclear] coordination updates.", arabicText: "سأتناول السياق الافتتاحي ثم أنتقل إلى تحديثات [unclear] الدبلوماسي.", hasUnclear: true },
     { id: "l5", speakerId: pid(1), time: "6:06 PM", language: "Arabic", translated: true, text: "Engineering is ready. The live translation path for Arabic and English is stable on both channels.", arabicText: "الفريق الهندسي جاهز. مسار الترجمة الفورية للعربية والإنجليزية مستقر على كلا القناتين." },
-    { id: "l6", speakerId: pid(3), time: "6:08 PM", language: "English", text: "From the client side, the main concern is keeping terminology consistent during the security segment.", arabicText: "من جانب العميل، يتمحور الاهتمام الرئيسي حول الحفاظ على اتساق المصطلحات خلال مقطع الأمن." },
+    { id: "l6", speakerId: pid(3), time: "6:08 PM", language: "English", text: "From the client side, the main concern is keeping [unclear] consistent during the [unclear] segment.", arabicText: "من جانب العميل، يتمحور الاهتمام الرئيسي حول [unclear] خلال مقطع الأمن.", hasUnclear: true },
     { id: "l7", speakerId: pid(0), time: "6:09 PM", language: "English", text: "Good point. Let me flag that with the translation team before we start.", arabicText: "نقطة جيدة. دعني أشير إلى ذلك مع فريق الترجمة قبل أن نبدأ." },
     { id: "l8", speakerId: pid(2), time: "6:10 PM", language: "English", text: "I am monitoring the interpreter panel and participant language preferences right now.", arabicText: "أراقب لوحة المترجمين وتفضيلات اللغة للمشاركين الآن." },
   ];
@@ -806,10 +832,12 @@ function LiveTranscriptPanel({
   messages,
   participants,
   currentUserId,
+  isInApp = false,
 }: {
   messages: LiveTranscriptMessage[];
   participants: ReturnType<typeof normalizeLiveParticipants>;
   currentUserId: string;
+  isInApp?: boolean;
 }) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const [showScrollBtn, setShowScrollBtn] = React.useState(false);
@@ -890,8 +918,21 @@ function LiveTranscriptPanel({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   };
 
+  // Detect if any visible messages have unclear markers (in-app only)
+  const unclearCount = isInApp ? messages.filter((m) => m.hasUnclear).length : 0;
+
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      {/* Audio quality alert banner — in-app only, shown when unclear markers exist */}
+      {isInApp && unclearCount > 0 && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-[#fde68a] bg-[#fffbeb] px-4 py-2">
+          <AlertTriangle size={13} className="shrink-0 text-[#f59e0b]" />
+          <span className="flex-1 text-[11px] font-medium text-[#92400e]">
+            {unclearCount} segment{unclearCount > 1 ? "s" : ""} with low audio quality detected — ask the speaker to repeat if needed
+          </span>
+        </div>
+      )}
+
       {/* Compact language bar — single row, minimal height */}
       <div className="flex shrink-0 items-center gap-2 border-b border-[#f0f0f4] bg-white px-4 pb-2.5 pt-0">
         {/* Source — label + value */}
@@ -998,12 +1039,14 @@ function LiveTranscriptPanel({
                   {(() => {
                     const showArabic = targetLang === "Arabic" && !!message.arabicText;
                     const displayText = showArabic ? message.arabicText! : message.text;
+                    const hasUnclear = isInApp && !!message.hasUnclear;
                     return (
                       <div
                         dir={showArabic ? "rtl" : undefined}
                         className={cn(
                           "relative border px-3 py-2 text-sm leading-7 text-[#181d27] transition-colors duration-200",
                           showArabic && "text-right",
+                          hasUnclear && "border-[#fde68a]",
                           isYou
                             ? "rounded-bl-lg rounded-br-lg rounded-tl-lg border-[#d0cfdd] bg-[#e7e7ee] hover:bg-[#dfdfe8]"
                             : "rounded-bl-lg rounded-br-lg rounded-tr-lg border-[#e9eaeb] bg-[#fafafa] hover:bg-[#f3f3f7]",
@@ -1024,6 +1067,8 @@ function LiveTranscriptPanel({
                               <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse rounded-sm bg-[#9fa3ae] align-middle" />
                             )}
                           </>
+                        ) : hasUnclear ? (
+                          renderWithUnclearMarkers(displayText)
                         ) : (
                           displayText
                         )}
@@ -2165,7 +2210,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
           </div>
 
           {activePanel === "transcript" ? (
-            <LiveTranscriptPanel messages={liveMessages} participants={participants} currentUserId={currentUserId} />
+            <LiveTranscriptPanel messages={liveMessages} participants={participants} currentUserId={currentUserId} isInApp={isInApp} />
           ) : (
             <LiveParticipantsPanel participants={participants} currentUserId={currentUserId} />
           )}
