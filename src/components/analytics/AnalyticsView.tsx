@@ -16,7 +16,7 @@ export function AnalyticsView() {
       <Navbar
         className="bg-white pt-3"
         containerClassName="max-w-[1440px] px-[120px]"
-        logo={{ src: ANALYTICS_LOGO, alt: "MOFA" }}
+        logo={{ src: ANALYTICS_LOGO, alt: "Baseer Voice for MOFA", width: 160, height: 44 }}
         items={[
           { label: "Home", href: "/", icon: Home },
           { label: "Meetings", href: "/meetings", icon: Video },

@@ -36,7 +36,8 @@ import {
 } from "@/lib/calendar/calendar-utils";
 import { cn } from "@/lib/utils";
 
-const AGENDA_DATE = new Date(2025, 0, 10);
+const AGENDA_DATE = new Date(2025, 0, 10); // sample data day
+const TODAY = new Date();
 
 type ViewMode = (typeof calendarViewOptions)[number]["id"];
 
@@ -80,9 +81,9 @@ const monthLabel = (y: number, m0: number) =>
 
 export function CalendarPageClient() {
   const [view, setView] = React.useState<ViewMode>("day");
-  const [viewYear, setViewYear] = React.useState(2025);
-  const [viewMonth0, setViewMonth0] = React.useState(0);
-  const [selected, setSelected] = React.useState(AGENDA_DATE);
+  const [viewYear, setViewYear] = React.useState(TODAY.getFullYear());
+  const [viewMonth0, setViewMonth0] = React.useState(TODAY.getMonth());
+  const [selected, setSelected] = React.useState(TODAY);
   const [selectedId, setSelectedId] = React.useState(DEFAULT_SELECTED_EVENT_ID);
 
   const hasAgendaDay = isSameDate(selected, AGENDA_DATE);
@@ -354,8 +355,7 @@ export function CalendarPageClient() {
                 role="status"
               >
                 <div className="rounded-lg border border-dashed border-[#e0dde8] bg-[#fafbfc] px-4 py-8 text-center text-sm text-[#535862]">
-                  No meetings on this day. Pick January 10 to view the sample agenda, or
-                  add a new meeting.
+                  No meetings on this day. Add a new meeting to get started.
                 </div>
               </div>
             )}

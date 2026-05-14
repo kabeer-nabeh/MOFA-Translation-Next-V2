@@ -19,8 +19,7 @@ import type { Meeting, CalendarBadgeDate } from "@/types/meeting";
 
 import { getLiveMeetings, getUpcomingMeetings } from "@/lib/services/meetings";
 
-const logoSrc =
-  "https://www.figma.com/api/mcp/asset/07071394-f040-458b-a0ba-f05352719e1a";
+const logoSrc = "/baseer-logo.png";
 
 /** Parse meeting startLabel to extract month and day */
 function extractDateBadge(startLabel: string): CalendarBadgeDate {
@@ -82,7 +81,7 @@ export async function DashboardView() {
       <Navbar
         className="rounded-3xl pt-3"
         containerClassName="max-w-[1440px] px-[120px]"
-        logo={{ src: logoSrc, alt: "MOFA" }}
+        logo={{ src: logoSrc, alt: "Baseer Voice for MOFA", width: 160, height: 44 }}
         items={[
           { label: "Home", href: "/", icon: Home },
           { label: "Meetings", href: "/meetings", icon: Video },
@@ -95,8 +94,7 @@ export async function DashboardView() {
         settingsHref="/settings"
         user={{
           name: "Abdullah Al Harbi",
-          avatarSrc:
-            "https://www.figma.com/api/mcp/asset/94ea3eac-604a-47ba-a319-20f5ae630c98",
+          avatarSrc: null,
         }}
       />
 
