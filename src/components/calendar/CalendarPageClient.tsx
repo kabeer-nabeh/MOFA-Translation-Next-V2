@@ -36,8 +36,9 @@ import {
 } from "@/lib/calendar/calendar-utils";
 import { cn } from "@/lib/utils";
 
-const AGENDA_DATE = new Date(2025, 0, 10); // sample data day
 const TODAY = new Date();
+// Sample events are anchored to today so the calendar always looks populated
+const AGENDA_DATE = TODAY;
 
 type ViewMode = (typeof calendarViewOptions)[number]["id"];
 
@@ -296,7 +297,7 @@ export function CalendarPageClient() {
                   const isSelected = isSameDate(c.date, selected);
                   const inM = c.inCurrentMonth;
                   const day = c.date.getDate();
-                  const isDot = inM && DAYS_WITH_DOTS.has(day);
+                  const isDot = inM && (DAYS_WITH_DOTS.has(day) || isSameDate(c.date, TODAY));
                   return (
                     <button
                       key={+c.date}

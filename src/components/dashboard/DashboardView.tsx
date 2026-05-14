@@ -94,7 +94,7 @@ export async function DashboardView() {
         settingsHref="/settings"
         user={{
           name: "Abdullah Al Harbi",
-          avatarSrc: null,
+          avatarSrc: "/avatar.jpg",
         }}
       />
 
