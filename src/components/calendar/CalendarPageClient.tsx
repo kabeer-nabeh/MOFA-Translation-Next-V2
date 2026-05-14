@@ -134,11 +134,21 @@ export function CalendarPageClient() {
     <div className="flex min-h-0 flex-1 flex-col pt-6">
       <div className="mb-6 flex shrink-0 flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-4">
+          {/* Two-row date chip: month short on top, day number below */}
           <div
-            className="flex h-10 shrink-0 items-center justify-center rounded-lg border border-[#e9eaeb] bg-[#fafbfc] px-3.5 text-xs font-semibold tracking-wide text-[#414651]"
+            className="flex w-16 shrink-0 flex-col items-center overflow-hidden rounded-lg border border-[#e9eaeb] bg-white"
             aria-label={dateChipText(selected)}
           >
-            {dateChipText(selected)}
+            <div className="flex w-full items-center justify-center bg-[#fafafa] pb-0.5 pt-1 px-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-[#717680]">
+                {selected.toLocaleString("en-US", { month: "short" })}
+              </span>
+            </div>
+            <div className="flex w-full items-center justify-center pb-[3px] pt-px px-2">
+              <span className="text-lg font-bold leading-7 text-[#545469]">
+                {selected.getDate()}
+              </span>
+            </div>
           </div>
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold text-[#1d1d1f] sm:text-3xl">
