@@ -61,7 +61,7 @@ const UP3_END = _isoAt(7, 12);
 // ─── Mock Data ───────────────────────────────────────────────────────────────
 
 const MOCK_CURRENT_MEETING: Meeting = {
-  id: "current",
+  id: "m8",
   title: "Product Strategy Discussion - Q2 Planning",
   startLabel: _fmtDate(CURR_START),
   timeRangeLabel: _range(CURR_START, CURR_END),
