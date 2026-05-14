@@ -79,7 +79,7 @@ export function SettingsView({ className }: { className?: string }) {
       <Navbar
         className="bg-white pt-3"
         containerClassName="max-w-[1440px] px-[120px]"
-        logo={{ src: SETTINGS_LOGO, alt: "MOFA" }}
+        logo={{ src: SETTINGS_LOGO, alt: "Baseer Voice for MOFA", width: 160, height: 44 }}
         items={[
           { label: "Home", href: "/", icon: Home },
           { label: "Meetings", href: "/meetings", icon: Video },
@@ -94,7 +94,7 @@ export function SettingsView({ className }: { className?: string }) {
         user={{ name: "Abdullah Al Harbi", avatarSrc: SETTINGS_AVATAR }}
       />
 
-      <main className="mx-auto w-full max-w-[1440px] px-[120px] pb-16 pt-6">
+      <main className="mx-auto w-full max-w-[1440px] px-[120px] pb-16">
         <div className="flex items-start gap-[60px]">
           <aside className="w-[200px] shrink-0">
             <div className="text-2xl font-medium leading-8 text-black">

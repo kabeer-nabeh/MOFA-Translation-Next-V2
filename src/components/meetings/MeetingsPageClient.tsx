@@ -676,7 +676,6 @@ function MeetingCard({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <StatusBadge status={meeting.status} />
             <MoreMenu open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} meeting={meeting} />
           </div>
         </div>

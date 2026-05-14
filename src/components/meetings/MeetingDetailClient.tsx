@@ -5,15 +5,16 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
-  Bot,
   Calendar,
   Check,
   ChevronDown,
   Clock,
+  Copy,
   Download,
   FileText,
   Globe,
   Hash,
+  Link2,
   MessageSquare,
   Mic,
   MicOff,
@@ -26,6 +27,7 @@ import {
   PictureInPicture2,
   Pin,
   Play,
+  Plus,
   Search,
   Send,
   Share2,
@@ -57,6 +59,9 @@ import {
   useActiveMeeting,
   type ActiveTranscriptLine,
 } from "@/contexts/ActiveMeetingContext";
+import { GuestList } from "@/components/meetings/GuestList";
+import { getGuests } from "@/lib/services/guests";
+import type { Guest } from "@/types/meeting";
 
 // ─── Waveform ─────────────────────────────────────────────────────────────────
 
@@ -194,7 +199,7 @@ function Sidebar({
 
 // ─── Tab types ────────────────────────────────────────────────────────────────
 
-type TabId = "summary" | "transcript" | "participants" | "minutes" | "ask-ai";
+type TabId = "summary" | "transcript" | "participants";
 
 // ─── Engagement badge ─────────────────────────────────────────────────────────
 
@@ -242,27 +247,12 @@ function ParticipantCard({ p, id }: { p: ParticipantDetail; id?: string }) {
         <div className="mb-1.5 flex items-center justify-between text-xs">
           <span className="text-[#717680]">Participation Level</span>
           <span className="font-semibold text-[#414651]">
-            {p.wordCount.toLocaleString()} words ({p.wordPercent}%)
+            {p.wordCount.toLocaleString()} words translated ({p.wordPercent}%)
           </span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-[#f0f0f4]">
           <div className="h-full rounded-full bg-[#48476e] transition-all" style={{ width: `${p.participationLevel}%` }} />
         </div>
-        <div className="mt-1 text-right text-xs text-[#717680]">{p.participationLevel}%</div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-4 divide-x divide-[#f0f0f4] rounded-lg border border-[#f0f0f4] bg-[#fafbfc]">
-        {[
-          { label: "Segments", value: p.segments },
-          { label: "Sentences", value: p.sentences },
-          { label: "Words/Seg", value: p.wordsPerSegment },
-          { label: "Words/min", value: p.wordsPerMin },
-        ].map(({ label, value }) => (
-          <div key={label} className="flex flex-col items-center py-3 px-2">
-            <span className="text-base font-bold text-[#414651]">{value}</span>
-            <span className="mt-0.5 text-center text-[10px] text-[#717680]">{label}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -335,6 +325,23 @@ function AISummaryTab({ detail }: { detail: MeetingDetail }) {
   );
 }
 
+// ─── Language Badge Config ────────────────────────────────────────────────────
+
+const LANGUAGE_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
+  EN: { label: "EN", bg: "#e8f0fa", text: "#4a72a8" },
+  ES: { label: "ES", bg: "#f0e8fa", text: "#6b40b0" },
+  JA: { label: "JA", bg: "#e8fae8", text: "#3f6f3f" },
+  KO: { label: "KO", bg: "#fae8e8", text: "#8b3a3a" },
+  ZH: { label: "ZH", bg: "#f5e8fa", text: "#6b4a7f" },
+  TL: { label: "TL", bg: "#fae8f0", text: "#7f4a5f" },
+  PT: { label: "PT", bg: "#e8f5fa", text: "#3a6b7f" },
+  FR: { label: "FR", bg: "#faf5e8", text: "#7f6b3a" },
+};
+
+function getLanguageConfig(lang?: string) {
+  return LANGUAGE_CONFIG[lang || "EN"] || LANGUAGE_CONFIG["EN"];
+}
+
 // ─── Transcript Tab ───────────────────────────────────────────────────────────
 
 function TranscriptTab({
@@ -366,6 +373,9 @@ function TranscriptTab({
       {filtered.map((entry, idx) => {
         const prevSpeaker = idx > 0 ? filtered[idx - 1]?.speakerId : null;
         const showHeader = entry.speakerId !== prevSpeaker;
+        const arUnclearCount = entry.arabicTranslation ? countUnclearMarkers(entry.arabicTranslation) : 0;
+        const totalUnclear = arUnclearCount;
+        const hasUnclear = totalUnclear > 0;
         return (
           <div key={entry.id} className={cn(showHeader && idx > 0 && "mt-5")}>
             {showHeader && (
@@ -378,22 +388,34 @@ function TranscriptTab({
                 </div>
                 <span className="text-xs font-semibold text-[#414651]">{entry.speakerName}</span>
                 <span className="text-[11px] tabular-nums text-[#b0b3bb]">{entry.timestamp}</span>
+                {hasUnclear && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 text-[10px] font-semibold text-[#b45309]">
+                    <AlertTriangle size={9} className="shrink-0" aria-hidden />
+                    {totalUnclear} word{totalUnclear > 1 ? "s" : ""} unclear
+                  </span>
+                )}
               </div>
             )}
 
-            {/* Card: EN original + AR translation */}
-            <div className="ml-8 overflow-hidden rounded-xl border border-[#e9eaeb] bg-white">
-              {/* English row */}
-              <div className="flex items-start gap-2.5 px-4 py-3">
-                <span className="mt-[3px] shrink-0 rounded-[4px] bg-[#e8f0fa] px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-wide text-[#4a72a8]">
-                  EN
-                </span>
-                <p className="flex-1 text-sm leading-6 text-[#414651]">
-                  {search.trim() ? <HighlightedText text={entry.text} query={search} /> : entry.text}
-                </p>
-              </div>
-
-              {/* Arabic translation row */}
+            {/* Card: Source language + AR translation */}
+            <div className={cn("ml-8 overflow-hidden rounded-xl border bg-white", hasUnclear ? "border-[#fde68a]" : "border-[#e9eaeb]")}>
+              {/* Source language row */}
+              {(() => {
+                const langConfig = getLanguageConfig(entry.language);
+                return (
+                  <div className="flex items-start gap-2.5 px-4 py-3">
+                    <span
+                      className="mt-[3px] shrink-0 rounded-[4px] px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-wide"
+                      style={{ backgroundColor: langConfig.bg, color: langConfig.text }}
+                    >
+                      {langConfig.label}
+                    </span>
+                    <p className="flex-1 text-sm leading-6 text-[#414651]">
+                      {search.trim() ? <HighlightedText text={entry.text} query={search} /> : entry.text}
+                    </p>
+                  </div>
+                );
+              })()}
               {entry.arabicTranslation && (
                 <div className="flex items-start gap-2.5 border-t border-[#f0eff6] bg-[#faf9fd] px-4 py-3">
                   <span className="mt-[3px] shrink-0 rounded-[4px] bg-[#ede8f8] px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-wide text-[#6b40b0]">
@@ -404,7 +426,7 @@ function TranscriptTab({
                     className="flex-1 text-sm leading-7 text-[#535862]"
                     style={{ fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" }}
                   >
-                    {entry.arabicTranslation}
+                    {renderWithUnclearPlaceholders(entry.arabicTranslation, { isRtl: true, highlightKeywords: true })}
                   </p>
                 </div>
               )}
@@ -438,9 +460,9 @@ function ParticipantsTab({ detail }: { detail: MeetingDetail }) {
       <div className="grid grid-cols-4 divide-x divide-[#e9eaeb] rounded-xl border border-[#e9eaeb] bg-white">
         {[
           { label: "Total Speakers", value: detail.totalSpeakers },
-          { label: "Total Words", value: detail.totalWords.toLocaleString() },
+          { label: "Total Words Translated", value: detail.totalWords.toLocaleString() },
           { label: "Speaking Time", value: detail.totalSpeakingTime },
-          { label: "Avg Speed", value: `${detail.avgSpeakingRate} wpm` },
+          { label: "Translation Accuracy", value: "92.3%" },
         ].map(({ label, value }) => (
           <div key={label} className="flex flex-col items-center py-5">
             <span className="text-2xl font-bold text-[#414651]">{value}</span>
@@ -506,96 +528,6 @@ function MeetingMinutesTab({ items }: { items: MinuteItem[] }) {
   );
 }
 
-// ─── Ask AI Tab ───────────────────────────────────────────────────────────────
-
-type ChatMsg = { role: "user" | "ai"; text: string };
-
-const SUGGESTIONS = [
-  "What were the main decisions?",
-  "Summarize the action items",
-  "Who spoke the most?",
-  "What were the key risks discussed?",
-];
-
-function AskAITab({ meetingTitle }: { meetingTitle: string }) {
-  const [messages, setMessages] = React.useState<ChatMsg[]>([]);
-  const [input, setInput] = React.useState("");
-  const bottomRef = React.useRef<HTMLDivElement>(null);
-
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return;
-    const aiResponse: ChatMsg = {
-      role: "ai",
-      text: `Based on the meeting "${meetingTitle}", here's what I found: "${text}". This is a demo response — in production this would query the actual meeting transcript and AI-generated summary.`,
-    };
-    setMessages((prev) => [...prev, { role: "user", text }, aiResponse]);
-    setInput("");
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-  };
-
-  return (
-    <div className="flex flex-col" style={{ minHeight: 420 }}>
-      {messages.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 py-10">
-          <div className="flex size-12 items-center justify-center rounded-2xl border border-[#e0dde8] bg-[#f3f3f7]">
-            <Bot size={24} className="text-[#48476e]" />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-semibold text-[#414651]">Ask about this meeting</p>
-            <p className="mt-1 text-xs text-[#717680]">Get instant answers from the transcript and AI analysis.</p>
-          </div>
-          <div className="grid w-full max-w-md grid-cols-2 gap-2">
-            {SUGGESTIONS.map((s) => (
-              <button key={s} type="button" onClick={() => sendMessage(s)}
-                className="rounded-xl border border-[#e0dde8] bg-white px-3 py-2.5 text-left text-xs text-[#414651] shadow-sm transition hover:bg-[#f3f3f7] hover:border-[#c8c7d8]">
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto pb-4">
-          {messages.map((msg, i) => (
-            <div key={i} className={cn("flex gap-2.5", msg.role === "user" ? "justify-end" : "justify-start")}>
-              {msg.role === "ai" && (
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#48476e] text-white">
-                  <Bot size={13} />
-                </div>
-              )}
-              <div className={cn(
-                "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-6",
-                msg.role === "user"
-                  ? "bg-[#48476e] text-white rounded-br-sm"
-                  : "bg-[#f3f3f7] text-[#414651] rounded-bl-sm",
-              )}>
-                {msg.text}
-              </div>
-            </div>
-          ))}
-          <div ref={bottomRef} />
-        </div>
-      )}
-
-      <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#d5d7da] bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-[#6f6e8a]/30">
-        <Mic size={15} className="shrink-0 text-[#717680]" aria-hidden />
-        <input
-          type="text"
-          placeholder="Ask anything about this meeting..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
-          className="flex-1 bg-transparent text-sm text-[#414651] outline-none placeholder:text-[#717680]"
-        />
-        <button type="button" onClick={() => sendMessage(input)} disabled={!input.trim()}
-          className="flex size-7 items-center justify-center rounded-lg bg-[#48476e] text-white transition hover:bg-[#3f3e63] disabled:opacity-40 disabled:cursor-not-allowed"
-          aria-label="Send">
-          <Send size={13} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── Download Menu ────────────────────────────────────────────────────────────
 
 const DOWNLOAD_FORMATS = [
@@ -612,6 +544,55 @@ const PARTICIPANT_DIRECTORY: Record<string, { name: string; role: string }> = {
   p4: { name: "Ahmed Bashir", role: "Client" },
   p5: { name: "Rania Nasser", role: "Design" },
 };
+
+// ─── Diplomatic keyword highlighting ─────────────────────────────────────────
+
+/** Arabic translations of "Keyword Processed" glossary entries */
+const DIPLOMATIC_TERMS_AR = [
+  "الحصانة الدبلوماسية",
+  "اتفاقية ثنائية",
+  "مذكرة تفاهم",
+  "الشؤون القنصلية",
+  "زيارة دولة",
+  "وزارة الخارجية",
+  "سفير فوق العادة",
+  "برقية دبلوماسية",
+  "شخص غير مرغوب فيه",
+];
+
+function highlightDiplomaticTerms(text: string): React.ReactNode {
+  if (!text) return text;
+  const escaped = DIPLOMATIC_TERMS_AR.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(`(${escaped.join("|")})`, "g");
+  const parts = text.split(pattern);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) =>
+    DIPLOMATIC_TERMS_AR.includes(part) ? (
+      <span key={i} className="group/kw relative inline-block">
+        <mark
+          className="rounded-sm px-1 py-0.5 font-bold not-italic cursor-default"
+          style={{
+            backgroundColor: "#dddcf0",
+            color: "#35346b",
+            boxShadow: "inset 0 0 0 1px #c5c3de",
+            fontStyle: "normal",
+            textDecoration: "none",
+          }}
+        >
+          {part}
+        </mark>
+        {/* Tooltip */}
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2d2c4a] px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/kw:opacity-100">
+          Diplomatic Keyword
+          {/* Arrow */}
+          <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#2d2c4a]" />
+        </span>
+      </span>
+    ) : (
+      <React.Fragment key={i}>{part}</React.Fragment>
+    )
+  );
+}
 
 type LiveTranscriptMessage = {
   id: string;
@@ -635,17 +616,120 @@ function stripUnclearMarkers(text: string): string {
   return text.replace(/\[unclear\]/gi, "· · ·");
 }
 
+// ─── Inline unclear placeholder (clickable → editable) ────────────────────────
+
+function UnclearPlaceholder({ isRtl }: { isRtl?: boolean }) {
+  const [editing, setEditing] = React.useState(false);
+  const [filled, setFilled] = React.useState("");
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const commit = () => {
+    setEditing(false);
+  };
+
+  React.useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  if (filled && !editing) {
+    // Filled state — show the word with a subtle confirmed style
+    return (
+      <span
+        className="group/filled relative inline-block cursor-pointer"
+        onClick={() => setEditing(true)}
+        title="Click to edit"
+      >
+        <span
+          className="rounded-sm px-1 py-0.5 text-sm font-medium"
+          style={{
+            backgroundColor: "#d1fae5",
+            color: "#065f46",
+            boxShadow: "inset 0 0 0 1px #a7f3d0",
+          }}
+        >
+          {filled}
+        </span>
+      </span>
+    );
+  }
+
+  if (editing) {
+    return (
+      <span className="relative inline-block align-baseline">
+        <input
+          ref={inputRef}
+          dir={isRtl ? "rtl" : "ltr"}
+          type="text"
+          value={filled}
+          onChange={(e) => setFilled(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); commit(); }
+            if (e.key === "Escape") { setFilled(""); setEditing(false); }
+          }}
+          placeholder="type word…"
+          className="inline-block w-28 rounded-md border border-[#fbbf24] bg-[#fffbeb] px-2 py-0.5 text-sm text-[#92400e] outline-none placeholder:text-[#d97706]/60 focus:ring-2 focus:ring-[#fbbf24]/40"
+          style={{ verticalAlign: "baseline" }}
+        />
+      </span>
+    );
+  }
+
+  // Default — dashed clickable placeholder
+  return (
+    <span
+      onClick={() => setEditing(true)}
+      title="Click to fill unclear word"
+      className="group/unclear relative inline-block cursor-text select-none"
+    >
+      <span
+        className="rounded-sm px-2 py-0.5 text-xs font-semibold tracking-widest transition-colors duration-100 group-hover/unclear:bg-[#fef3c7]"
+        style={{
+          color: "#d97706",
+          border: "1.5px dashed #fbbf24",
+          backgroundColor: "#fffbeb",
+        }}
+      >
+        · · ·
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Replaces [unclear] markers in `text` with interactive UnclearPlaceholder components.
+ * Preserves surrounding text and diplomatic keyword highlighting on Arabic segments.
+ */
+function renderWithUnclearPlaceholders(
+  text: string,
+  options?: { isRtl?: boolean; highlightKeywords?: boolean },
+): React.ReactNode {
+  const parts = text.split(/(\[unclear\])/gi);
+  if (parts.length === 1) {
+    return options?.highlightKeywords ? highlightDiplomaticTerms(text) : text;
+  }
+  return parts.map((part, i) => {
+    if (/^\[unclear\]$/i.test(part)) {
+      return <UnclearPlaceholder key={i} isRtl={options?.isRtl} />;
+    }
+    const content = options?.highlightKeywords
+      ? highlightDiplomaticTerms(part)
+      : part;
+    return <React.Fragment key={i}>{content}</React.Fragment>;
+  });
+}
+
 /** Messages use relative participant indices: the first participant (index 0) = "You" */
 function buildLiveMessages(participants: ReturnType<typeof normalizeLiveParticipants>): LiveTranscriptMessage[] {
   const pid = (idx: number) => participants[idx]?.id ?? "p1";
   return [
-    { id: "l1", speakerId: pid(1), time: "6:02 PM", language: "Arabic", text: "We have the ambassadorial briefing in ten minutes, so let's lock the agenda and assignments.", arabicText: "لدينا الإحاطة السفارية في غضون عشر دقائق، لذا دعنا نحدد جدول الأعمال والمهام." },
+    { id: "l1", speakerId: pid(1), time: "6:02 PM", language: "Arabic", text: "We have the ambassadorial briefing in ten minutes — let's confirm the consular affairs agenda.", arabicText: "لدينا الإحاطة السفارية في غضون عشر دقائق — دعنا نؤكد جدول أعمال الشؤون القنصلية." },
     { id: "l2", speakerId: pid(1), time: "6:02 PM", language: "Arabic", translated: true, text: "Please make sure all interpreter channels are active before we begin.", arabicText: "يرجى التأكد من أن جميع قنوات المترجمين نشطة قبل أن نبدأ." },
-    { id: "l3", speakerId: pid(0), time: "6:03 PM", language: "English", text: "Agreed. I've reviewed the latest briefing notes — everything looks good on my end.", arabicText: "موافق. لقد راجعت أحدث ملاحظات الإحاطة — كل شيء يبدو جيداً من جهتي." },
+    { id: "l3", speakerId: pid(0), time: "6:03 PM", language: "English", text: "Agreed. I've reviewed the memorandum of understanding — everything looks good on my end.", arabicText: "موافق. لقد راجعت مذكرة تفاهم الأخيرة — كل شيء يبدو جيداً من جهتي." },
     { id: "l4", speakerId: pid(2), time: "6:04 PM", language: "English", text: "I'll cover the opening context and hand over to the [unclear] coordination updates.", arabicText: "سأتناول السياق الافتتاحي ثم أنتقل إلى تحديثات [unclear] الدبلوماسي.", hasUnclear: true },
-    { id: "l5", speakerId: pid(1), time: "6:06 PM", language: "Arabic", translated: true, text: "Engineering is ready. The live translation path for Arabic and English is stable on both channels.", arabicText: "الفريق الهندسي جاهز. مسار الترجمة الفورية للعربية والإنجليزية مستقر على كلا القناتين." },
+    { id: "l5", speakerId: pid(1), time: "6:06 PM", language: "Arabic", translated: true, text: "Engineering is ready. The bilateral agreement draft was also cleared by the Foreign Affairs Ministry.", arabicText: "الفريق الهندسي جاهز. كما تمت مراجعة اتفاقية ثنائية من قِبل وزارة الخارجية." },
     { id: "l6", speakerId: pid(3), time: "6:08 PM", language: "English", text: "From the client side, the main concern is keeping [unclear] consistent during the [unclear] segment.", arabicText: "من جانب العميل، يتمحور الاهتمام الرئيسي حول [unclear] خلال مقطع الأمن.", hasUnclear: true },
-    { id: "l7", speakerId: pid(0), time: "6:09 PM", language: "English", text: "Good point. Let me flag that with the translation team before we start.", arabicText: "نقطة جيدة. دعني أشير إلى ذلك مع فريق الترجمة قبل أن نبدأ." },
+    { id: "l7", speakerId: pid(0), time: "6:09 PM", language: "English", text: "Good point. The ambassador plenipotentiary flagged this — let me align with the translation team.", arabicText: "نقطة جيدة. أشار إليها سفير فوق العادة — دعني أنسق مع فريق الترجمة." },
     { id: "l8", speakerId: pid(2), time: "6:10 PM", language: "English", text: "I am monitoring the interpreter panel and participant language preferences right now.", arabicText: "أراقب لوحة المترجمين وتفضيلات اللغة للمشاركين الآن." },
   ];
 }
@@ -905,51 +989,8 @@ function LiveTranscriptPanel({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   };
 
-  // Detect if any visible messages have unclear markers (in-app only)
-  const unclearCount = isInApp ? messages.filter((m) => m.hasUnclear).length : 0;
-
-  // Toast state — auto-dismiss after 5 s
-  const [toastVisible, setToastVisible] = React.useState(false);
-  const [toastDismissed, setToastDismissed] = React.useState(false);
-
-  React.useEffect(() => {
-    if (unclearCount > 0 && !toastDismissed) {
-      setToastVisible(true);
-      const timer = setTimeout(() => setToastVisible(false), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [unclearCount, toastDismissed]);
-
-  const dismissToast = () => {
-    setToastVisible(false);
-    setToastDismissed(true);
-  };
-
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-      {/* Audio quality toast — slides in from top, auto-dismisses after 5s */}
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-3 pt-2 transition-all duration-300",
-          toastVisible ? "translate-y-0 opacity-100 pointer-events-auto" : "-translate-y-2 opacity-0",
-        )}
-      >
-        <div className="flex w-full max-w-sm items-center gap-2 rounded-lg border border-[#fde68a] bg-[#fffbeb] px-3 py-2 shadow-md">
-          <AlertTriangle size={13} className="shrink-0 text-[#f59e0b]" />
-          <span className="flex-1 text-[11px] font-medium text-[#92400e]">
-            {unclearCount} segment{unclearCount > 1 ? "s" : ""} with low audio quality — ask the speaker to repeat
-          </span>
-          <button
-            type="button"
-            onClick={dismissToast}
-            aria-label="Dismiss alert"
-            className="pointer-events-auto ml-1 flex size-4 shrink-0 items-center justify-center rounded text-[#b45309] hover:bg-[#fde68a]/50"
-          >
-            <X size={11} />
-          </button>
-        </div>
-      </div>
-
       {/* Compact language bar — single row, minimal height */}
       <div className="flex shrink-0 items-center gap-2 border-b border-[#f0f0f4] bg-white px-4 pb-2.5 pt-0">
         {/* Source — label + value */}
@@ -1046,8 +1087,7 @@ function LiveTranscriptPanel({
                   {(() => {
                     const showArabic = targetLang === "Arabic" && !!message.arabicText;
                     const rawText = showArabic ? message.arabicText! : message.text;
-                    const hasUnclear = isInApp && !!message.hasUnclear;
-                    const displayText = hasUnclear ? stripUnclearMarkers(rawText) : rawText;
+                    const hasUnclear = !!message.hasUnclear;
                     const unclearWordsCount = hasUnclear ? countUnclearMarkers(rawText) : 0;
 
                     return (
@@ -1096,7 +1136,10 @@ function LiveTranscriptPanel({
                               )}
                             </>
                           ) : (
-                            displayText
+                            renderWithUnclearPlaceholders(rawText, {
+                              isRtl: showArabic,
+                              highlightKeywords: showArabic,
+                            })
                           )}
                         </div>
                       </>
@@ -1127,18 +1170,35 @@ function LiveTranscriptPanel({
 function LiveParticipantsPanel({
   participants,
   currentUserId,
+  meetingId,
+  isInApp = false,
+  showAddGuestModal = false,
+  onAddGuestModalClose,
 }: {
   participants: ReturnType<typeof normalizeLiveParticipants>;
   currentUserId: string;
+  meetingId: string;
+  isInApp?: boolean;
+  showAddGuestModal?: boolean;
+  onAddGuestModalClose?: () => void;
 }) {
+  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const [guestsReady, setGuestsReady] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isInApp) { setGuestsReady(true); return; }
+    getGuests(meetingId).then((g) => { setGuests(g); setGuestsReady(true); });
+  }, [meetingId, isInApp]);
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      {/* ── Internal participants ── */}
       <div className="px-4 pb-2 pt-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-[#717680]">
           Participants · {participants.length}
         </p>
       </div>
-      <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-4">
+      <div className="flex flex-col gap-0.5 px-3 pb-3">
         {participants.map((participant, index) => {
           const isYou = participant.id === currentUserId;
           const isSpeaking = index < 2;
@@ -1149,7 +1209,6 @@ function LiveParticipantsPanel({
               className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors duration-150 hover:bg-[#f3f3f7] animate-[fadeSlideIn_0.3s_ease-out_both]"
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              {/* Avatar with status dot */}
               <div
                 className="relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-[#414651]"
                 style={{ backgroundColor: participant.bg }}
@@ -1163,8 +1222,6 @@ function LiveParticipantsPanel({
                   style={{ backgroundColor: dotColor }}
                 />
               </div>
-
-              {/* Name + role */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="truncate text-xs font-medium text-[#414651]">{participant.name}</p>
@@ -1176,8 +1233,6 @@ function LiveParticipantsPanel({
                 </div>
                 <p className="text-[10px] text-[#717680]">{participant.role}</p>
               </div>
-
-              {/* Status label */}
               <span className={cn(
                 "shrink-0 text-[11px] font-medium",
                 isSpeaking ? "text-[#067647]" : "text-[#98a2b3]",
@@ -1188,6 +1243,27 @@ function LiveParticipantsPanel({
           );
         })}
       </div>
+
+      {/* ── Guests section — In App only ── */}
+      {isInApp && (
+        <>
+          <div className="mx-3 my-1 h-px bg-[#f0f0f4]" />
+          <div className="pb-3 pt-1">
+            {guestsReady ? (
+              <GuestList
+                meetingId={meetingId}
+                initialGuests={guests}
+                showAddModal={showAddGuestModal}
+                onAddModalClose={onAddGuestModalClose}
+              />
+            ) : (
+              <div className="flex items-center justify-center py-4">
+                <span className="size-4 animate-spin rounded-full border-2 border-[#d5d7da] border-t-[#48476e]" />
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1773,6 +1849,37 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
   const isInApp = meeting.platform === "In App";
   const [micOn, setMicOn] = React.useState(false);
   const [speakerOn, setSpeakerOn] = React.useState(true);
+  const [showAddGuestModal, setShowAddGuestModal] = React.useState(false);
+  const [showShareModal, setShowShareModal] = React.useState(false);
+  const [copiedLink, setCopiedLink] = React.useState(false);
+  const [copiedPassword, setCopiedPassword] = React.useState(false);
+  const [copiedAll, setCopiedAll] = React.useState(false);
+  const [sendSummary, setSendSummary] = React.useState(false);
+  const [sendTranscript, setSendTranscript] = React.useState(false);
+
+  // Generate stable mock meeting link + password from meeting id
+  const meetingLink = `https://meet.mofa.gov.sa/join/${meeting.id}`;
+  const meetingPassword = React.useMemo(() => {
+    const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let result = "";
+    let seed = meeting.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+    for (let i = 0; i < 8; i++) {
+      seed = (seed * 1664525 + 1013904223) & 0xffffffff;
+      result += chars[Math.abs(seed) % chars.length];
+    }
+    return result;
+  }, [meeting.id]);
+
+  const copyToClipboard = (text: string, type: "link" | "password") => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    if (type === "link") {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } else {
+      setCopiedPassword(true);
+      setTimeout(() => setCopiedPassword(false), 2000);
+    }
+  };
 
   // ── Space-bar press-to-talk shortcut (in-app only) ───────────────────────
   React.useEffect(() => {
@@ -2020,7 +2127,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
       }
 
       {/* Title row */}
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2.5">
         {/* Back button — minimises to global overlay and navigates back */}
         <button
           type="button"
@@ -2031,13 +2138,168 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
         >
           <ArrowLeft size={15} />
         </button>
-        <h1 className="flex-1 text-xl font-medium text-[#414651]">{meeting.title}</h1>
-        {/* Platform badge — after meeting name */}
+
+        {/* Title + platform badge grouped together */}
+        <h1 className="text-xl font-medium text-[#414651]">{meeting.title}</h1>
         {meeting.platform && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e0dde8] bg-[#f8f7fc] px-2.5 py-1 text-[11px] font-semibold text-[#535862]">
             <PlatformIcon platform={meeting.platform} containerSize />
             {meeting.platform}
           </span>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Share / Invite button — In App only */}
+        {isInApp && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowShareModal((v) => !v)}
+              className="flex items-center gap-1.5 rounded-lg border border-[#d5d7da] bg-white px-3 py-1.5 text-xs font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[#f3f3f7] active:scale-[0.98]"
+            >
+              <Share2 size={12} aria-hidden />
+              Invite Guest
+            </button>
+
+            {/* Share popover */}
+            {showShareModal && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowShareModal(false)}
+                />
+                {/* Popover card */}
+                <div className="absolute right-0 top-full z-50 mt-2 w-[340px] rounded-2xl border border-[#e9eaeb] bg-white p-5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-[#111827]">Invite Guest to Meeting</h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowShareModal(false)}
+                      className="flex size-6 items-center justify-center rounded-md text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+
+                  {/* Meeting info */}
+                  <div className="mb-4 rounded-xl border border-[#e9eaeb] bg-[#fafafa] px-4 py-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-[#9da4ae]">Meeting</p>
+                    <p className="mt-0.5 text-sm font-semibold text-[#414651] leading-snug">{meeting.title}</p>
+                  </div>
+
+                  {/* Meeting Link */}
+                  <div className="mb-3">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
+                      <Link2 size={12} aria-hidden />
+                      Meeting Link
+                    </p>
+                    <div className="flex items-center gap-2 rounded-lg border border-[#e9eaeb] bg-[#f9fafb] px-3 py-2">
+                      <span className="flex-1 truncate font-mono text-xs text-[#374151]">{meetingLink}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(meetingLink, "link")}
+                        className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition hover:bg-[#e9eaeb]"
+                        style={{ color: copiedLink ? "#16a34a" : "#6b7280" }}
+                      >
+                        {copiedLink ? <Check size={11} /> : <Copy size={11} />}
+                        {copiedLink ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Password */}
+                  <div className="mb-4">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Password
+                    </p>
+                    <div className="flex items-center gap-2 rounded-lg border border-[#e9eaeb] bg-[#f9fafb] px-3 py-2">
+                      <span className="flex-1 font-mono text-xs tracking-widest text-[#374151]">{meetingPassword}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(meetingPassword, "password")}
+                        className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition hover:bg-[#e9eaeb]"
+                        style={{ color: copiedPassword ? "#16a34a" : "#6b7280" }}
+                      >
+                        {copiedPassword ? <Check size={11} /> : <Copy size={11} />}
+                        {copiedPassword ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Email toggles */}
+                  <div className="mb-4 rounded-xl border border-[#e9eaeb] divide-y divide-[#e9eaeb]">
+                    {/* Send AI Summary */}
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div>
+                        <p className="text-xs font-medium text-[#374151]">Send AI Summary</p>
+                        <p className="text-[11px] text-[#9da4ae]">Email the meeting summary to guests</p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={sendSummary}
+                        onClick={() => setSendSummary((v) => !v)}
+                        className={cn(
+                          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                          sendSummary ? "bg-[#48476e]" : "bg-[#d1d5db]"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                            sendSummary ? "translate-x-4" : "translate-x-0"
+                          )}
+                        />
+                      </button>
+                    </div>
+                    {/* Send Transcript */}
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div>
+                        <p className="text-xs font-medium text-[#374151]">Send Transcript</p>
+                        <p className="text-[11px] text-[#9da4ae]">Email the full transcript to guests</p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={sendTranscript}
+                        onClick={() => setSendTranscript((v) => !v)}
+                        className={cn(
+                          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                          sendTranscript ? "bg-[#48476e]" : "bg-[#d1d5db]"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                            sendTranscript ? "translate-x-4" : "translate-x-0"
+                          )}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Copy both button */}
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="w-full justify-center"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`Meeting Link: ${meetingLink}\nPassword: ${meetingPassword}`).catch(() => {});
+                      setCopiedAll(true);
+                      setTimeout(() => setCopiedAll(false), 2000);
+                    }}
+                  >
+                    {copiedAll ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
+                    {copiedAll ? "Copied!" : "Copy Invite Details"}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 
@@ -2239,7 +2501,14 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
           {activePanel === "transcript" ? (
             <LiveTranscriptPanel messages={liveMessages} participants={participants} currentUserId={currentUserId} isInApp={isInApp} />
           ) : (
-            <LiveParticipantsPanel participants={participants} currentUserId={currentUserId} />
+            <LiveParticipantsPanel
+              participants={participants}
+              currentUserId={currentUserId}
+              meetingId={meeting.id}
+              isInApp={isInApp}
+              showAddGuestModal={showAddGuestModal}
+              onAddGuestModalClose={() => setShowAddGuestModal(false)}
+            />
           )}
         </aside>
       </div>
@@ -2353,8 +2622,6 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
     { id: "summary", label: "AI Summary", icon: <Sparkles size={13} /> },
     { id: "transcript", label: "Transcript", icon: <FileText size={13} /> },
     { id: "participants", label: "Participants", icon: <Users size={13} />, count: detail.participants.length },
-    { id: "minutes", label: "Meeting Minutes", icon: <MessageSquare size={13} /> },
-    { id: "ask-ai", label: "Ask AI", icon: <Bot size={13} /> },
   ];
 
   return (
@@ -2447,8 +2714,6 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
               />
             )}
             {activeTab === "participants" && <ParticipantsTab detail={detail} />}
-            {activeTab === "minutes" && <MeetingMinutesTab items={detail.minutes} />}
-            {activeTab === "ask-ai" && <AskAITab meetingTitle={meeting.title} />}
           </div>
         </div>
       </div>
