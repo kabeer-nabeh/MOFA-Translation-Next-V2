@@ -132,51 +132,52 @@ export function CalendarPageClient() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col pt-6">
-      <div className="mb-6 flex shrink-0 flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-4">
-          {/* Two-row date chip: month short on top, day number below */}
-          <div
-            className="flex w-16 shrink-0 flex-col items-center overflow-hidden rounded-lg border border-[#e9eaeb] bg-white"
-            aria-label={dateChipText(selected)}
-          >
-            <div className="flex w-full items-center justify-center bg-[#fafafa] pb-0.5 pt-1 px-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[#717680]">
-                {selected.toLocaleString("en-US", { month: "short" })}
-              </span>
+      {/* Outer card — contains both the header row and the timeline, matching the local design */}
+      <div className="flex h-[min(1400px,calc(100dvh-10rem))] min-h-0 max-h-[min(1400px,calc(100dvh-10rem))] flex-1 flex-col overflow-hidden rounded-xl border border-[#e9eaeb] bg-white shadow-sm">
+        {/* Header row inside the card */}
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 px-6 py-5">
+          <div className="flex min-w-0 items-start gap-3">
+            {/* Two-row date chip: month short on top, day number below */}
+            <div
+              className="flex w-16 shrink-0 flex-col items-center overflow-hidden rounded-lg border border-[#e9eaeb] bg-white"
+              aria-label={dateChipText(selected)}
+            >
+              <div className="flex w-full items-center justify-center bg-[#fafafa] pb-0.5 pt-1 px-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-[#717680]">
+                  {selected.toLocaleString("en-US", { month: "short" })}
+                </span>
+              </div>
+              <div className="flex w-full items-center justify-center pb-[3px] pt-px px-2">
+                <span className="text-lg font-bold leading-7 text-[#545469]">
+                  {selected.getDate()}
+                </span>
+              </div>
             </div>
-            <div className="flex w-full items-center justify-center pb-[3px] pt-px px-2">
-              <span className="text-lg font-bold leading-7 text-[#545469]">
-                {selected.getDate()}
-              </span>
+            <div className="flex min-w-0 flex-1 flex-col items-start justify-center gap-0.5">
+              <p className="text-lg font-semibold text-[#181d27]">
+                {longDateText(selected)}
+              </p>
+              <p className="text-sm text-[#535862]">
+                {weekdayText(selected)}
+              </p>
             </div>
           </div>
-          <div className="min-w-0">
-            <h1 className="text-2xl font-semibold text-[#1d1d1f] sm:text-3xl">
-              {longDateText(selected)}
-            </h1>
-            <p className="text-sm text-[#717680]">
-              {weekdayText(selected)} · {view === "day" ? "Day schedule" : "Week schedule"}
-            </p>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-0">
+              <SelectMenu
+                id="calendar-view"
+                value={view}
+                onChange={setView}
+                options={calendarViewOptions}
+                leadingIcon={
+                  <CalendarDays size={16} strokeWidth={1.7} className="text-[#535862]" />
+                }
+              />
+            </div>
+            <NewMeetingModalTrigger label="New meeting" />
           </div>
         </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="w-44 min-w-0">
-            <SelectMenu
-              id="calendar-view"
-              value={view}
-              onChange={setView}
-              options={calendarViewOptions}
-              leadingIcon={
-                <CalendarDays size={16} strokeWidth={1.7} className="text-[#535862]" />
-              }
-            />
-          </div>
-          <NewMeetingModalTrigger label="New meeting" />
-        </div>
-      </div>
-
-      <div className="flex h-[min(1200px,calc(100dvh-15.5rem))] min-h-0 max-h-[min(1200px,calc(100dvh-15.5rem))] flex-1 flex-col overflow-hidden rounded-xl border border-[#e9eaeb] bg-white shadow-sm">
         <div className="flex h-full min-h-0 w-full flex-1 flex-col items-stretch lg:flex-row">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-[#e9eaeb] lg:border-b-0 lg:border-r lg:border-[#e9eaeb]">
             {view === "week" ? (
