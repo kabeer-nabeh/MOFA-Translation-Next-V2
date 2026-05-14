@@ -36,3 +36,30 @@ export type CalendarBadgeDate = {
   monthShort: string;
   day: string;
 };
+
+// ─── Guest User Registration (FR LT-08 — In App only) ────────────────────────
+
+/** Lifecycle state of a registered external guest */
+export type GuestStatus = "invited" | "joined" | "left" | "revoked";
+
+/** Which post-meeting outputs get emailed to the guest */
+export type GuestOutputs = {
+  sendTranscript: boolean;
+  sendSummary: boolean;
+};
+
+export type Guest = {
+  id: string;
+  meetingId: string;
+  name: string;
+  email: string;
+  affiliation: string;
+  status: GuestStatus;
+  /** ISO datetime when the invitation was sent */
+  invitedAt: string;
+  outputs: GuestOutputs;
+  /** Two-letter initials derived from name */
+  initials: string;
+  /** Avatar background colour */
+  bg: string;
+};

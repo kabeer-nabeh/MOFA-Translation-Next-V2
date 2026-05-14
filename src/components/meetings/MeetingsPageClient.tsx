@@ -144,7 +144,7 @@ function getMeetingStartTime(meeting: Meeting): number {
   return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
 }
 
-function sortMeetingsForTab(meetings: Meeting[], activeTab: MeetingStatus): Meeting[] {
+export function sortMeetingsForTab(meetings: Meeting[], activeTab: MeetingStatus): Meeting[] {
   if (activeTab !== "upcoming") return meetings;
 
   const now = Date.now();
@@ -171,7 +171,7 @@ function sortMeetingsForTab(meetings: Meeting[], activeTab: MeetingStatus): Meet
 
 // ─── Current logged-in user (demo) ───────────────────────────────────────────
 
-const CURRENT_USER = "Abdullah Al Harbi";
+export const CURRENT_USER = "Abdullah Al Harbi";
 
 // ─── ICS Calendar Download ────────────────────────────────────────────────────
 
@@ -208,7 +208,7 @@ function downloadICS(meeting: Meeting): void {
 
 // ─── Conflict Detection ───────────────────────────────────────────────────────
 
-function getConflictIds(meetings: Meeting[]): Set<string> {
+export function getConflictIds(meetings: Meeting[]): Set<string> {
   const upcoming = meetings.filter(
     (m) => m.status === "upcoming" && m.startDatetime && m.endDatetime,
   );
@@ -609,7 +609,7 @@ function CancelMeetingModal({
 
 // ─── Meeting Card ─────────────────────────────────────────────────────────────
 
-function MeetingCard({
+export function MeetingCard({
   meeting,
   onRsvp,
   isConflict = false,

@@ -1698,6 +1698,7 @@ function PipTranscriptContent({
   currentUserId,
   meetingTitle,
   platform,
+  targetLang,
   onClose,
 }: {
   messages: LiveTranscriptMessage[];
@@ -1705,6 +1706,7 @@ function PipTranscriptContent({
   currentUserId: string;
   meetingTitle: string;
   platform?: MeetingPlatform;
+  targetLang: string;
   onClose: () => void;
 }) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -1849,6 +1851,8 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
   const isInApp = meeting.platform === "In App";
   const [micOn, setMicOn] = React.useState(false);
   const [speakerOn, setSpeakerOn] = React.useState(true);
+  // Target language for PiP transcript (mirrors LiveTranscriptPanel state)
+  const [targetLang, setTargetLang] = React.useState("Arabic");
   const [showAddGuestModal, setShowAddGuestModal] = React.useState(false);
   const [showShareModal, setShowShareModal] = React.useState(false);
   const [copiedLink, setCopiedLink] = React.useState(false);
@@ -1926,14 +1930,18 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
 
   // ── Keep the global context transcript lines in sync ──────────────────────
   React.useEffect(() => {
-    const lines: ActiveTranscriptLine[] = liveMessages.map((m) => ({
-      id: m.id,
-      speakerName: m.speakerName,
-      initials: m.initials,
-      colorClass: m.colorClass,
-      text: m.text,
-      isYou: m.isYou,
-    }));
+    const lines: ActiveTranscriptLine[] = liveMessages.map((m) => {
+      const p = participants.find((x) => x.id === m.speakerId);
+      const isYou = m.speakerId === currentUserId;
+      return {
+        id: m.id,
+        speakerName: isYou ? "You" : (p?.name ?? m.speakerId),
+        initials: p?.initials ?? m.speakerId.slice(0, 2).toUpperCase(),
+        colorClass: p?.bg ? `bg-[${p.bg}]` : "bg-[#6941c6]",
+        text: m.text,
+        isYou,
+      };
+    });
     updateLines(lines);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveMessages]);
@@ -2120,6 +2128,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
             currentUserId={currentUserId}
             meetingTitle={meeting.title}
             platform={meeting.platform}
+            targetLang={targetLang}
             onClose={closePip}
           />,
           pipWindow.document.body,
