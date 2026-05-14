@@ -36,9 +36,8 @@ import {
 } from "@/lib/calendar/calendar-utils";
 import { cn } from "@/lib/utils";
 
-const TODAY = new Date();
-// Sample events are anchored to today so the calendar always looks populated
-const AGENDA_DATE = TODAY;
+// No module-level date constants — always derive from client-side new Date() to avoid
+// SSR/hydration mismatches on statically generated pages.
 
 type ViewMode = (typeof calendarViewOptions)[number]["id"];
 
@@ -82,12 +81,14 @@ const monthLabel = (y: number, m0: number) =>
 
 export function CalendarPageClient() {
   const [view, setView] = React.useState<ViewMode>("day");
-  const [viewYear, setViewYear] = React.useState(TODAY.getFullYear());
-  const [viewMonth0, setViewMonth0] = React.useState(TODAY.getMonth());
-  const [selected, setSelected] = React.useState(TODAY);
+  // Use lazy initialisers so these always reflect the CLIENT's current date,
+  // not the build-time date from SSR static generation.
+  const [viewYear, setViewYear] = React.useState(() => new Date().getFullYear());
+  const [viewMonth0, setViewMonth0] = React.useState(() => new Date().getMonth());
+  const [selected, setSelected] = React.useState(() => new Date());
   const [selectedId, setSelectedId] = React.useState(DEFAULT_SELECTED_EVENT_ID);
 
-  const hasAgendaDay = isSameDate(selected, AGENDA_DATE);
+  const hasAgendaDay = isSameDate(selected, new Date());
   const eventsForDay = hasAgendaDay ? TIMELINE_EVENTS : [];
 
   React.useEffect(() => {
@@ -100,7 +101,15 @@ export function CalendarPageClient() {
     eventsForDay.find((e) => e.id === selectedId) ?? eventsForDay[0] ?? null;
 
   const nowTopPx = (NOW_MINUTES_FROM_8 / 60) * 96;
-  const showNowLine = isSameDate(selected, AGENDA_DATE) && view === "day";
+  const showNowLine = isSameDate(selected, new Date()) && view === "day";
+
+  // Derive today's formatted date label for event details (overrides hardcoded dates in data)
+  const todayMonthLabel = selected.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).toUpperCase();
+  const todayWeekday = selected.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
 
   const cells = React.useMemo(
     () => getMonthGridCells(viewYear, viewMonth0),
@@ -297,7 +306,7 @@ export function CalendarPageClient() {
                   const isSelected = isSameDate(c.date, selected);
                   const inM = c.inCurrentMonth;
                   const day = c.date.getDate();
-                  const isDot = inM && (DAYS_WITH_DOTS.has(day) || isSameDate(c.date, TODAY));
+                  const isDot = inM && (DAYS_WITH_DOTS.has(day) || isSameDate(c.date, selected));
                   return (
                     <button
                       key={+c.date}
@@ -330,7 +339,11 @@ export function CalendarPageClient() {
                   >
                     <div className="pr-0.5 pb-8 sm:pb-10">
                       <EventDetailScrollBody
-                        detail={active.detail}
+                        detail={{
+                          ...active.detail,
+                          monthLabel: todayMonthLabel,
+                          weekday: todayWeekday,
+                        }}
                         titleId="calendar-event-title"
                       />
                     </div>
