@@ -27,6 +27,8 @@ export type TranscriptEntry = {
   speakerName: string;
   timestamp: string; // e.g. "00:02"
   text: string;
+  /** Arabic translation of the original text */
+  arabicTranslation?: string;
 };
 
 export type MinuteItem = {
@@ -60,7 +62,7 @@ export const MEETING_DETAILS: Record<string, MeetingDetail> = {
     totalSpeakingTime: "59:49",
     avgSpeakingRate: 167,
     executiveSummary:
-      "قامت الجلسة الحالية بمناقشة أداء منتج AmplifAI (BRD) بشكل واسع واستكشاف إمكانية استكشاف أفكار جديدة من خلال دمج قاعدة بيانات واحدة توحد المبيعات والخدمات والمالية وإدارة المستخدمين، مما سيؤدي إلى تحسين تجربة المستخدمين. كما ناقش الفريق معايير أداء واضحة لكل من يعمل عليه. تم تسليط الضوء بشكل خاص على أن المنتج سيمكنا من قياس مدة المكالمة ودقة النص المستخلص والمعاملات المرتبطة بإعدادات الحساب.",
+      "ناقشت الجلسة أداء منظومة الترجمة الحية لوزارة الخارجية واستعراض مؤشرات الأداء الرئيسية. تضمنت المناقشة تقييم دقة النصوص المستخلصة لدعم الاجتماعات الدبلوماسية، وتحسين معالجة اللهجات العربية المتعددة، وخارطة طريق تكامل منصات التواصل الخارجية (Teams وBeem). تم التركيز على قياس مدة الجلسات الدبلوماسية ودقة الترجمة الفورية بين اللغة العربية والإنجليزية.",
     keywords: [
       "# BRD",
       "# المعاملات المالية",
@@ -158,16 +160,16 @@ export const MEETING_DETAILS: Record<string, MeetingDetail> = {
       },
     ],
     transcript: [
-      { id: "t1", speakerId: "p1", speakerInitials: "SA", speakerBg: "#e5ddce", speakerName: "Suliman Alawi", timestamp: "00:00", text: "Good morning everyone, let's get started. Today we'll be reviewing the AmplifAI product performance and discussing the integration roadmap." },
-      { id: "t2", speakerId: "p2", speakerInitials: "KO", speakerBg: "#e5cfe7", speakerName: "Koray Okumus", timestamp: "00:42", text: "Thanks Suliman. From the engineering side, we've completed the BRD review. The unified database schema is now ready for staging deployment." },
-      { id: "t3", speakerId: "p3", speakerInitials: "ZM", speakerBg: "#d3d6e9", speakerName: "Zara Malik", timestamp: "01:15", text: "Great progress. On the product side, we need to finalize the KPIs before we push to production. I've prepared a draft framework we can walk through." },
-      { id: "t4", speakerId: "p1", speakerInitials: "SA", speakerBg: "#e5ddce", speakerName: "Suliman Alawi", timestamp: "02:00", text: "Perfect. Let's focus on the financial transaction metrics first. The client specifically asked about call duration tracking and transcript accuracy." },
-      { id: "t5", speakerId: "p4", speakerInitials: "AB", speakerBg: "#c7d1b0", speakerName: "Ahmed Bashir", timestamp: "03:10", text: "Yes, that's our top priority. We need the transcript accuracy to be above 95% before we can proceed with the account settings integration." },
-      { id: "t6", speakerId: "p2", speakerInitials: "KO", speakerBg: "#e5cfe7", speakerName: "Koray Okumus", timestamp: "04:05", text: "We're currently at 92.3%. The remaining 3% gap is mostly around Arabic dialect handling. We have a fix scheduled for next sprint." },
-      { id: "t7", speakerId: "p3", speakerInitials: "ZM", speakerBg: "#d3d6e9", speakerName: "Zara Malik", timestamp: "05:30", text: "That's acceptable. Can we set a firm deadline for the sprint completion? I'd like to update the client timeline accordingly." },
-      { id: "t8", speakerId: "p1", speakerInitials: "SA", speakerBg: "#e5ddce", speakerName: "Suliman Alawi", timestamp: "06:15", text: "Let's target December 28th. That gives us buffer before the January review. Koray, does that work for your team?" },
-      { id: "t9", speakerId: "p2", speakerInitials: "KO", speakerBg: "#e5cfe7", speakerName: "Koray Okumus", timestamp: "06:48", text: "Yes, December 28th works. I'll allocate two engineers to focus specifically on the dialect model fine-tuning." },
-      { id: "t10", speakerId: "p5", speakerInitials: "RN", speakerBg: "#c7a8b0", speakerName: "Rania Nasser", timestamp: "07:40", text: "From a design perspective, we should also update the transcript viewer UI to highlight low-confidence segments for the user." },
+      { id: "t1", speakerId: "p1", speakerInitials: "SA", speakerBg: "#e5ddce", speakerName: "Suliman Alawi", timestamp: "00:00", text: "Good morning everyone, let's get started. Today we'll be reviewing the MOFA Live Translation system performance and discussing the deployment roadmap.", arabicTranslation: "صباح الخير للجميع، لنبدأ. سنراجع اليوم أداء منظومة الترجمة الحية لوزارة الخارجية ونناقش خارطة طريق النشر." },
+      { id: "t2", speakerId: "p2", speakerInitials: "KO", speakerBg: "#e5cfe7", speakerName: "Koray Okumus", timestamp: "00:42", text: "Thanks Suliman. From the engineering side, we've completed the BRD review. The unified database schema is now ready for staging deployment.", arabicTranslation: "شكراً سليمان. من الجانب الهندسي، أكملنا مراجعة BRD. مخطط قاعدة البيانات الموحدة جاهز الآن لنشر بيئة التشغيل التجريبي." },
+      { id: "t3", speakerId: "p3", speakerInitials: "ZM", speakerBg: "#d3d6e9", speakerName: "Zara Malik", timestamp: "01:15", text: "Great progress. On the product side, we need to finalize the KPIs before we push to production. I've prepared a draft framework we can walk through.", arabicTranslation: "تقدم رائع. من جانب المنتج، نحتاج إلى إنهاء مؤشرات الأداء الرئيسية قبل الإطلاق للإنتاج. لقد أعددت إطاراً مسودة يمكننا استعراضه." },
+      { id: "t4", speakerId: "p1", speakerInitials: "SA", speakerBg: "#e5ddce", speakerName: "Suliman Alawi", timestamp: "02:00", text: "Perfect. Let's focus on the financial transaction metrics first. The client specifically asked about call duration tracking and transcript accuracy.", arabicTranslation: "ممتاز. لنركز أولاً على مقاييس المعاملات المالية. طلب العميل تحديداً تتبع مدة المكالمة ودقة النص المستخلص." },
+      { id: "t5", speakerId: "p4", speakerInitials: "AB", speakerBg: "#c7d1b0", speakerName: "Ahmed Bashir", timestamp: "03:10", text: "Yes, that's our top priority. We need the transcript accuracy to be above 95% before we can proceed with the account settings integration.", arabicTranslation: "نعم، هذه أولويتنا القصوى. نحتاج أن تتجاوز دقة النص المستخلص 95% قبل أن نتمكن من المضي قدماً في تكامل إعدادات الحساب." },
+      { id: "t6", speakerId: "p2", speakerInitials: "KO", speakerBg: "#e5cfe7", speakerName: "Koray Okumus", timestamp: "04:05", text: "We're currently at 92.3%. The remaining 3% gap is mostly around Arabic dialect handling. We have a fix scheduled for next sprint.", arabicTranslation: "نحن حالياً عند 92.3%. الفجوة المتبقية البالغة 3% تتعلق أساساً بمعالجة اللهجة العربية. لدينا إصلاح مجدول للسبرينت القادم." },
+      { id: "t7", speakerId: "p3", speakerInitials: "ZM", speakerBg: "#d3d6e9", speakerName: "Zara Malik", timestamp: "05:30", text: "That's acceptable. Can we set a firm deadline for the sprint completion? I'd like to update the client timeline accordingly.", arabicTranslation: "هذا مقبول. هل يمكننا تحديد موعد نهائي صارم لإتمام السبرينت؟ أود تحديث الجدول الزمني للعميل وفقاً لذلك." },
+      { id: "t8", speakerId: "p1", speakerInitials: "SA", speakerBg: "#e5ddce", speakerName: "Suliman Alawi", timestamp: "06:15", text: "Let's target December 28th. That gives us buffer before the January review. Koray, does that work for your team?", arabicTranslation: "لنستهدف 28 ديسمبر. هذا يمنحنا هامشاً قبل مراجعة يناير. كوراي، هل يناسب ذلك فريقك؟" },
+      { id: "t9", speakerId: "p2", speakerInitials: "KO", speakerBg: "#e5cfe7", speakerName: "Koray Okumus", timestamp: "06:48", text: "Yes, December 28th works. I'll allocate two engineers to focus specifically on the dialect model fine-tuning.", arabicTranslation: "نعم، 28 ديسمبر مناسب. سأخصص مهندسين اثنين للتركيز تحديداً على ضبط نموذج اللهجة." },
+      { id: "t10", speakerId: "p5", speakerInitials: "RN", speakerBg: "#c7a8b0", speakerName: "Rania Nasser", timestamp: "07:40", text: "From a design perspective, we should also update the transcript viewer UI to highlight low-confidence segments for the user.", arabicTranslation: "من منظور التصميم، يجب أيضاً تحديث واجهة عارض النص المستخلص لتمييز المقاطع ذات الثقة المنخفضة للمستخدم." },
     ],
     minutes: [
       { type: "decision", text: "Unified database schema approved for staging deployment by December 26, 2025." },
@@ -252,6 +254,73 @@ export const MEETING_DETAILS: Record<string, MeetingDetail> = {
       { type: "action", text: "Zara Malik to document quantization methodology and performance benchmarks.", owner: "Zara Malik" },
       { type: "action", text: "Rania Nasser to set up multi-region pipeline monitoring dashboard.", owner: "Rania Nasser" },
       { type: "note", text: "Post-processing quality review scheduled for next technical walkthrough." },
+    ],
+  },
+
+  m9: {
+    meetingId: "m9",
+    audioDuration: "00:35",
+    totalSpeakers: 4,
+    totalWords: 8924,
+    totalSpeakingTime: "45:22",
+    avgSpeakingRate: 155,
+    executiveSummary:
+      "تركزت الجلسة على تحسين التنسيق الدبلوماسي بين الدول الخليجية وتعزيز آليات التواصل الثنائي. تم مناقشة المعاهدات الجديدة والاتفاقيات الثنائية، مع التركيز على دور الترجمة الفورية في ضمان دقة النقل بين اللغة العربية والإنجليزية. قدمت الجلسة رؤى حول تحسين كفاءة المباحثات الدبلوماسية والتعاون الإقليمي.",
+    keywords: [
+      "# التنسيق الدبلوماسي",
+      "# الاتفاقيات الثنائية",
+      "# الترجمة الفورية",
+      "# التواصل الدولي",
+      "# المعاهدات",
+      "# التعاون الإقليمي",
+      "# الحوار الدبلوماسي",
+      "# GCC Summit",
+    ],
+    participants: [
+      {
+        id: "p1",
+        initials: "SA",
+        bg: "#e5ddce",
+        name: "Suliman Alawi",
+        role: "Senior Diplomat",
+        engagement: "Very High",
+        wordCount: 2145,
+        wordPercent: 68.4,
+        speakingTime: "15:32",
+        participationLevel: 82.1,
+        segments: 45,
+        sentences: 68,
+        wordsPerSegment: 88,
+        wordsPerMin: 128,
+      },
+      {
+        id: "p2",
+        initials: "KO",
+        bg: "#e5cfe7",
+        name: "Koray Okumus",
+        role: "Interpreter",
+        engagement: "High",
+        wordCount: 1876,
+        wordPercent: 45.2,
+        speakingTime: "14:18",
+        participationLevel: 71.3,
+        segments: 38,
+        sentences: 52,
+        wordsPerSegment: 81,
+        wordsPerMin: 119,
+      },
+    ],
+    transcript: [
+      { id: "t1", speakerId: "p1", speakerInitials: "SA", speakerBg: "#e5ddce", speakerName: "Suliman Alawi", timestamp: "00:05", text: "Good morning. Let's discuss the diplomatic coordination framework for this year.", arabicTranslation: "صباح الخير. دعونا نناقش إطار التنسيق الدبلوماسي لهذا العام." },
+      { id: "t2", speakerId: "p2", speakerInitials: "KO", speakerBg: "#e5cfe7", speakerName: "Koray Okumus", timestamp: "00:12", text: "The bilateral agreements need strengthening in three key areas.", arabicTranslation: "الاتفاقيات الثنائية تحتاج إلى تعزيز في ثلاثة مجالات رئيسية." },
+      { id: "t3", speakerId: "p1", speakerInitials: "SA", speakerBg: "#e5ddce", speakerName: "Suliman Alawi", timestamp: "00:28", text: "Can you detail those areas for our regional partners?", arabicTranslation: "هل يمكنك تفصيل تلك المجالات لشركائنا الإقليميين؟" },
+      { id: "t4", speakerId: "p2", speakerInitials: "KO", speakerBg: "#e5cfe7", speakerName: "Koray Okumus", timestamp: "00:45", text: "Economic cooperation, security coordination, and cultural exchange initiatives.", arabicTranslation: "التعاون الاقتصادي، والتنسيق الأمني، ومبادرات التبادل الثقافي." },
+    ],
+    minutes: [
+      { type: "decision", text: "Establish joint diplomatic coordination committee for GCC nations." },
+      { type: "action", text: "Suliman Alawi to prepare detailed bilateral agreement framework.", owner: "Suliman Alawi" },
+      { type: "action", text: "Schedule follow-up meeting for implementation planning.", owner: "Koray Okumus" },
+      { type: "note", text: "All participants to review updated protocols before next session." },
     ],
   },
 };

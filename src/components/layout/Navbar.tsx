@@ -47,7 +47,10 @@ export function Navbar({
   user,
 }: NavbarProps) {
   return (
-    <header className={cn("bg-white", className)}>
+    <>
+    {/* Spacer — holds the 80px the fixed navbar occupies (68px inner + 12px pt-3 padding) */}
+    <div className="h-20 shrink-0" aria-hidden />
+    <header className={cn("fixed top-0 left-0 right-0 z-50 bg-white", className)}>
       <div
         className={cn(
           "mx-auto flex h-[68px] w-full max-w-6xl items-center justify-between px-4",
@@ -148,6 +151,7 @@ export function Navbar({
         </div>
       </div>
     </header>
+    </>
   );
 }
 

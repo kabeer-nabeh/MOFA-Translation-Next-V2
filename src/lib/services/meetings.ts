@@ -42,6 +42,10 @@ function _range(startIso: string, endIso: string): string {
 const CURR_START = _isoFromNow(-15);
 const CURR_END = _isoFromNow(45);
 
+// Second live meeting — In App: started 5 min ago, ends in 55 min
+const INAPP_START = _isoFromNow(-5);
+const INAPP_END = _isoFromNow(55);
+
 // Upcoming 1 — starting soon: begins 20 min from now, 60-min long
 const UP1_START = _isoFromNow(20);
 const UP1_END = _isoFromNow(80);
@@ -88,6 +92,21 @@ const MOCK_CURRENT_MEETING: Meeting = {
         "https://www.figma.com/api/mcp/asset/0905d49c-639c-4738-8ea6-fa8b30371aa4",
     },
   ],
+};
+
+const MOCK_INAPP_LIVE_MEETING: Meeting = {
+  id: "m9",
+  title: "GCC Diplomatic Coordination - Live Translation",
+  startLabel: _fmtDate(INAPP_START),
+  timeRangeLabel: _range(INAPP_START, INAPP_END),
+  hostName: "Suliman Alawi",
+  languages: ["Arabic", "English"],
+  platform: "In App",
+  startDatetime: INAPP_START,
+  endDatetime: INAPP_END,
+  rsvpStatus: "accepted",
+  participantsCount: 5,
+  participants: [],
 };
 
 const MOCK_UPCOMING_MEETINGS: Array<{ id: string } & Meeting> = [
@@ -137,6 +156,15 @@ export async function getCurrentMeeting(): Promise<Meeting | null> {
   // Simulate network delay
   return new Promise((resolve) => {
     setTimeout(() => resolve(MOCK_CURRENT_MEETING), 100);
+  });
+}
+
+/**
+ * Returns all meetings that are currently live (multiple concurrent sessions).
+ */
+export async function getLiveMeetings(): Promise<Meeting[]> {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve([MOCK_CURRENT_MEETING, MOCK_INAPP_LIVE_MEETING]), 100);
   });
 }
 

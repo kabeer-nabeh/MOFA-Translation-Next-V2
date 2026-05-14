@@ -2,27 +2,32 @@
 
 import * as React from "react";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
-  Bot,
   Calendar,
   Check,
   ChevronDown,
   Clock,
+  Copy,
   Download,
   FileText,
   Globe,
   Hash,
+  Link2,
   MessageSquare,
   Mic,
+  MicOff,
   Monitor,
   MoreVertical,
+  LogOut,
   PhoneOff,
   Pause,
   PictureInPicture,
   PictureInPicture2,
   Pin,
   Play,
+  Plus,
   Search,
   Send,
   Share2,
@@ -54,207 +59,16 @@ import {
   useActiveMeeting,
   type ActiveTranscriptLine,
 } from "@/contexts/ActiveMeetingContext";
+import { GuestList } from "@/components/meetings/GuestList";
+import { getGuests } from "@/lib/services/guests";
+import type { Guest } from "@/types/meeting";
 
 // ─── Waveform ─────────────────────────────────────────────────────────────────
-
-function generateWaveform(seed: string, barCount = 160): number[] {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
-  }
-  const bars: number[] = [];
-  for (let i = 0; i < barCount; i++) {
-    h ^= h << 13;
-    h ^= h >> 17;
-    h ^= h << 5;
-    bars.push(Math.abs(h % 30) + 4);
-  }
-  return bars;
-}
-
-const BAR_W = 0.55;
-const BAR_GAP = 1.85;
-const SVG_H = 32;
-
-function InteractiveWaveform({
-  bars,
-  progress,
-  onSeek,
-}: {
-  bars: number[];
-  progress: number;
-  onSeek: (p: number) => void;
-}) {
-  const svgRef = React.useRef<SVGSVGElement>(null);
-  const dragging = React.useRef(false);
-
-  const posToProgress = React.useCallback((clientX: number) => {
-    if (!svgRef.current) return 0;
-    const rect = svgRef.current.getBoundingClientRect();
-    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-  }, []);
-
-  return (
-    <svg
-      ref={svgRef}
-      className="h-8 w-full cursor-pointer"
-      viewBox={`0 0 ${bars.length * BAR_GAP} ${SVG_H}`}
-      preserveAspectRatio="none"
-      aria-hidden
-      onPointerDown={(e) => {
-        dragging.current = true;
-        (e.target as Element).setPointerCapture(e.pointerId);
-        onSeek(posToProgress(e.clientX));
-      }}
-      onPointerMove={(e) => { if (dragging.current) onSeek(posToProgress(e.clientX)); }}
-      onPointerUp={() => { dragging.current = false; }}
-      style={{ touchAction: "none" }}
-    >
-      {bars.map((h, i) => {
-        const x = i * BAR_GAP + 0.5;
-        const y = (SVG_H - h) / 2;
-        const filled = i / bars.length <= progress;
-        return <rect key={i} x={x} y={y} width={BAR_W} height={h} rx={0.3} fill={filled ? "#48476e" : "#d5d3e8"} />;
-      })}
-    </svg>
-  );
-}
-
-// ─── Audio Player ─────────────────────────────────────────────────────────────
-
-function parseDuration(d: string): number {
-  const parts = d.split(":").map(Number);
-  if (parts.length === 2) return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
-  if (parts.length === 3) return (parts[0] ?? 0) * 3600 + (parts[1] ?? 0) * 60 + (parts[2] ?? 0);
-  return 0;
-}
-
-function fmtTime(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-}
 
 function parseTimestamp(ts: string): number {
   const parts = ts.split(":").map(Number);
   if (parts.length === 2) return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
   return 0;
-}
-
-const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
-
-function AudioPlayer({
-  duration,
-  meetingId,
-  progress,
-  onProgressChange,
-}: {
-  duration: string;
-  meetingId: string;
-  progress: number;
-  onProgressChange: React.Dispatch<React.SetStateAction<number>>;
-}) {
-  const totalSec = React.useMemo(() => parseDuration(duration), [duration]);
-  const bars = React.useMemo(() => generateWaveform(meetingId, 200), [meetingId]);
-
-  const [playing, setPlaying] = React.useState(false);
-  const [muted, setMuted] = React.useState(false);
-  const [speed, setSpeed] = React.useState<number>(1);
-  const [speedMenuOpen, setSpeedMenuOpen] = React.useState(false);
-  const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
-  const speedMenuRef = React.useRef<HTMLDivElement>(null);
-
-  const startPlayback = React.useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      onProgressChange((prev) => {
-        if (prev >= 1) {
-          clearInterval(intervalRef.current!);
-          intervalRef.current = null;
-          setPlaying(false);
-          return 0;
-        }
-        return Math.min(1, prev + (0.05 * speed) / totalSec);
-      });
-    }, 50);
-  }, [speed, totalSec, onProgressChange]);
-
-  const toggle = () => {
-    setPlaying((p) => {
-      if (!p) { startPlayback(); }
-      else { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } }
-      return !p;
-    });
-  };
-
-  React.useEffect(() => { if (playing) startPlayback(); }, [speed]); // eslint-disable-line
-  React.useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
-  React.useEffect(() => {
-    if (!speedMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (speedMenuRef.current && !speedMenuRef.current.contains(e.target as Node)) setSpeedMenuOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [speedMenuOpen]);
-
-  const skip = (delta: number) => onProgressChange((p) => Math.max(0, Math.min(1, p + delta / totalSec)));
-  const elapsed = fmtTime(progress * totalSec);
-  const total = fmtTime(totalSec);
-
-  return (
-    <div className="flex items-center gap-3 bg-white px-6 py-3 border-b border-[#e9eaeb]">
-      <button type="button" onClick={toggle}
-        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#48476e] text-white transition hover:bg-[#3f3e63] active:scale-95"
-        aria-label={playing ? "Pause" : "Play"}>
-        {playing ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" className="ml-0.5" />}
-      </button>
-
-      <button type="button" onClick={() => skip(-10)}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
-        aria-label="Rewind 10s">
-        <SkipBack size={14} />
-      </button>
-
-      <div className="min-w-0 flex-1">
-        <InteractiveWaveform bars={bars} progress={progress} onSeek={onProgressChange} />
-      </div>
-
-      <button type="button" onClick={() => skip(10)}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
-        aria-label="Forward 10s">
-        <SkipForward size={14} />
-      </button>
-
-      <span className="shrink-0 tabular-nums text-xs font-medium text-[#717680]">{elapsed} / {total}</span>
-
-      <div className="relative" ref={speedMenuRef}>
-        <button type="button" onClick={() => setSpeedMenuOpen((v) => !v)}
-          className="flex h-7 items-center justify-center rounded-md border border-[#e0dde8] bg-[#f8f8fb] px-1.5 text-[11px] font-semibold text-[#545469] transition hover:bg-[#eeedf5]"
-          aria-label="Playback speed">
-          {speed}x
-        </button>
-        {speedMenuOpen && (
-          <div className="absolute bottom-full right-0 z-50 mb-1 min-w-[56px] overflow-hidden rounded-lg border border-[#e9eaeb] bg-white py-1 shadow-lg">
-            {SPEED_OPTIONS.map((s) => (
-              <button key={s} type="button"
-                className={cn("flex w-full items-center justify-center px-2 py-1.5 text-xs",
-                  s === speed ? "bg-[#f3f3f7] font-semibold text-[#545469]" : "text-[#717680] hover:bg-[#f8f8fb]")}
-                onClick={() => { setSpeed(s); setSpeedMenuOpen(false); }}>
-                {s}x
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <button type="button" onClick={() => setMuted((m) => !m)}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
-        aria-label={muted ? "Unmute" : "Mute"}>
-        {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
-      </button>
-    </div>
-  );
 }
 
 // ─── Platform icon ────────────────────────────────────────────────────────────
@@ -372,7 +186,7 @@ function Sidebar({
         <p className="px-4 pt-4 pb-3 text-xs font-semibold uppercase tracking-wider text-[#717680]">Keywords</p>
         <div className="flex flex-wrap gap-1.5 px-4 pb-4 overflow-y-auto max-h-32">
           {detail.keywords.map((kw) => (
-            <span key={kw}
+            <span key={kw} dir="rtl"
               className="rounded-full border border-[#e0dde8] bg-[#f3f3f7] px-2 py-0.5 text-[11px] font-medium text-[#545469]">
               {kw}
             </span>
@@ -385,7 +199,7 @@ function Sidebar({
 
 // ─── Tab types ────────────────────────────────────────────────────────────────
 
-type TabId = "summary" | "transcript" | "participants" | "minutes" | "ask-ai";
+type TabId = "summary" | "transcript" | "participants";
 
 // ─── Engagement badge ─────────────────────────────────────────────────────────
 
@@ -433,27 +247,12 @@ function ParticipantCard({ p, id }: { p: ParticipantDetail; id?: string }) {
         <div className="mb-1.5 flex items-center justify-between text-xs">
           <span className="text-[#717680]">Participation Level</span>
           <span className="font-semibold text-[#414651]">
-            {p.wordCount.toLocaleString()} words ({p.wordPercent}%)
+            {p.wordCount.toLocaleString()} words translated ({p.wordPercent}%)
           </span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-[#f0f0f4]">
           <div className="h-full rounded-full bg-[#48476e] transition-all" style={{ width: `${p.participationLevel}%` }} />
         </div>
-        <div className="mt-1 text-right text-xs text-[#717680]">{p.participationLevel}%</div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-4 divide-x divide-[#f0f0f4] rounded-lg border border-[#f0f0f4] bg-[#fafbfc]">
-        {[
-          { label: "Segments", value: p.segments },
-          { label: "Sentences", value: p.sentences },
-          { label: "Words/Seg", value: p.wordsPerSegment },
-          { label: "Words/min", value: p.wordsPerMin },
-        ].map(({ label, value }) => (
-          <div key={label} className="flex flex-col items-center py-3 px-2">
-            <span className="text-base font-bold text-[#414651]">{value}</span>
-            <span className="mt-0.5 text-center text-[10px] text-[#717680]">{label}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -491,7 +290,7 @@ function AISummaryTab({ detail }: { detail: MeetingDetail }) {
           <Sparkles size={16} className="text-[#48476e]" aria-hidden />
           <h2 className="text-sm font-semibold text-[#414651]">Executive Summary</h2>
         </div>
-        <p className="leading-8 text-sm text-[#535862]" dir="auto">{detail.executiveSummary}</p>
+        <p className="leading-8 text-sm text-[#535862]" dir="rtl">{detail.executiveSummary}</p>
       </section>
 
       <div className="border-t border-[#f0f0f4]" />
@@ -503,7 +302,7 @@ function AISummaryTab({ detail }: { detail: MeetingDetail }) {
         </div>
         <div className="flex flex-wrap gap-2">
           {detail.keywords.map((kw) => (
-            <span key={kw}
+            <span key={kw} dir="rtl"
               className="rounded-full border border-[#e0dde8] bg-[#f3f3f7] px-3 py-1 text-sm font-medium text-[#545469]">
               {kw}
             </span>
@@ -526,23 +325,32 @@ function AISummaryTab({ detail }: { detail: MeetingDetail }) {
   );
 }
 
+// ─── Language Badge Config ────────────────────────────────────────────────────
+
+const LANGUAGE_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
+  EN: { label: "EN", bg: "#e8f0fa", text: "#4a72a8" },
+  ES: { label: "ES", bg: "#f0e8fa", text: "#6b40b0" },
+  JA: { label: "JA", bg: "#e8fae8", text: "#3f6f3f" },
+  KO: { label: "KO", bg: "#fae8e8", text: "#8b3a3a" },
+  ZH: { label: "ZH", bg: "#f5e8fa", text: "#6b4a7f" },
+  TL: { label: "TL", bg: "#fae8f0", text: "#7f4a5f" },
+  PT: { label: "PT", bg: "#e8f5fa", text: "#3a6b7f" },
+  FR: { label: "FR", bg: "#faf5e8", text: "#7f6b3a" },
+};
+
+function getLanguageConfig(lang?: string) {
+  return LANGUAGE_CONFIG[lang || "EN"] || LANGUAGE_CONFIG["EN"];
+}
+
 // ─── Transcript Tab ───────────────────────────────────────────────────────────
 
 function TranscriptTab({
   entries,
   search,
-  audioProgress,
-  totalSec,
-  onSeek,
 }: {
   entries: TranscriptEntry[];
   search: string;
-  audioProgress: number;
-  totalSec: number;
-  onSeek: (p: number) => void;
 }) {
-  const currentSec = audioProgress * totalSec;
-
   const filtered = React.useMemo(() => {
     if (!search.trim()) return entries;
     const q = search.toLowerCase();
@@ -550,14 +358,6 @@ function TranscriptTab({
       (e) => e.text.toLowerCase().includes(q) || e.speakerName.toLowerCase().includes(q),
     );
   }, [entries, search]);
-
-  const activeEntryIdx = React.useMemo(() => {
-    if (totalSec === 0) return -1;
-    for (let i = filtered.length - 1; i >= 0; i--) {
-      if (parseTimestamp(filtered[i]?.timestamp ?? "99:99") <= currentSec) return i;
-    }
-    return -1;
-  }, [filtered, currentSec, totalSec]);
 
   if (filtered.length === 0) {
     return (
@@ -569,40 +369,68 @@ function TranscriptTab({
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-1">
       {filtered.map((entry, idx) => {
         const prevSpeaker = idx > 0 ? filtered[idx - 1]?.speakerId : null;
         const showHeader = entry.speakerId !== prevSpeaker;
-        const isActive = idx === activeEntryIdx;
-        const entrySec = parseTimestamp(entry.timestamp);
+        const arUnclearCount = entry.arabicTranslation ? countUnclearMarkers(entry.arabicTranslation) : 0;
+        const totalUnclear = arUnclearCount;
+        const hasUnclear = totalUnclear > 0;
         return (
-          <div key={entry.id} className={cn("group", showHeader && idx > 0 && "mt-5")}>
+          <div key={entry.id} className={cn(showHeader && idx > 0 && "mt-5")}>
             {showHeader && (
-              <div className="mb-1.5 flex items-center gap-2">
-                <div className="flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-[#414651]"
-                  style={{ backgroundColor: entry.speakerBg }}>
+              <div className="mb-2 flex items-center gap-2">
+                <div
+                  className="flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-[#414651]"
+                  style={{ backgroundColor: entry.speakerBg }}
+                >
                   {entry.speakerInitials}
                 </div>
                 <span className="text-xs font-semibold text-[#414651]">{entry.speakerName}</span>
+                <span className="text-[11px] tabular-nums text-[#b0b3bb]">{entry.timestamp}</span>
+                {hasUnclear && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 text-[10px] font-semibold text-[#b45309]">
+                    <AlertTriangle size={9} className="shrink-0" aria-hidden />
+                    {totalUnclear} word{totalUnclear > 1 ? "s" : ""} unclear
+                  </span>
+                )}
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => onSeek(entrySec / totalSec)}
-              className={cn(
-                "ml-8 flex w-full items-start gap-3 rounded-xl px-4 py-2.5 text-left transition-colors",
-                isActive
-                  ? "bg-[#eeedf5] ring-1 ring-[#c8c7d8]"
-                  : "hover:bg-[#f9f9fc]",
+
+            {/* Card: Source language + AR translation */}
+            <div className={cn("ml-8 overflow-hidden rounded-xl border bg-white", hasUnclear ? "border-[#fde68a]" : "border-[#e9eaeb]")}>
+              {/* Source language row */}
+              {(() => {
+                const langConfig = getLanguageConfig(entry.language);
+                return (
+                  <div className="flex items-start gap-2.5 px-4 py-3">
+                    <span
+                      className="mt-[3px] shrink-0 rounded-[4px] px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-wide"
+                      style={{ backgroundColor: langConfig.bg, color: langConfig.text }}
+                    >
+                      {langConfig.label}
+                    </span>
+                    <p className="flex-1 text-sm leading-6 text-[#414651]">
+                      {search.trim() ? <HighlightedText text={entry.text} query={search} /> : entry.text}
+                    </p>
+                  </div>
+                );
+              })()}
+              {entry.arabicTranslation && (
+                <div className="flex items-start gap-2.5 border-t border-[#f0eff6] bg-[#faf9fd] px-4 py-3">
+                  <span className="mt-[3px] shrink-0 rounded-[4px] bg-[#ede8f8] px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-wide text-[#6b40b0]">
+                    AR
+                  </span>
+                  <p
+                    dir="rtl"
+                    className="flex-1 text-sm leading-7 text-[#535862]"
+                    style={{ fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" }}
+                  >
+                    {renderWithUnclearPlaceholders(entry.arabicTranslation, { isRtl: true, highlightKeywords: true })}
+                  </p>
+                </div>
               )}
-            >
-              <span className="mt-0.5 shrink-0 tabular-nums text-[11px] font-medium text-[#a4a7ae] group-hover:text-[#717680]">
-                {entry.timestamp}
-              </span>
-              <p className={cn("flex-1 text-sm leading-6", isActive ? "text-[#414651] font-medium" : "text-[#535862]")}>
-                {search.trim() ? <HighlightedText text={entry.text} query={search} /> : entry.text}
-              </p>
-            </button>
+            </div>
           </div>
         );
       })}
@@ -632,9 +460,9 @@ function ParticipantsTab({ detail }: { detail: MeetingDetail }) {
       <div className="grid grid-cols-4 divide-x divide-[#e9eaeb] rounded-xl border border-[#e9eaeb] bg-white">
         {[
           { label: "Total Speakers", value: detail.totalSpeakers },
-          { label: "Total Words", value: detail.totalWords.toLocaleString() },
+          { label: "Total Words Translated", value: detail.totalWords.toLocaleString() },
           { label: "Speaking Time", value: detail.totalSpeakingTime },
-          { label: "Avg Speed", value: `${detail.avgSpeakingRate} wpm` },
+          { label: "Translation Accuracy", value: "92.3%" },
         ].map(({ label, value }) => (
           <div key={label} className="flex flex-col items-center py-5">
             <span className="text-2xl font-bold text-[#414651]">{value}</span>
@@ -700,96 +528,6 @@ function MeetingMinutesTab({ items }: { items: MinuteItem[] }) {
   );
 }
 
-// ─── Ask AI Tab ───────────────────────────────────────────────────────────────
-
-type ChatMsg = { role: "user" | "ai"; text: string };
-
-const SUGGESTIONS = [
-  "What were the main decisions?",
-  "Summarize the action items",
-  "Who spoke the most?",
-  "What were the key risks discussed?",
-];
-
-function AskAITab({ meetingTitle }: { meetingTitle: string }) {
-  const [messages, setMessages] = React.useState<ChatMsg[]>([]);
-  const [input, setInput] = React.useState("");
-  const bottomRef = React.useRef<HTMLDivElement>(null);
-
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return;
-    const aiResponse: ChatMsg = {
-      role: "ai",
-      text: `Based on the meeting "${meetingTitle}", here's what I found: "${text}". This is a demo response — in production this would query the actual meeting transcript and AI-generated summary.`,
-    };
-    setMessages((prev) => [...prev, { role: "user", text }, aiResponse]);
-    setInput("");
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-  };
-
-  return (
-    <div className="flex flex-col" style={{ minHeight: 420 }}>
-      {messages.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 py-10">
-          <div className="flex size-12 items-center justify-center rounded-2xl border border-[#e0dde8] bg-[#f3f3f7]">
-            <Bot size={24} className="text-[#48476e]" />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-semibold text-[#414651]">Ask about this meeting</p>
-            <p className="mt-1 text-xs text-[#717680]">Get instant answers from the transcript and AI analysis.</p>
-          </div>
-          <div className="grid w-full max-w-md grid-cols-2 gap-2">
-            {SUGGESTIONS.map((s) => (
-              <button key={s} type="button" onClick={() => sendMessage(s)}
-                className="rounded-xl border border-[#e0dde8] bg-white px-3 py-2.5 text-left text-xs text-[#414651] shadow-sm transition hover:bg-[#f3f3f7] hover:border-[#c8c7d8]">
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto pb-4">
-          {messages.map((msg, i) => (
-            <div key={i} className={cn("flex gap-2.5", msg.role === "user" ? "justify-end" : "justify-start")}>
-              {msg.role === "ai" && (
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#48476e] text-white">
-                  <Bot size={13} />
-                </div>
-              )}
-              <div className={cn(
-                "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-6",
-                msg.role === "user"
-                  ? "bg-[#48476e] text-white rounded-br-sm"
-                  : "bg-[#f3f3f7] text-[#414651] rounded-bl-sm",
-              )}>
-                {msg.text}
-              </div>
-            </div>
-          ))}
-          <div ref={bottomRef} />
-        </div>
-      )}
-
-      <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#d5d7da] bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-[#6f6e8a]/30">
-        <Mic size={15} className="shrink-0 text-[#717680]" aria-hidden />
-        <input
-          type="text"
-          placeholder="Ask anything about this meeting..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
-          className="flex-1 bg-transparent text-sm text-[#414651] outline-none placeholder:text-[#717680]"
-        />
-        <button type="button" onClick={() => sendMessage(input)} disabled={!input.trim()}
-          className="flex size-7 items-center justify-center rounded-lg bg-[#48476e] text-white transition hover:bg-[#3f3e63] disabled:opacity-40 disabled:cursor-not-allowed"
-          aria-label="Send">
-          <Send size={13} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── Download Menu ────────────────────────────────────────────────────────────
 
 const DOWNLOAD_FORMATS = [
@@ -807,27 +545,192 @@ const PARTICIPANT_DIRECTORY: Record<string, { name: string; role: string }> = {
   p5: { name: "Rania Nasser", role: "Design" },
 };
 
+// ─── Diplomatic keyword highlighting ─────────────────────────────────────────
+
+/** Arabic translations of "Keyword Processed" glossary entries */
+const DIPLOMATIC_TERMS_AR = [
+  "الحصانة الدبلوماسية",
+  "اتفاقية ثنائية",
+  "مذكرة تفاهم",
+  "الشؤون القنصلية",
+  "زيارة دولة",
+  "وزارة الخارجية",
+  "سفير فوق العادة",
+  "برقية دبلوماسية",
+  "شخص غير مرغوب فيه",
+];
+
+function highlightDiplomaticTerms(text: string): React.ReactNode {
+  if (!text) return text;
+  const escaped = DIPLOMATIC_TERMS_AR.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(`(${escaped.join("|")})`, "g");
+  const parts = text.split(pattern);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) =>
+    DIPLOMATIC_TERMS_AR.includes(part) ? (
+      <span key={i} className="group/kw relative inline-block">
+        <mark
+          className="rounded-sm px-1 py-0.5 font-bold not-italic cursor-default"
+          style={{
+            backgroundColor: "#dddcf0",
+            color: "#35346b",
+            boxShadow: "inset 0 0 0 1px #c5c3de",
+            fontStyle: "normal",
+            textDecoration: "none",
+          }}
+        >
+          {part}
+        </mark>
+        {/* Tooltip */}
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2d2c4a] px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/kw:opacity-100">
+          Diplomatic Keyword
+          {/* Arrow */}
+          <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#2d2c4a]" />
+        </span>
+      </span>
+    ) : (
+      <React.Fragment key={i}>{part}</React.Fragment>
+    )
+  );
+}
+
 type LiveTranscriptMessage = {
   id: string;
   speakerId: string;
   text: string;
+  arabicText?: string;
   time: string;
   translated?: boolean;
   language?: string;
+  /** True if this message contains [unclear] audio quality markers */
+  hasUnclear?: boolean;
 };
+
+/** Counts [unclear] tokens in a string */
+function countUnclearMarkers(text: string): number {
+  return (text.match(/\[unclear\]/gi) ?? []).length;
+}
+
+/** Strips [unclear] tokens from text, replacing with a subtle ellipsis placeholder */
+function stripUnclearMarkers(text: string): string {
+  return text.replace(/\[unclear\]/gi, "· · ·");
+}
+
+// ─── Inline unclear placeholder (clickable → editable) ────────────────────────
+
+function UnclearPlaceholder({ isRtl }: { isRtl?: boolean }) {
+  const [editing, setEditing] = React.useState(false);
+  const [filled, setFilled] = React.useState("");
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const commit = () => {
+    setEditing(false);
+  };
+
+  React.useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  if (filled && !editing) {
+    // Filled state — show the word with a subtle confirmed style
+    return (
+      <span
+        className="group/filled relative inline-block cursor-pointer"
+        onClick={() => setEditing(true)}
+        title="Click to edit"
+      >
+        <span
+          className="rounded-sm px-1 py-0.5 text-sm font-medium"
+          style={{
+            backgroundColor: "#d1fae5",
+            color: "#065f46",
+            boxShadow: "inset 0 0 0 1px #a7f3d0",
+          }}
+        >
+          {filled}
+        </span>
+      </span>
+    );
+  }
+
+  if (editing) {
+    return (
+      <span className="relative inline-block align-baseline">
+        <input
+          ref={inputRef}
+          dir={isRtl ? "rtl" : "ltr"}
+          type="text"
+          value={filled}
+          onChange={(e) => setFilled(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); commit(); }
+            if (e.key === "Escape") { setFilled(""); setEditing(false); }
+          }}
+          placeholder="type word…"
+          className="inline-block w-28 rounded-md border border-[#fbbf24] bg-[#fffbeb] px-2 py-0.5 text-sm text-[#92400e] outline-none placeholder:text-[#d97706]/60 focus:ring-2 focus:ring-[#fbbf24]/40"
+          style={{ verticalAlign: "baseline" }}
+        />
+      </span>
+    );
+  }
+
+  // Default — dashed clickable placeholder
+  return (
+    <span
+      onClick={() => setEditing(true)}
+      title="Click to fill unclear word"
+      className="group/unclear relative inline-block cursor-text select-none"
+    >
+      <span
+        className="rounded-sm px-2 py-0.5 text-xs font-semibold tracking-widest transition-colors duration-100 group-hover/unclear:bg-[#fef3c7]"
+        style={{
+          color: "#d97706",
+          border: "1.5px dashed #fbbf24",
+          backgroundColor: "#fffbeb",
+        }}
+      >
+        · · ·
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Replaces [unclear] markers in `text` with interactive UnclearPlaceholder components.
+ * Preserves surrounding text and diplomatic keyword highlighting on Arabic segments.
+ */
+function renderWithUnclearPlaceholders(
+  text: string,
+  options?: { isRtl?: boolean; highlightKeywords?: boolean },
+): React.ReactNode {
+  const parts = text.split(/(\[unclear\])/gi);
+  if (parts.length === 1) {
+    return options?.highlightKeywords ? highlightDiplomaticTerms(text) : text;
+  }
+  return parts.map((part, i) => {
+    if (/^\[unclear\]$/i.test(part)) {
+      return <UnclearPlaceholder key={i} isRtl={options?.isRtl} />;
+    }
+    const content = options?.highlightKeywords
+      ? highlightDiplomaticTerms(part)
+      : part;
+    return <React.Fragment key={i}>{content}</React.Fragment>;
+  });
+}
 
 /** Messages use relative participant indices: the first participant (index 0) = "You" */
 function buildLiveMessages(participants: ReturnType<typeof normalizeLiveParticipants>): LiveTranscriptMessage[] {
   const pid = (idx: number) => participants[idx]?.id ?? "p1";
   return [
-    { id: "l1", speakerId: pid(1), time: "6:02 PM", language: "Arabic", text: "We have the ambassadorial briefing in ten minutes, so let's lock the agenda and assignments." },
-    { id: "l2", speakerId: pid(1), time: "6:02 PM", language: "Arabic", translated: true, text: "Please make sure all interpreter channels are active before we begin." },
-    { id: "l3", speakerId: pid(0), time: "6:03 PM", language: "English", text: "Agreed. I've reviewed the latest briefing notes — everything looks good on my end." },
-    { id: "l4", speakerId: pid(2), time: "6:04 PM", language: "English", text: "I'll cover the opening context and hand over to the diplomatic coordination updates." },
-    { id: "l5", speakerId: pid(1), time: "6:06 PM", language: "Arabic", translated: true, text: "Engineering is ready. The live translation path for Arabic and English is stable on both channels." },
-    { id: "l6", speakerId: pid(3), time: "6:08 PM", language: "English", text: "From the client side, the main concern is keeping terminology consistent during the security segment." },
-    { id: "l7", speakerId: pid(0), time: "6:09 PM", language: "English", text: "Good point. Let me flag that with the translation team before we start." },
-    { id: "l8", speakerId: pid(2), time: "6:10 PM", language: "English", text: "I am monitoring the interpreter panel and participant language preferences right now." },
+    { id: "l1", speakerId: pid(1), time: "6:02 PM", language: "Arabic", text: "We have the ambassadorial briefing in ten minutes — let's confirm the consular affairs agenda.", arabicText: "لدينا الإحاطة السفارية في غضون عشر دقائق — دعنا نؤكد جدول أعمال الشؤون القنصلية." },
+    { id: "l2", speakerId: pid(1), time: "6:02 PM", language: "Arabic", translated: true, text: "Please make sure all interpreter channels are active before we begin.", arabicText: "يرجى التأكد من أن جميع قنوات المترجمين نشطة قبل أن نبدأ." },
+    { id: "l3", speakerId: pid(0), time: "6:03 PM", language: "English", text: "Agreed. I've reviewed the memorandum of understanding — everything looks good on my end.", arabicText: "موافق. لقد راجعت مذكرة تفاهم الأخيرة — كل شيء يبدو جيداً من جهتي." },
+    { id: "l4", speakerId: pid(2), time: "6:04 PM", language: "English", text: "I'll cover the opening context and hand over to the [unclear] coordination updates.", arabicText: "سأتناول السياق الافتتاحي ثم أنتقل إلى تحديثات [unclear] الدبلوماسي.", hasUnclear: true },
+    { id: "l5", speakerId: pid(1), time: "6:06 PM", language: "Arabic", translated: true, text: "Engineering is ready. The bilateral agreement draft was also cleared by the Foreign Affairs Ministry.", arabicText: "الفريق الهندسي جاهز. كما تمت مراجعة اتفاقية ثنائية من قِبل وزارة الخارجية." },
+    { id: "l6", speakerId: pid(3), time: "6:08 PM", language: "English", text: "From the client side, the main concern is keeping [unclear] consistent during the [unclear] segment.", arabicText: "من جانب العميل، يتمحور الاهتمام الرئيسي حول [unclear] خلال مقطع الأمن.", hasUnclear: true },
+    { id: "l7", speakerId: pid(0), time: "6:09 PM", language: "English", text: "Good point. The ambassador plenipotentiary flagged this — let me align with the translation team.", arabicText: "نقطة جيدة. أشار إليها سفير فوق العادة — دعني أنسق مع فريق الترجمة." },
+    { id: "l8", speakerId: pid(2), time: "6:10 PM", language: "English", text: "I am monitoring the interpreter panel and participant language preferences right now.", arabicText: "أراقب لوحة المترجمين وتفضيلات اللغة للمشاركين الآن." },
   ];
 }
 
@@ -1000,16 +903,18 @@ function LiveTranscriptPanel({
   messages,
   participants,
   currentUserId,
+  isInApp = false,
 }: {
   messages: LiveTranscriptMessage[];
   participants: ReturnType<typeof normalizeLiveParticipants>;
   currentUserId: string;
+  isInApp?: boolean;
 }) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const [showScrollBtn, setShowScrollBtn] = React.useState(false);
 
   // ── Language state ───────────────────────────────────────────────────────
-  const [targetLang, setTargetLang] = React.useState("English");
+  const [targetLang, setTargetLang] = React.useState("Arabic");
   const [showLangMenu, setShowLangMenu] = React.useState(false);
   const langMenuRef = React.useRef<HTMLDivElement>(null);
 
@@ -1178,54 +1083,68 @@ function LiveTranscriptPanel({
 
                 {/* Bubble + meta */}
                 <div className={cn("flex max-w-[80%] flex-col gap-2", isYou ? "items-end" : "items-start")}>
-                  {/* Speaker name + time + language + translated badge — only on first message of a group */}
-                  {!isSameAsPrev && (
-                    <div className={cn("flex items-center gap-2", isYou ? "flex-row-reverse pr-1" : "flex-row")}>
-                      <span className="text-xs font-semibold text-[#414651]">
-                        {isYou ? "You" : participant.name}
-                      </span>
-                      <span className="text-[10px] text-[#9fa3ae]">{message.time}</span>
-                      {message.language && (
-                        <span className="inline-flex items-center gap-0.5 rounded-full border border-[#e0dde8] bg-white px-1.5 py-px text-[9px] font-medium text-[#717680]">
-                          <Globe size={9} />
-                          {message.language}
-                        </span>
-                      )}
-                      {message.translated && (
-                        <span className="inline-flex items-center rounded-full border border-[#b2ddff] bg-[#eff8ff] px-1 py-px text-[9px] font-semibold text-[#175cd3]">
-                          Translated
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  {/* Bubble — extract hasUnclear/unclearWordsCount first for use in metadata row */}
+                  {(() => {
+                    const showArabic = targetLang === "Arabic" && !!message.arabicText;
+                    const rawText = showArabic ? message.arabicText! : message.text;
+                    const hasUnclear = !!message.hasUnclear;
+                    const unclearWordsCount = hasUnclear ? countUnclearMarkers(rawText) : 0;
 
-                  {/* Bubble */}
-                  <div
-                    className={cn(
-                      "relative border px-3 py-2 text-sm leading-6 text-[#181d27] transition-colors duration-200",
-                      isYou
-                        ? "rounded-bl-lg rounded-br-lg rounded-tl-lg border-[#d0cfdd] bg-[#e7e7ee] hover:bg-[#dfdfe8]"
-                        : "rounded-bl-lg rounded-br-lg rounded-tr-lg border-[#e9eaeb] bg-[#fafafa] hover:bg-[#f3f3f7]",
-                    )}
-                  >
-                    {isLastMsg ? (
+                    return (
                       <>
-                        {lastMsgWords.slice(0, revealedCount).map((word, wordIdx) => (
-                          <React.Fragment key={wordIdx}>
-                            <span className="animate-[wordPop_0.15s_ease-out_both]">
-                              {word}
-                            </span>
-                            {wordIdx < lastMsgWords.length - 1 ? " " : ""}
-                          </React.Fragment>
-                        ))}
-                        {revealedCount < lastMsgWords.length && (
-                          <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse rounded-sm bg-[#9fa3ae] align-middle" />
+                        {/* Speaker name + time + unclear badge — only on first message of a group */}
+                        {!isSameAsPrev && (
+                          <div className={cn("flex items-center justify-between gap-2", isYou ? "flex-row-reverse" : "flex-row")}>
+                            <div className={cn("flex items-center gap-2", isYou ? "flex-row-reverse" : "flex-row")}>
+                              <span className="text-xs font-semibold text-[#414651]">
+                                {isYou ? "You" : participant.name}
+                              </span>
+                              <span className="text-[10px] text-[#9fa3ae]">{message.time}</span>
+                            </div>
+                            {hasUnclear && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 text-[10px] font-semibold text-[#b45309]">
+                                <AlertTriangle size={9} className="shrink-0" aria-hidden />
+                                {unclearWordsCount} word{unclearWordsCount > 1 ? "s" : ""} unclear
+                              </span>
+                            )}
+                          </div>
                         )}
+
+                        {/* Message bubble */}
+                        <div
+                          dir={showArabic ? "rtl" : undefined}
+                          className={cn(
+                            "relative border px-3 py-2 text-sm leading-7 text-[#181d27] transition-colors duration-200",
+                            showArabic && "text-right",
+                            hasUnclear && "border-[#fde68a]",
+                            isYou
+                              ? "rounded-bl-lg rounded-br-lg rounded-tl-lg border-[#d0cfdd] bg-[#e7e7ee] hover:bg-[#dfdfe8]"
+                              : "rounded-bl-lg rounded-br-lg rounded-tr-lg border-[#e9eaeb] bg-[#fafafa] hover:bg-[#f3f3f7]",
+                          )}
+                          style={showArabic ? { fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" } : undefined}
+                        >
+                          {isLastMsg && !showArabic ? (
+                            <>
+                              {lastMsgWords.slice(0, revealedCount).map((word, wordIdx) => (
+                                <React.Fragment key={wordIdx}>
+                                  <span className="animate-[wordPop_0.15s_ease-out_both]">{word}</span>
+                                  {wordIdx < lastMsgWords.length - 1 ? " " : ""}
+                                </React.Fragment>
+                              ))}
+                              {revealedCount < lastMsgWords.length && (
+                                <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse rounded-sm bg-[#9fa3ae] align-middle" />
+                              )}
+                            </>
+                          ) : (
+                            renderWithUnclearPlaceholders(rawText, {
+                              isRtl: showArabic,
+                              highlightKeywords: showArabic,
+                            })
+                          )}
+                        </div>
                       </>
-                    ) : (
-                      message.text
-                    )}
-                  </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -1251,18 +1170,35 @@ function LiveTranscriptPanel({
 function LiveParticipantsPanel({
   participants,
   currentUserId,
+  meetingId,
+  isInApp = false,
+  showAddGuestModal = false,
+  onAddGuestModalClose,
 }: {
   participants: ReturnType<typeof normalizeLiveParticipants>;
   currentUserId: string;
+  meetingId: string;
+  isInApp?: boolean;
+  showAddGuestModal?: boolean;
+  onAddGuestModalClose?: () => void;
 }) {
+  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const [guestsReady, setGuestsReady] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isInApp) { setGuestsReady(true); return; }
+    getGuests(meetingId).then((g) => { setGuests(g); setGuestsReady(true); });
+  }, [meetingId, isInApp]);
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      {/* ── Internal participants ── */}
       <div className="px-4 pb-2 pt-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-[#717680]">
           Participants · {participants.length}
         </p>
       </div>
-      <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-4">
+      <div className="flex flex-col gap-0.5 px-3 pb-3">
         {participants.map((participant, index) => {
           const isYou = participant.id === currentUserId;
           const isSpeaking = index < 2;
@@ -1273,7 +1209,6 @@ function LiveParticipantsPanel({
               className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors duration-150 hover:bg-[#f3f3f7] animate-[fadeSlideIn_0.3s_ease-out_both]"
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              {/* Avatar with status dot */}
               <div
                 className="relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-[#414651]"
                 style={{ backgroundColor: participant.bg }}
@@ -1287,8 +1222,6 @@ function LiveParticipantsPanel({
                   style={{ backgroundColor: dotColor }}
                 />
               </div>
-
-              {/* Name + role */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="truncate text-xs font-medium text-[#414651]">{participant.name}</p>
@@ -1300,8 +1233,6 @@ function LiveParticipantsPanel({
                 </div>
                 <p className="text-[10px] text-[#717680]">{participant.role}</p>
               </div>
-
-              {/* Status label */}
               <span className={cn(
                 "shrink-0 text-[11px] font-medium",
                 isSpeaking ? "text-[#067647]" : "text-[#98a2b3]",
@@ -1312,6 +1243,27 @@ function LiveParticipantsPanel({
           );
         })}
       </div>
+
+      {/* ── Guests section — In App only ── */}
+      {isInApp && (
+        <>
+          <div className="mx-3 my-1 h-px bg-[#f0f0f4]" />
+          <div className="pb-3 pt-1">
+            {guestsReady ? (
+              <GuestList
+                meetingId={meetingId}
+                initialGuests={guests}
+                showAddModal={showAddGuestModal}
+                onAddModalClose={onAddGuestModalClose}
+              />
+            ) : (
+              <div className="flex items-center justify-center py-4">
+                <span className="size-4 animate-spin rounded-full border-2 border-[#d5d7da] border-t-[#48476e]" />
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1333,6 +1285,257 @@ function LiveTimer() {
   );
 }
 
+// ─── Microphone Test Screen (In-App meetings only) ───────────────────────────
+
+type MicTestStatus = "idle" | "checking" | "passed" | "failed" | "testing-volume";
+
+function MicrophoneTestScreen({
+  meeting,
+  participants,
+  onReady,
+}: {
+  meeting: NonNullable<ReturnType<typeof MEETINGS.find>>;
+  participants: ReturnType<typeof normalizeLiveParticipants>;
+  onReady: () => void;
+}) {
+  const [status, setStatus] = React.useState<MicTestStatus>("checking");
+  const [volumeLevel, setVolumeLevel] = React.useState(0);
+  const [showSkipWarning, setShowSkipWarning] = React.useState(false);
+  const streamRef = React.useRef<MediaStream | null>(null);
+  const analyzerRef = React.useRef<AnalyserNode | null>(null);
+  const animationFrameRef = React.useRef<number | null>(null);
+
+  // Start mic detection and volume test
+  React.useEffect(() => {
+    const startTest = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamRef.current = stream;
+
+        // Create audio context for volume detection
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const analyzer = audioCtx.createAnalyser();
+        analyzerRef.current = analyzer;
+
+        const source = audioCtx.createMediaStreamSource(stream);
+        source.connect(analyzer);
+
+        // Move to volume testing phase
+        setStatus("testing-volume");
+
+        // Monitor volume levels
+        const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+        const checkVolume = () => {
+          analyzer.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+          setVolumeLevel(Math.min(100, (average / 256) * 100));
+          animationFrameRef.current = requestAnimationFrame(checkVolume);
+        };
+        checkVolume();
+      } catch (error) {
+        setStatus("failed");
+        cleanupStream();
+      }
+    };
+
+    startTest();
+    return () => cleanupStream();
+  }, []);
+
+  const cleanupStream = () => {
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const handleProceed = () => {
+    if (status === "testing-volume") {
+      setStatus("passed");
+      cleanupStream();
+      setTimeout(onReady, 500);
+    }
+  };
+
+  const handleRetry = () => {
+    cleanupStream();
+    setStatus("checking");
+    setVolumeLevel(0);
+    setShowSkipWarning(false);
+  };
+
+  const handleSkip = () => {
+    cleanupStream();
+    setShowSkipWarning(false);
+    onReady();
+  };
+
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-gradient-to-br from-[#fafafa] to-[#f3f3f7] p-6">
+      {/* Title */}
+      <div className="text-center">
+        <h1 className="text-2xl font-semibold text-[#181d27]">Microphone Test</h1>
+        <p className="mt-1 text-sm text-[#717680]">Checking your audio setup before we start</p>
+      </div>
+
+      {/* Test stages */}
+      <div className="w-full max-w-sm space-y-4">
+        {/* Stage 1: Mic detection */}
+        <div className="rounded-lg border border-[#e9eaeb] bg-white p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "flex size-8 items-center justify-center rounded-lg",
+                status === "checking" ? "bg-[#f3f3f7]" : status === "failed" ? "bg-[#fee2e2]" : "bg-[#dcfce7]"
+              )}>
+                {status === "failed" ? (
+                  <Mic size={16} className="text-[#d92d20]" />
+                ) : (
+                  <Mic size={16} className={status === "checking" ? "text-[#717680]" : "text-[#17b26a]"} />
+                )}
+              </div>
+              <span className="text-sm font-medium text-[#414651]">Microphone detection</span>
+            </div>
+            {status === "checking" ? (
+              <div className="flex gap-1">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="size-1.5 rounded-full bg-[#8988ab] animate-bounce"
+                    style={{ animationDelay: `${i * 150}ms` }}
+                  />
+                ))}
+              </div>
+            ) : status === "failed" ? (
+              <span className="text-xs font-semibold text-[#d92d20]">✗ Not found</span>
+            ) : (
+              <span className="text-xs font-semibold text-[#17b26a]">✓ Connected</span>
+            )}
+          </div>
+          {status === "failed" && (
+            <p className="mt-2 text-xs text-[#717680]">No microphone detected. Please connect a microphone and try again.</p>
+          )}
+        </div>
+
+        {/* Stage 2: Volume test */}
+        {status !== "failed" && (
+          <div className="rounded-lg border border-[#e9eaeb] bg-white p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "flex size-8 items-center justify-center rounded-lg",
+                  volumeLevel > 30 ? "bg-[#dcfce7]" : "bg-[#fef3c7]"
+                )}>
+                  <Volume2 size={16} className={volumeLevel > 30 ? "text-[#17b26a]" : "text-[#f59e0b]"} />
+                </div>
+                <span className="text-sm font-medium text-[#414651]">Volume level</span>
+              </div>
+              <span className="text-xs text-[#717680]">{Math.round(volumeLevel)}%</span>
+            </div>
+            {/* Volume bar */}
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[#e9eaeb]">
+              <div
+                className={cn(
+                  "h-full transition-all duration-100",
+                  volumeLevel > 30 ? "bg-[#17b26a]" : "bg-[#f59e0b]",
+                )}
+                style={{ width: `${volumeLevel}%` }}
+              />
+            </div>
+            <p className="mt-2 text-xs text-[#717680]">
+              {volumeLevel < 10
+                ? "Speak into your microphone to test volume"
+                : volumeLevel < 30
+                  ? "⚠️ Volume is low for translation quality"
+                  : "✓ Volume level is good"}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Action buttons */}
+      {status === "failed" ? (
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#48476e] bg-[#48476e] px-4 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#3d3c52] active:scale-[0.98]"
+          >
+            Retry Test
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSkipWarning(true)}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#d5d7da] bg-white px-4 text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+          >
+            Skip for now
+          </button>
+        </div>
+      ) : status === "passed" ? (
+        <div className="flex items-center gap-2 rounded-lg border border-[#e7e7ee] bg-white px-4 py-2 animate-[fadeSlideIn_0.3s_ease-out]">
+          <div className="size-2 rounded-full bg-[#17b26a]" />
+          <span className="text-xs font-semibold text-[#067647]">Ready to enter meeting</span>
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleProceed}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#48476e] bg-[#48476e] px-6 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#3d3c52] active:scale-[0.98]"
+          >
+            Proceed to Meeting
+          </button>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#d5d7da] bg-white px-4 text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+          >
+            Retry Test
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSkipWarning(true)}
+            className="flex h-10 items-center justify-center rounded-lg border border-[#d5d7da] bg-white px-4 text-sm font-semibold text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+          >
+            Skip
+          </button>
+        </div>
+      )}
+
+      {/* Skip confirmation warning */}
+      {showSkipWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 animate-[fadeSlideIn_0.15s_ease-out]">
+          <div className="w-full max-w-xs rounded-2xl border border-[#e9eaeb] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]">
+            <h3 className="text-base font-semibold text-[#181d27]">Skip microphone test?</h3>
+            <p className="mt-2 text-sm text-[#535862]">
+              Skipping this test may affect translation quality. Make sure your microphone is working properly before proceeding.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowSkipWarning(false)}
+                className="flex h-9 flex-1 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all hover:bg-[#f8f8fb] active:scale-[0.98]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="flex h-9 flex-1 items-center justify-center rounded-lg border border-[#f59e0b] bg-[#fff7ed] text-sm font-semibold text-[#b45309] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all hover:bg-[#fef3c7] active:scale-[0.98]"
+              >
+                Skip anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Connecting Screen (Teams/Beem or post-test) ────────────────────────────
+
 function MeetingConnectingScreen({
   meeting,
   participants,
@@ -1342,10 +1545,30 @@ function MeetingConnectingScreen({
   participants: ReturnType<typeof normalizeLiveParticipants>;
   onReady: () => void;
 }) {
+  const [showMicTest, setShowMicTest] = React.useState(meeting.platform === "In App");
+  const isInApp = meeting.platform === "In App";
+
+  // Auto-proceed for non-in-app meetings
   React.useEffect(() => {
-    const timer = setTimeout(onReady, 2500);
-    return () => clearTimeout(timer);
-  }, [onReady]);
+    if (!isInApp) {
+      const timer = setTimeout(onReady, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [isInApp, onReady]);
+
+  // Show mic test for in-app, or skip to connecting screen
+  if (isInApp && showMicTest) {
+    return (
+      <MicrophoneTestScreen
+        meeting={meeting}
+        participants={participants}
+        onReady={() => {
+          setShowMicTest(false);
+          setTimeout(onReady, 500);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-gradient-to-br from-[#fafafa] to-[#f3f3f7] p-6">
@@ -1435,14 +1658,14 @@ function LeaveConfirmDialog({
         className="w-full max-w-sm rounded-2xl border border-[#e9eaeb] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="flex size-12 items-center justify-center rounded-full bg-[#fff1f0] mb-4">
-          <PhoneOff size={20} className="text-[#d92d20]" />
+        <div className="flex size-12 items-center justify-center rounded-full bg-[#f3f3f7] mb-4">
+          <LogOut size={20} className="text-[#48476e]" />
         </div>
         <h2 id="leave-title" className="text-base font-semibold text-[#181d27]">
-          Leave this meeting?
+          Leave MOFA Translation view?
         </h2>
         <p className="mt-1 text-sm text-[#535862]">
-          You will be disconnected from the live translation session. You can rejoin later from the meetings page.
+          This closes the live translation panel only. Your call on <span className="font-medium text-[#414651]">Beem or Teams</span> will continue uninterrupted — you can rejoin the translation view anytime from the meetings page.
         </p>
         <div className="mt-6 flex gap-3">
           <button
@@ -1450,14 +1673,15 @@ function LeaveConfirmDialog({
             onClick={onCancel}
             className="flex h-10 flex-1 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
           >
-            Cancel
+            Stay
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="flex h-10 flex-1 items-center justify-center rounded-lg border-2 border-white/10 bg-[#d92d20] text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#b42318] active:scale-[0.98]"
+            className="flex h-10 flex-1 items-center gap-2 justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f3f3f7] active:scale-[0.98]"
           >
-            Leave Meeting
+            <LogOut size={14} aria-hidden />
+            Leave View
           </button>
         </div>
       </div>
@@ -1577,16 +1801,24 @@ function PipTranscriptContent({
                   )}
 
                   {/* Bubble */}
-                  <div
-                    className={cn(
-                      "px-2.5 py-1.5 text-[12px] leading-[18px]",
-                      isYou
-                        ? "rounded-bl-xl rounded-br-xl rounded-tl-xl border border-[#d0cfdd] bg-[#e7e7ee] text-[#181d27]"
-                        : "rounded-bl-xl rounded-br-xl rounded-tr-xl border border-[#e9eaeb] bg-[#fafafa] text-[#181d27]",
-                    )}
-                  >
-                    {message.text}
-                  </div>
+                  {(() => {
+                    const showArabic = targetLang === "Arabic" && !!message.arabicText;
+                    return (
+                      <div
+                        dir={showArabic ? "rtl" : undefined}
+                        className={cn(
+                          "px-2.5 py-1.5 text-[12px] leading-[18px]",
+                          showArabic && "text-right",
+                          isYou
+                            ? "rounded-bl-xl rounded-br-xl rounded-tl-xl border border-[#d0cfdd] bg-[#e7e7ee] text-[#181d27]"
+                            : "rounded-bl-xl rounded-br-xl rounded-tr-xl border border-[#e9eaeb] bg-[#fafafa] text-[#181d27]",
+                        )}
+                        style={showArabic ? { fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" } : undefined}
+                      >
+                        {showArabic ? message.arabicText : message.text}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -1614,6 +1846,62 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
   const participants = React.useMemo(() => normalizeLiveParticipants(meeting), [meeting]);
   const [activePanel, setActivePanel] = React.useState<"transcript" | "participants">("transcript");
   const [showLeaveDialog, setShowLeaveDialog] = React.useState(false);
+  const isInApp = meeting.platform === "In App";
+  const [micOn, setMicOn] = React.useState(false);
+  const [speakerOn, setSpeakerOn] = React.useState(true);
+  const [showAddGuestModal, setShowAddGuestModal] = React.useState(false);
+  const [showShareModal, setShowShareModal] = React.useState(false);
+  const [copiedLink, setCopiedLink] = React.useState(false);
+  const [copiedPassword, setCopiedPassword] = React.useState(false);
+  const [copiedAll, setCopiedAll] = React.useState(false);
+  const [sendSummary, setSendSummary] = React.useState(false);
+  const [sendTranscript, setSendTranscript] = React.useState(false);
+
+  // Generate stable mock meeting link + password from meeting id
+  const meetingLink = `https://meet.mofa.gov.sa/join/${meeting.id}`;
+  const meetingPassword = React.useMemo(() => {
+    const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let result = "";
+    let seed = meeting.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+    for (let i = 0; i < 8; i++) {
+      seed = (seed * 1664525 + 1013904223) & 0xffffffff;
+      result += chars[Math.abs(seed) % chars.length];
+    }
+    return result;
+  }, [meeting.id]);
+
+  const copyToClipboard = (text: string, type: "link" | "password") => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    if (type === "link") {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } else {
+      setCopiedPassword(true);
+      setTimeout(() => setCopiedPassword(false), 2000);
+    }
+  };
+
+  // ── Space-bar press-to-talk shortcut (in-app only) ───────────────────────
+  React.useEffect(() => {
+    if (!isInApp) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !e.repeat && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+        e.preventDefault();
+        setMicOn(true);
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        setMicOn(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [isInApp]);
 
   // ── Register this meeting in the global context when we enter the live room ──
   React.useEffect(() => {
@@ -1839,7 +2127,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
       }
 
       {/* Title row */}
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2.5">
         {/* Back button — minimises to global overlay and navigates back */}
         <button
           type="button"
@@ -1850,13 +2138,168 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
         >
           <ArrowLeft size={15} />
         </button>
-        <h1 className="flex-1 text-xl font-medium text-[#414651]">{meeting.title}</h1>
-        {/* Platform badge — after meeting name */}
+
+        {/* Title + platform badge grouped together */}
+        <h1 className="text-xl font-medium text-[#414651]">{meeting.title}</h1>
         {meeting.platform && (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e0dde8] bg-[#f8f7fc] px-2.5 py-1 text-[11px] font-semibold text-[#535862]">
             <PlatformIcon platform={meeting.platform} containerSize />
             {meeting.platform}
           </span>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Share / Invite button — In App only */}
+        {isInApp && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowShareModal((v) => !v)}
+              className="flex items-center gap-1.5 rounded-lg border border-[#d5d7da] bg-white px-3 py-1.5 text-xs font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[#f3f3f7] active:scale-[0.98]"
+            >
+              <Share2 size={12} aria-hidden />
+              Invite Guest
+            </button>
+
+            {/* Share popover */}
+            {showShareModal && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowShareModal(false)}
+                />
+                {/* Popover card */}
+                <div className="absolute right-0 top-full z-50 mt-2 w-[340px] rounded-2xl border border-[#e9eaeb] bg-white p-5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-[#111827]">Invite Guest to Meeting</h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowShareModal(false)}
+                      className="flex size-6 items-center justify-center rounded-md text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+
+                  {/* Meeting info */}
+                  <div className="mb-4 rounded-xl border border-[#e9eaeb] bg-[#fafafa] px-4 py-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-[#9da4ae]">Meeting</p>
+                    <p className="mt-0.5 text-sm font-semibold text-[#414651] leading-snug">{meeting.title}</p>
+                  </div>
+
+                  {/* Meeting Link */}
+                  <div className="mb-3">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
+                      <Link2 size={12} aria-hidden />
+                      Meeting Link
+                    </p>
+                    <div className="flex items-center gap-2 rounded-lg border border-[#e9eaeb] bg-[#f9fafb] px-3 py-2">
+                      <span className="flex-1 truncate font-mono text-xs text-[#374151]">{meetingLink}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(meetingLink, "link")}
+                        className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition hover:bg-[#e9eaeb]"
+                        style={{ color: copiedLink ? "#16a34a" : "#6b7280" }}
+                      >
+                        {copiedLink ? <Check size={11} /> : <Copy size={11} />}
+                        {copiedLink ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Password */}
+                  <div className="mb-4">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Password
+                    </p>
+                    <div className="flex items-center gap-2 rounded-lg border border-[#e9eaeb] bg-[#f9fafb] px-3 py-2">
+                      <span className="flex-1 font-mono text-xs tracking-widest text-[#374151]">{meetingPassword}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(meetingPassword, "password")}
+                        className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition hover:bg-[#e9eaeb]"
+                        style={{ color: copiedPassword ? "#16a34a" : "#6b7280" }}
+                      >
+                        {copiedPassword ? <Check size={11} /> : <Copy size={11} />}
+                        {copiedPassword ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Email toggles */}
+                  <div className="mb-4 rounded-xl border border-[#e9eaeb] divide-y divide-[#e9eaeb]">
+                    {/* Send AI Summary */}
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div>
+                        <p className="text-xs font-medium text-[#374151]">Send AI Summary</p>
+                        <p className="text-[11px] text-[#9da4ae]">Email the meeting summary to guests</p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={sendSummary}
+                        onClick={() => setSendSummary((v) => !v)}
+                        className={cn(
+                          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                          sendSummary ? "bg-[#48476e]" : "bg-[#d1d5db]"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                            sendSummary ? "translate-x-4" : "translate-x-0"
+                          )}
+                        />
+                      </button>
+                    </div>
+                    {/* Send Transcript */}
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div>
+                        <p className="text-xs font-medium text-[#374151]">Send Transcript</p>
+                        <p className="text-[11px] text-[#9da4ae]">Email the full transcript to guests</p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={sendTranscript}
+                        onClick={() => setSendTranscript((v) => !v)}
+                        className={cn(
+                          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                          sendTranscript ? "bg-[#48476e]" : "bg-[#d1d5db]"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                            sendTranscript ? "translate-x-4" : "translate-x-0"
+                          )}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Copy both button */}
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="w-full justify-center"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`Meeting Link: ${meetingLink}\nPassword: ${meetingPassword}`).catch(() => {});
+                      setCopiedAll(true);
+                      setTimeout(() => setCopiedAll(false), 2000);
+                    }}
+                  >
+                    {copiedAll ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
+                    {copiedAll ? "Copied!" : "Copy Invite Details"}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 
@@ -1894,17 +2337,97 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
             </div>
           </div>
 
-          {/* Timer + controls */}
-          <div className="flex shrink-0 flex-col items-center gap-2 pb-1 pt-3">
+          {/* Control bar */}
+          <div className="flex shrink-0 items-center justify-between border-t border-[#ebebef] px-4 pb-3 pt-3">
+            {/* Left: timer */}
             <LiveTimer />
+
+            {/* Centre: mic + speaker (in-app only) */}
+            {isInApp ? (
+              <div className="flex items-center gap-4">
+                {/* Mic — press to talk */}
+                <div className="group flex flex-col items-center gap-1">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onPointerDown={() => setMicOn(true)}
+                      onPointerUp={() => setMicOn(false)}
+                      onPointerLeave={() => setMicOn(false)}
+                      aria-label={micOn ? "Microphone active" : "Press to talk"}
+                      title={micOn ? "Hold to speak" : "Press and hold to talk"}
+                      className={cn(
+                        "relative flex size-11 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-95",
+                        micOn
+                          ? "border-[#d92d20]/20 bg-[#d92d20] text-white shadow-[0_4px_12px_rgba(217,45,32,0.35)]"
+                          : "border-[#e9eaeb] bg-white text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7] hover:text-[#414651]",
+                      )}
+                    >
+                      {micOn && (
+                        <span className="absolute inset-0 rounded-full border-2 border-[#d92d20] animate-ping opacity-40" />
+                      )}
+                      {micOn ? <Mic size={16} aria-hidden /> : <MicOff size={16} aria-hidden />}
+                    </button>
+
+                    {/* Shortcut tooltip — hover only, hidden while mic is active */}
+                    <div
+                      className={cn(
+                        "pointer-events-none absolute bottom-full left-1/2 mb-3 -translate-x-1/2 flex flex-col items-center transition-opacity duration-150",
+                        micOn ? "opacity-0" : "opacity-0 group-hover:opacity-100",
+                      )}
+                    >
+                      <div className="relative flex items-center gap-1.5 rounded-lg bg-[#18181b] px-2.5 py-1.5 shadow-xl ring-1 ring-white/10">
+                        <span className="whitespace-nowrap text-[11px] font-medium text-white/70">Hold</span>
+                        <kbd className="inline-flex items-center rounded-[5px] border border-white/20 bg-white/15 px-1.5 py-0.5 font-sans text-[11px] font-semibold leading-none tracking-wide text-white shadow-[inset_0_-1px_0_rgba(0,0,0,0.3)]">
+                          Space
+                        </kbd>
+                        <span className="whitespace-nowrap text-[11px] font-medium text-white/70">to talk</span>
+                        {/* Arrow — sits inside pill, lower-half peeks out to form a sharp caret */}
+                        <div className="absolute -bottom-[6px] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-[#18181b]" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <span className={cn("text-[10px] font-medium", micOn ? "text-[#d92d20]" : "text-[#9fa3ae]")}>
+                    {micOn ? "Live" : "Muted"}
+                  </span>
+                </div>
+
+                {/* Speaker */}
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSpeakerOn((v) => !v)}
+                    aria-label={speakerOn ? "Mute speaker" : "Unmute speaker"}
+                    title={speakerOn ? "Mute speaker output" : "Unmute speaker output"}
+                    className={cn(
+                      "flex size-11 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-95",
+                      speakerOn
+                        ? "border-[#e9eaeb] bg-white text-[#48476e] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7]"
+                        : "border-[#e9eaeb] bg-white text-[#9fa3ae] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7]",
+                    )}
+                  >
+                    {speakerOn ? <Volume2 size={16} aria-hidden /> : <VolumeX size={16} aria-hidden />}
+                  </button>
+                  <span className="text-[10px] font-medium text-[#9fa3ae]">
+                    {speakerOn ? "Speaker" : "Silent"}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              /* Spacer to keep leave button right-aligned on non-in-app meetings */
+              <div />
+            )}
+
+            {/* Right: leave */}
             <button
               type="button"
               onClick={() => setShowLeaveDialog(true)}
-              className="flex size-12 items-center justify-center rounded-full border-2 border-white/10 bg-[#d92d20] text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#b42318] hover:shadow-[0_4px_12px_rgba(217,45,32,0.3)] active:scale-95"
-              aria-label="Leave meeting"
-              title="Leave meeting"
+              className="flex h-8 items-center gap-1.5 rounded-full border border-[#e9eaeb] bg-white px-4 text-[12px] font-semibold text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f3f3f7] hover:text-[#414651] active:scale-95"
+              aria-label="Leave MOFA view"
+              title={isInApp ? "Leave meeting" : "Leave MOFA view — your call on Beem/Teams continues"}
             >
-              <PhoneOff size={20} />
+              <LogOut size={12} aria-hidden />
+              Leave
             </button>
           </div>
         </section>
@@ -1976,9 +2499,16 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
           </div>
 
           {activePanel === "transcript" ? (
-            <LiveTranscriptPanel messages={liveMessages} participants={participants} currentUserId={currentUserId} />
+            <LiveTranscriptPanel messages={liveMessages} participants={participants} currentUserId={currentUserId} isInApp={isInApp} />
           ) : (
-            <LiveParticipantsPanel participants={participants} currentUserId={currentUserId} />
+            <LiveParticipantsPanel
+              participants={participants}
+              currentUserId={currentUserId}
+              meetingId={meeting.id}
+              isInApp={isInApp}
+              showAddGuestModal={showAddGuestModal}
+              onAddGuestModalClose={() => setShowAddGuestModal(false)}
+            />
           )}
         </aside>
       </div>
@@ -2039,16 +2569,12 @@ function DownloadMenu() {
 export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
   const [activeTab, setActiveTab] = React.useState<TabId>("summary");
   const [search, setSearch] = React.useState("");
-  const [audioProgress, setAudioProgress] = React.useState(0);
   const [showLiveRoom, setShowLiveRoom] = React.useState(false);
 
-  const meeting = MEETINGS.find((m) => m.id === meetingId);
-  const detail = MEETING_DETAILS[meetingId];
-
-  const totalSec = React.useMemo(
-    () => (meeting?.audioDuration ? parseDuration(meeting.audioDuration) : 0),
-    [meeting],
-  );
+  // Map "current" to the live meeting (m8)
+  const resolvedId = meetingId === "current" ? "m8" : meetingId;
+  const meeting = MEETINGS.find((m) => m.id === resolvedId);
+  const detail = MEETING_DETAILS[resolvedId];
 
   const handleParticipantClick = (id: string) => {
     setActiveTab("participants");
@@ -2096,38 +2622,25 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
     { id: "summary", label: "AI Summary", icon: <Sparkles size={13} /> },
     { id: "transcript", label: "Transcript", icon: <FileText size={13} /> },
     { id: "participants", label: "Participants", icon: <Users size={13} />, count: detail.participants.length },
-    { id: "minutes", label: "Meeting Minutes", icon: <MessageSquare size={13} /> },
-    { id: "ask-ai", label: "Ask AI", icon: <Bot size={13} /> },
   ];
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col pt-2">
-      {/* Back nav + actions */}
-      <div className="mb-5 flex items-center justify-between">
+      {/* Header row: back + title + actions */}
+      <div className="mb-5 flex items-center gap-3">
         <Link href="/meetings"
-          className="inline-flex items-center gap-1.5 text-sm text-[#717680] transition hover:text-[#414651]">
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#e7e7ee] bg-white text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]">
           <ArrowLeft size={15} />
-          Back to Meetings
         </Link>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" className="gap-2">
+        <h1 className="flex-1 truncate text-xl font-semibold text-[#414651]">{meeting.title}</h1>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <Button variant="tertiary" size="sm" className="gap-1.5">
             <Share2 size={14} aria-hidden />
             Share
           </Button>
-          <button type="button"
-            className="flex size-8 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-[#717680] transition hover:bg-[#f3f3f7]">
+          <Button variant="tertiary" size="sm" className="w-9 px-0">
             <MoreVertical size={15} />
-          </button>
-        </div>
-      </div>
-
-      {/* Page header */}
-      <div className="mb-5">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="text-xl font-semibold text-[#414651]">{meeting.title}</h1>
-          <span className="rounded-md border border-[#abefc6] bg-[#ecfdf3] px-2.5 py-0.5 text-sm font-medium text-[#067647]">
-            Completed
-          </span>
+          </Button>
         </div>
       </div>
 
@@ -2142,16 +2655,6 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
 
         {/* ── Main content ── */}
         <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-[#e9eaeb] bg-white overflow-hidden">
-          {/* Sticky audio player */}
-          <div className="shrink-0">
-            <AudioPlayer
-              duration={meeting.audioDuration ?? "00:00"}
-              meetingId={meeting.id}
-              progress={audioProgress}
-              onProgressChange={setAudioProgress}
-            />
-          </div>
-
           {/* Toolbar: search (transcript only) + download */}
           <div className="flex shrink-0 items-center justify-between gap-4 px-5 py-3">
             <div className={cn("relative flex-1 max-w-xs transition-all", activeTab !== "transcript" && "opacity-40 pointer-events-none")}>
@@ -2208,14 +2711,9 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
               <TranscriptTab
                 entries={detail.transcript}
                 search={search}
-                audioProgress={audioProgress}
-                totalSec={totalSec}
-                onSeek={setAudioProgress}
               />
             )}
             {activeTab === "participants" && <ParticipantsTab detail={detail} />}
-            {activeTab === "minutes" && <MeetingMinutesTab items={detail.minutes} />}
-            {activeTab === "ask-ai" && <AskAITab meetingTitle={meeting.title} />}
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  BookKey,
   Calendar,
   Globe2,
   Home,
@@ -15,6 +16,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
 import { Navbar } from "@/components/layout/Navbar";
+import { DiplomaticKeywordsPanel } from "@/components/settings/DiplomaticKeywordsPanel";
 import { IntegrationsSettingsPanel } from "@/components/settings/IntegrationsSettingsPanel";
 import { SETTINGS_AVATAR, SETTINGS_LOGO } from "@/components/settings/settings-assets";
 import { ProfileSettingsPanel } from "@/components/settings/ProfileSettingsPanel";
@@ -23,7 +25,7 @@ import { UsageCostsPanel } from "@/components/settings/UsageCostsPanel";
 import { UsersSettingsPanel } from "@/components/settings/UsersSettingsPanel";
 import { cn } from "@/lib/utils";
 
-type SettingsTab = "profile" | "users" | "roles" | "usage" | "integrations";
+type SettingsTab = "profile" | "users" | "roles" | "usage" | "integrations" | "keywords";
 
 const TAB_ITEMS: Array<{
   id: SettingsTab;
@@ -35,6 +37,7 @@ const TAB_ITEMS: Array<{
   { id: "roles", label: "Roles", icon: Shield },
   { id: "usage", label: "Usage & Costs", icon: BarChart3 },
   { id: "integrations", label: "Integrations", icon: Plug2 },
+  { id: "keywords", label: "Diplomatic Keywords", icon: BookKey },
 ];
 
 const VALID: SettingsTab[] = [
@@ -43,6 +46,7 @@ const VALID: SettingsTab[] = [
   "roles",
   "usage",
   "integrations",
+  "keywords",
 ];
 
 function parseTab(v: string | null): SettingsTab {
@@ -75,7 +79,7 @@ export function SettingsView({ className }: { className?: string }) {
       <Navbar
         className="bg-white pt-3"
         containerClassName="max-w-[1440px] px-[120px]"
-        logo={{ src: SETTINGS_LOGO, alt: "MOFA" }}
+        logo={{ src: SETTINGS_LOGO, alt: "Baseer Voice for MOFA", width: 160, height: 44 }}
         items={[
           { label: "Home", href: "/", icon: Home },
           { label: "Meetings", href: "/meetings", icon: Video },
@@ -90,7 +94,7 @@ export function SettingsView({ className }: { className?: string }) {
         user={{ name: "Abdullah Al Harbi", avatarSrc: SETTINGS_AVATAR }}
       />
 
-      <main className="mx-auto w-full max-w-[1440px] px-[120px] pb-16 pt-6">
+      <main className="mx-auto w-full max-w-[1440px] px-[120px] pb-16">
         <div className="flex items-start gap-[60px]">
           <aside className="w-[200px] shrink-0">
             <div className="text-2xl font-medium leading-8 text-black">
@@ -131,6 +135,7 @@ export function SettingsView({ className }: { className?: string }) {
             {tab === "roles" ? <RolesSettingsPanel /> : null}
             {tab === "usage" ? <UsageCostsPanel /> : null}
             {tab === "integrations" ? <IntegrationsSettingsPanel /> : null}
+            {tab === "keywords" ? <DiplomaticKeywordsPanel /> : null}
           </section>
         </div>
       </main>
