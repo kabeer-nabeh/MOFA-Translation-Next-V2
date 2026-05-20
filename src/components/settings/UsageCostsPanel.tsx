@@ -62,16 +62,16 @@ function KpiCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-[#eeedf5] bg-white p-[21px]">
+    <div className="flex flex-col gap-2 rounded-2xl border border-[color:var(--mofa-border-default)] bg-white p-[21px]">
       <div className="flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e5e7eb] bg-[#f3f3f7]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)]">
           {icon}
         </div>
-        <div className="text-sm font-medium leading-[21px] text-[#535862]">
+        <div className="text-sm font-medium leading-[21px] text-[color:var(--mofa-text-subtle)]">
           {label}
         </div>
       </div>
-      <div className="text-[32px] font-medium leading-[48px] tracking-[-0.8px] text-[#414651]">
+      <div className="text-[32px] font-medium leading-[48px] tracking-[-0.8px] text-[color:var(--mofa-text-body)]">
         {value}
       </div>
     </div>
@@ -125,7 +125,7 @@ export function UsageCostsPanel() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center rounded-lg bg-[#f3f3f7] p-1">
+        <div className="flex items-center rounded-lg bg-[color:var(--mofa-sidebar-active-bg)] p-1">
           <button
             type="button"
             onClick={() => setMode("users")}
@@ -133,7 +133,7 @@ export function UsageCostsPanel() {
               "h-[31.5px] rounded-md px-4 text-[13px] font-semibold leading-[19.5px]",
               mode === "users"
                 ? "bg-white text-black shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.1)]"
-                : "text-[#535862]",
+                : "text-[color:var(--mofa-text-subtle)]",
             )}
           >
             Usage by Users
@@ -145,7 +145,7 @@ export function UsageCostsPanel() {
               "h-[31.5px] rounded-md px-4 text-[13px] font-semibold leading-[19.5px]",
               mode === "meetings"
                 ? "bg-white text-black shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.1)]"
-                : "text-[#535862]",
+                : "text-[color:var(--mofa-text-subtle)]",
             )}
           >
             Usage by Meetings
@@ -166,18 +166,18 @@ export function UsageCostsPanel() {
               label="Total API Cost (30 days)"
               value="$789.10"
               icon={
-                <DollarSign size={18} className="text-[#414651]" aria-hidden="true" />
+                <DollarSign size={18} className="text-[color:var(--mofa-text-body)]" aria-hidden="true" />
               }
             />
             <KpiCard
               label="Avg Cost per User"
               value="$157.82"
-              icon={<Users size={18} className="text-[#414651]" aria-hidden="true" />}
+              icon={<Users size={18} className="text-[color:var(--mofa-text-body)]" aria-hidden="true" />}
             />
             <KpiCard
               label="Total Words Translated"
               value="115.7k"
-              icon={<Type size={18} className="text-[#414651]" aria-hidden="true" />}
+              icon={<Type size={18} className="text-[color:var(--mofa-text-body)]" aria-hidden="true" />}
             />
           </>
         ) : (
@@ -186,30 +186,30 @@ export function UsageCostsPanel() {
               label="Total API Cost (30 days)"
               value="$248.20"
               icon={
-                <DollarSign size={18} className="text-[#414651]" aria-hidden="true" />
+                <DollarSign size={18} className="text-[color:var(--mofa-text-body)]" aria-hidden="true" />
               }
             />
             <KpiCard
               label="Avg Meeting Cost"
               value="$62.05"
-              icon={<Users size={18} className="text-[#414651]" aria-hidden="true" />}
+              icon={<Users size={18} className="text-[color:var(--mofa-text-body)]" aria-hidden="true" />}
             />
             <KpiCard
               label="Total Words Translated"
               value="47.9k"
-              icon={<Type size={18} className="text-[#414651]" aria-hidden="true" />}
+              icon={<Type size={18} className="text-[color:var(--mofa-text-body)]" aria-hidden="true" />}
             />
           </>
         )}
       </div>
 
-      <div className="rounded-2xl border border-[#eeedf5] bg-white px-[25px] pb-5 pt-[25px]">
+      <div className="rounded-2xl border border-[color:var(--mofa-border-default)] bg-white px-[25px] pb-5 pt-[25px]">
         <div className="flex items-start justify-between">
           <div>
-            <div className="text-[18px] font-semibold leading-7 text-[#414651]">
+            <div className="text-[18px] font-semibold leading-7 text-[color:var(--mofa-text-body)]">
               Your Usage
             </div>
-            <div className="mt-1 text-sm leading-5 text-[#535862]">
+            <div className="mt-1 text-sm leading-5 text-[color:var(--mofa-text-subtle)]">
               Your cumulative spend per day across this billing period
             </div>
           </div>
@@ -235,15 +235,15 @@ export function UsageCostsPanel() {
                 </linearGradient>
               </defs>
 
-              <CartesianGrid vertical={false} stroke="#eeedf5" />
+              <CartesianGrid vertical={false} stroke="#e5e7eb" />
               <XAxis
                 dataKey="day"
-                tick={{ fontSize: 12, fill: "#535862" }}
+                tick={{ fontSize: 12, fill: "var(--mofa-text-subtle)" }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 12, fill: "#535862" }}
+                tick={{ fontSize: 12, fill: "var(--mofa-text-subtle)" }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => {
@@ -261,7 +261,7 @@ export function UsageCostsPanel() {
                   if (unit === "SAR") return [formatSar(n), String(name ?? "")];
                   return [formatUsd(n), String(name ?? "")];
                 }}
-                contentStyle={{ borderRadius: 8, border: "1px solid #eeedf5" }}
+                contentStyle={{ borderRadius: 8, border: "1px solid var(--mofa-border-default)" }}
               />
               <Legend content={<UsageLegend />} />
 
@@ -297,12 +297,13 @@ export function UsageCostsPanel() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search by user"
                 placeholder="Search by user..."
-                className="h-10 w-full rounded-lg border border-[#eeedf5] bg-white pl-9 pr-3 text-sm text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] placeholder:text-[rgba(65,70,81,0.5)] focus:outline-none"
+                className="h-10 w-full rounded-lg border border-[color:var(--mofa-border-default)] bg-white pl-9 pr-3 text-sm text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] placeholder:text-[color:var(--mofa-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[#6f6e8a]/30"
               />
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#414651]"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--mofa-text-body)]"
                 aria-hidden="true"
               />
             </div>
@@ -313,8 +314,10 @@ export function UsageCostsPanel() {
             </Button>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-[#eeedf5] bg-white">
-            <div className="grid grid-cols-[1fr_180px_180px_180px_180px] border-b border-[#e5e7eb] bg-[#fdfcfc] py-[15px] text-sm font-medium text-[#535862]">
+          <div className="overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-white">
+            <div className="overflow-x-auto">
+            <div className="min-w-[760px]">
+            <div className="grid grid-cols-[1fr_180px_180px_180px_180px] border-b border-[color:var(--mofa-border-default)] bg-[#fdfcfc] py-[15px] text-sm font-medium text-[color:var(--mofa-text-subtle)]">
               <div className="px-6">User Name</div>
               <div className="px-6">Meetings Attended</div>
               <div className="px-6">Words Translated</div>
@@ -329,25 +332,27 @@ export function UsageCostsPanel() {
                   key={r.name}
                   className={cn(
                     "grid grid-cols-[1fr_180px_180px_180px_180px] items-center py-4",
-                    !isLast && "border-b border-[#eeedf5]",
+                    !isLast && "border-b border-[color:var(--mofa-border-default)]",
                   )}
                 >
-                  <div className="px-6 text-sm font-semibold text-[#414651]">
+                  <div className="px-6 text-sm font-semibold text-[color:var(--mofa-text-body)]">
                     {r.name}
                   </div>
-                  <div className="px-6 text-sm text-[#535862]">{r.meetings}</div>
-                  <div className="px-6 text-sm text-[#535862]">
+                  <div className="px-6 text-sm text-[color:var(--mofa-text-subtle)]">{r.meetings}</div>
+                  <div className="px-6 text-sm text-[color:var(--mofa-text-subtle)]">
                     {r.words.toLocaleString()}
                   </div>
-                  <div className="px-6 text-sm text-[#535862]">
+                  <div className="px-6 text-sm text-[color:var(--mofa-text-subtle)]">
                     {formatUsd(r.avg)}
                   </div>
-                  <div className="px-6 text-right text-sm font-semibold text-[#414651]">
+                  <div className="px-6 text-right text-sm font-semibold text-[color:var(--mofa-text-body)]">
                     {formatUsd(r.cost)}
                   </div>
                 </div>
               );
             })}
+            </div>
+            </div>
           </div>
         </>
       ) : (
@@ -357,12 +362,13 @@ export function UsageCostsPanel() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search by meeting name or host"
                 placeholder="Search by meeting name or host..."
-                className="h-10 w-full rounded-lg border border-[#eeedf5] bg-white pl-9 pr-3 text-sm text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] placeholder:text-[rgba(65,70,81,0.5)] focus:outline-none"
+                className="h-10 w-full rounded-lg border border-[color:var(--mofa-border-default)] bg-white pl-9 pr-3 text-sm text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] placeholder:text-[color:var(--mofa-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[#6f6e8a]/30"
               />
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#414651]"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--mofa-text-body)]"
                 aria-hidden="true"
               />
             </div>
@@ -393,10 +399,10 @@ function UsageByMeetingsTable({ query }: { query: string }) {
   }, [query]);
 
   return (
-    <div className="min-w-0 overflow-hidden rounded-2xl border border-[#eeedf5] bg-white">
+    <div className="min-w-0 overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-white">
       <div className="w-full min-w-0 overflow-x-auto">
         <div className="min-w-[900px]">
-          <div className="grid grid-cols-[1fr_180px_140px_130px_120px_120px] border-b border-[#e5e7eb] bg-[#fdfcfc] py-[15px] text-sm font-medium text-[#535862]">
+          <div className="grid grid-cols-[1fr_180px_140px_130px_120px_120px] border-b border-[color:var(--mofa-border-default)] bg-[#fdfcfc] py-[15px] text-sm font-medium text-[color:var(--mofa-text-subtle)]">
             <div className="px-6">Meeting Name</div>
             <div className="px-6">Host</div>
             <div className="px-6">Date</div>
@@ -411,24 +417,24 @@ function UsageByMeetingsTable({ query }: { query: string }) {
                 key={`${r.name}-${r.date}`}
                 className={cn(
                   "grid grid-cols-[1fr_180px_140px_130px_120px_120px] items-center py-4",
-                  !isLast && "border-b border-[#eeedf5]",
+                  !isLast && "border-b border-[color:var(--mofa-border-default)]",
                 )}
               >
                 <div className="flex min-w-0 items-center gap-3 px-6">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[#f3f3f7] text-[#6e6b8b]">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[color:var(--mofa-sidebar-active-bg)] text-[#6e6b8b]">
                     <span className="text-[12px] font-semibold">⟡</span>
                   </div>
-                  <div className="min-w-0 truncate text-sm font-semibold text-[#414651]">
+                  <div className="min-w-0 truncate text-sm font-semibold text-[color:var(--mofa-text-body)]">
                     {r.name}
                   </div>
                 </div>
-                <div className="px-6 text-sm text-[#535862]">{r.host}</div>
-                <div className="px-6 text-sm text-[#535862]">{r.date}</div>
-                <div className="px-6 text-sm text-[#535862]">{r.participants}</div>
-                <div className="px-6 text-sm text-[#535862]">
+                <div className="px-6 text-sm text-[color:var(--mofa-text-subtle)]">{r.host}</div>
+                <div className="px-6 text-sm text-[color:var(--mofa-text-subtle)]">{r.date}</div>
+                <div className="px-6 text-sm text-[color:var(--mofa-text-subtle)]">{r.participants}</div>
+                <div className="px-6 text-sm text-[color:var(--mofa-text-subtle)]">
                   {r.words.toLocaleString()}
                 </div>
-                <div className="px-6 text-right text-sm font-semibold text-[#414651]">
+                <div className="px-6 text-right text-sm font-semibold text-[color:var(--mofa-text-body)]">
                   ${r.cost.toFixed(2)}
                 </div>
               </div>

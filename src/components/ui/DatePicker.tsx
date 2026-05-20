@@ -51,30 +51,30 @@ export function DatePicker({ value, onChange, className }: DatePickerProps) {
       <button 
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex h-11 w-full items-center justify-between rounded-lg border border-[#d5d7da] bg-white px-[14px] py-[10px] text-[16px] text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none focus:shadow-[0_1px_2px_rgba(10,13,18,0.05),0_0_0_2px_var(--mofa-btn-outline-focus-halo)]"
+        className="flex h-11 w-full items-center justify-between rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-[14px] py-[10px] text-[16px] text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none focus:shadow-[0_1px_2px_rgba(10,13,18,0.05),0_0_0_2px_var(--mofa-btn-outline-focus-halo)]"
       >
         <span>{formatInput(value)}</span>
-        <CalendarIcon size={18} className="text-[#717680]" />
+        <CalendarIcon size={18} className="text-[color:var(--mofa-text-muted)]" />
       </button>
 
       {open && (
-        <div className="absolute top-[calc(100%+4px)] left-0 z-50 w-72 rounded-xl border border-[#e9eaeb] bg-white p-4 shadow-[0_12px_24px_rgba(0,0,0,0.12)]">
+        <div className="absolute top-[calc(100%+4px)] left-0 z-50 w-72 rounded-xl border border-[color:var(--mofa-border-default)] bg-white p-4 shadow-[0_12px_24px_rgba(0,0,0,0.12)]">
           <div className="mb-4 flex items-center justify-between">
-            <div className="text-[17px] font-semibold text-[#414651]">
+            <div className="text-[17px] font-semibold text-[color:var(--mofa-text-body)]">
               {viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
             </div>
             <div className="flex items-center gap-1">
               <button 
                 type="button" 
                 onClick={handlePrevMonth} 
-                className="flex h-8 w-8 items-center justify-center rounded-md text-[#717680] transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#48476e]"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-[color:var(--mofa-text-muted)] transition-colors hover:bg-[color:var(--mofa-btn-outline-hover)] focus:outline-none focus:ring-2 focus:ring-[color:var(--mofa-accent)]"
               >
                 <ArrowUp size={16} />
               </button>
               <button 
                 type="button" 
                 onClick={handleNextMonth} 
-                className="flex h-8 w-8 items-center justify-center rounded-md text-[#717680] transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#48476e]"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-[color:var(--mofa-text-muted)] transition-colors hover:bg-[color:var(--mofa-btn-outline-hover)] focus:outline-none focus:ring-2 focus:ring-[color:var(--mofa-accent)]"
               >
                 <ArrowDown size={16} />
               </button>
@@ -83,7 +83,7 @@ export function DatePicker({ value, onChange, className }: DatePickerProps) {
           
           <div className="mb-2 grid grid-cols-7 gap-1 text-center">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-              <div key={i} className="text-[13px] font-medium text-[#717680]">{day}</div>
+              <div key={i} className="text-[13px] font-medium text-[color:var(--mofa-text-muted)]">{day}</div>
             ))}
           </div>
           
@@ -113,10 +113,10 @@ export function DatePicker({ value, onChange, className }: DatePickerProps) {
                     setOpen(false);
                   }}
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center mx-auto rounded-full text-[14px] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#48476e]",
+                    "flex h-8 w-8 items-center justify-center mx-auto rounded-full text-[14px] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[color:var(--mofa-accent)]",
                     isSelected 
-                      ? "bg-[#48476e] font-semibold text-white hover:bg-[#3f3e63]" 
-                      : "text-[#414651] hover:bg-slate-100"
+                      ? "bg-[color:var(--mofa-accent)] font-semibold text-white hover:bg-[color:var(--mofa-accent-hover)]" 
+                      : "text-[color:var(--mofa-text-body)] hover:bg-[color:var(--mofa-btn-outline-hover)]"
                   )}
                 >
                   {day}

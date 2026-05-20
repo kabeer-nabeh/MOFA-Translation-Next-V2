@@ -29,10 +29,10 @@ const PLATFORM_STYLES: Record<
   { bg: string; text: string; border: string; icon: React.ReactNode }
 > = {
   "In App": {
-    bg: "#f3f3f7",
-    text: "#545469",
-    border: "#d5d3e8",
-    icon: <Monitor size={13} className="text-[#545469]" aria-hidden />,
+    bg: "#ECEAE5",
+    text: "#52525B",
+    border: "var(--mofa-border-default)",
+    icon: <Monitor size={13} className="text-[color:var(--mofa-text-secondary)]" aria-hidden />,
   },
   Teams: {
     bg: "#f0eefe",
@@ -135,13 +135,13 @@ function RelativeTimeBadge({
   }
   if (time.state === "ended") {
     return (
-      <span className="inline-flex items-center rounded-md border border-[#d5d7da] bg-white px-2 py-0.5 text-xs font-semibold text-[#717680]">
+      <span className="inline-flex items-center rounded-md border border-[color:var(--mofa-border-default)] bg-white px-2 py-0.5 text-xs font-semibold text-[color:var(--mofa-text-muted)]">
         {time.label}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded-md border border-[#d5d3e8] bg-white px-2 py-0.5 text-xs font-semibold text-[#545469]">
+    <span className="inline-flex items-center rounded-md border border-[color:var(--mofa-border-default)] bg-white px-2 py-0.5 text-xs font-semibold text-[color:var(--mofa-text-secondary)]">
       {time.label}
     </span>
   );
@@ -183,13 +183,13 @@ function DeclineConfirmModal({
       }}
     >
       <div
-        className="w-full max-w-md rounded-xl border border-[#e9eaeb] bg-white p-6 shadow-[0_24px_64px_rgba(10,13,18,0.24)]"
+        className="w-full max-w-md rounded-xl border border-[color:var(--mofa-border-default)] bg-white p-6 shadow-[0_24px_64px_rgba(10,13,18,0.24)]"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <h2 id="decline-title" className="text-lg font-semibold text-[#414651]">
+        <h2 id="decline-title" className="text-lg font-semibold text-[color:var(--mofa-text-body)]">
           Decline this meeting?
         </h2>
-        <p className="mt-2 text-sm leading-6 text-[#535862]">
+        <p className="mt-2 text-sm leading-6 text-[color:var(--mofa-text-subtle)]">
           You are about to decline &ldquo;{title}&rdquo;. You can revoke the
           decline later from the meeting menu.
         </p>
@@ -246,7 +246,7 @@ function MoreMenu({
       <button
         type="button"
         onClick={onToggle}
-        className="flex size-8 items-center justify-center rounded-lg text-[#717680] transition hover:bg-white/60"
+        className="flex size-8 items-center justify-center rounded-lg text-[color:var(--mofa-text-muted)] transition hover:bg-white/60"
         aria-label="More options"
         aria-expanded={open}
       >
@@ -257,10 +257,10 @@ function MoreMenu({
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-12 z-50 min-w-[188px] overflow-hidden rounded-lg border border-[#e9eaeb] bg-white py-1 shadow-lg">
+        <div className="absolute right-0 top-12 z-50 min-w-[188px] overflow-hidden rounded-lg border border-[color:var(--mofa-border-default)] bg-white py-1 shadow-lg">
           <button
             type="button"
-            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-[#414651] transition-colors hover:bg-[#f3f3f7]"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-[color:var(--mofa-text-body)] transition-colors hover:bg-[color:var(--mofa-sidebar-active-bg)]"
             onClick={() => {
               setCopied(true);
               window.setTimeout(() => setCopied(false), 1800);
@@ -272,13 +272,13 @@ function MoreMenu({
           </button>
           <button
             type="button"
-            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-[#414651] transition-colors hover:bg-[#f3f3f7]"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-[color:var(--mofa-text-body)] transition-colors hover:bg-[color:var(--mofa-sidebar-active-bg)]"
             onClick={onToggle}
           >
             <CalendarPlus size={14} aria-hidden />
             Add to calendar
           </button>
-          <div className="my-1 border-t border-[#f0f0f4]" />
+          <div className="my-1 border-t border-[color:var(--mofa-border-default)]" />
           {rsvp === "accepted" && (
             <button
               type="button"
@@ -400,18 +400,30 @@ export function UpcomingMeetingItem({
     <>
       <Card
         className={cn(
-          "border-0 bg-[#f3f3f7] transition",
+          "transition",
           isEnded && "opacity-65 grayscale",
           className,
         )}
       >
         <Card.Content className="flex items-center gap-6 p-6">
           {/* Date chip */}
-          <div className="w-16 shrink-0 overflow-hidden rounded-md border border-[#e9eaeb] bg-white shadow-[0_0_0_2px_white,0_0_0_4px_#8988ab]">
-            <div className="flex items-center justify-center bg-[#e7e7ee] px-2 pb-0.5 pt-1 text-xs font-semibold uppercase tracking-wide text-[#717680]">
+          <div
+            className="w-16 shrink-0 overflow-hidden rounded-md border bg-white"
+            style={{
+              borderColor: "var(--mofa-border-default)",
+              boxShadow: "0 0 0 2px #F5F4F1, 0 0 0 3px #C8C4BC",
+            }}
+          >
+            <div
+              className="flex items-center justify-center px-2 pb-0.5 pt-1 text-xs font-semibold uppercase tracking-wide"
+              style={{ background: "var(--mofa-sidebar-active-bg)", color: "var(--mofa-text-muted)" }}
+            >
               {date.monthShort}
             </div>
-            <div className="flex items-center justify-center pb-[3px] pt-px text-lg font-bold leading-7 text-[#545469]">
+            <div
+              className="flex items-center justify-center pb-[3px] pt-px text-lg font-bold leading-7"
+              style={{ color: "var(--mofa-text-primary)" }}
+            >
               {date.day}
             </div>
           </div>
@@ -420,7 +432,7 @@ export function UpcomingMeetingItem({
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             {/* Title + badges row */}
             <div className="flex flex-wrap items-center gap-2">
-              <p className="line-clamp-1 text-lg font-semibold leading-7 text-[#414651]">
+              <p className="line-clamp-1 text-lg font-semibold leading-7" style={{ color: "var(--mofa-text-primary)" }}>
                 {title}
               </p>
               {platform && <PlatformBadge platform={platform} />}
@@ -429,17 +441,17 @@ export function UpcomingMeetingItem({
             </div>
 
             {/* Metadata row */}
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[#414651]">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm" style={{ color: "var(--mofa-text-secondary)" }}>
               <div className="flex items-center gap-1">
-                <Calendar size={16} aria-hidden="true" className="shrink-0 text-[#717680]" />
+                <Calendar size={16} aria-hidden="true" className="shrink-0" style={{ color: "var(--mofa-text-muted)" }} />
                 <span>{dateTimeLabel}</span>
               </div>
               <div className="flex items-center gap-1">
-                <User2 size={16} aria-hidden="true" className="shrink-0 text-[#717680]" />
+                <User2 size={16} aria-hidden="true" className="shrink-0" style={{ color: "var(--mofa-text-muted)" }} />
                 <span>{hostLabel}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Globe2 size={16} aria-hidden="true" className="shrink-0 text-[#717680]" />
+                <Globe2 size={16} aria-hidden="true" className="shrink-0" style={{ color: "var(--mofa-text-muted)" }} />
                 <span>{languageLabel}</span>
               </div>
             </div>
@@ -505,7 +517,7 @@ export function UpcomingMeetingItem({
               )}
 
               {showJoin && platform !== "In App" && !meetingLink && (
-                <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-[#d5d7da] bg-white px-3 py-2 text-sm font-semibold text-[#a4a7ae] opacity-60 select-none">
+                <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-3 py-2 text-sm font-semibold text-[color:var(--mofa-text-disabled)] opacity-60 select-none">
                   <Video size={16} aria-hidden />
                   Link unavailable
                 </span>
@@ -551,7 +563,7 @@ export function UpcomingMeetingItem({
         )}
       >
         {toast ? (
-          <div className="rounded-lg border border-[#d5d7da] bg-white px-4 py-3 text-sm font-semibold text-[#414651] shadow-[0_12px_30px_rgba(10,13,18,0.16)]">
+          <div className="rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--mofa-text-body)] shadow-[0_12px_30px_rgba(10,13,18,0.16)]">
             {toast}
           </div>
         ) : null}

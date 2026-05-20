@@ -15,10 +15,10 @@ const PLATFORM_STYLES: Record<
   { bg: string; text: string; border: string; icon: React.ReactNode }
 > = {
   "In App": {
-    bg: "#f3f3f7",
-    text: "#545469",
-    border: "#d5d3e8",
-    icon: <Monitor size={13} className="text-[#545469]" aria-hidden />,
+    bg: "#ECEAE5",
+    text: "#52525B",
+    border: "var(--mofa-border-default)",
+    icon: <Monitor size={13} className="text-[color:var(--mofa-text-secondary)]" aria-hidden />,
   },
   Teams: {
     bg: "#f0eefe",
@@ -114,15 +114,27 @@ export function MeetingCard({
   const relativeTime = useRelativeTime(startDatetime, endDatetime);
 
   return (
-    <Card className={cn("border-0 bg-[#f3f3f7]", className)}>
+    <Card className={cn(className)}>
       <Card.Content className="flex items-center gap-6 p-6">
         {/* Date Chip */}
         {date ? (
-          <div className="w-16 shrink-0 overflow-hidden rounded-md border border-[#e9eaeb] bg-white shadow-[0_0_0_2px_white,0_0_0_4px_#8988ab]">
-            <div className="flex items-center justify-center bg-[#e7e7ee] px-2 pb-0.5 pt-1 text-xs font-semibold uppercase tracking-wide text-[#717680]">
+          <div
+            className="w-16 shrink-0 overflow-hidden rounded-md border bg-white"
+            style={{
+              borderColor: "var(--mofa-border-default)",
+              boxShadow: "0 0 0 2px #F5F4F1, 0 0 0 3px var(--mofa-border-default)",
+            }}
+          >
+            <div
+              className="flex items-center justify-center px-2 pb-0.5 pt-1 text-xs font-semibold uppercase tracking-wide"
+              style={{ background: "var(--mofa-sidebar-active-bg)", color: "var(--mofa-text-muted)" }}
+            >
               {date.monthShort}
             </div>
-            <div className="flex items-center justify-center pb-[3px] pt-px text-lg font-bold leading-7 text-[#545469]">
+            <div
+              className="flex items-center justify-center pb-[3px] pt-px text-lg font-bold leading-7"
+              style={{ color: "var(--mofa-text-primary)" }}
+            >
               {date.day}
             </div>
           </div>
@@ -132,7 +144,7 @@ export function MeetingCard({
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           {/* Title + badges */}
           <div className="flex flex-wrap items-center gap-2">
-            <p className="line-clamp-1 text-lg font-semibold leading-7 text-[#414651]">
+            <p className="line-clamp-1 text-lg font-semibold leading-7" style={{ color: "var(--mofa-text-primary)" }}>
               {title}
             </p>
             {platform && <PlatformBadge platform={platform} />}
@@ -155,17 +167,17 @@ export function MeetingCard({
           </div>
 
           {/* Metadata */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[#414651]">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm" style={{ color: "var(--mofa-text-secondary)" }}>
             <div className="flex items-center gap-1">
-              <Calendar size={16} aria-hidden="true" className="shrink-0 text-[#717680]" />
+              <Calendar size={16} aria-hidden="true" className="shrink-0" style={{ color: "var(--mofa-text-muted)" }} />
               <span>{dateTimeLabel}</span>
             </div>
             <div className="flex items-center gap-1">
-              <User2 size={16} aria-hidden="true" className="shrink-0 text-[#717680]" />
+              <User2 size={16} aria-hidden="true" className="shrink-0" style={{ color: "var(--mofa-text-muted)" }} />
               <span>{hostLabel}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Globe2 size={16} aria-hidden="true" className="shrink-0 text-[#717680]" />
+              <Globe2 size={16} aria-hidden="true" className="shrink-0" style={{ color: "var(--mofa-text-muted)" }} />
               <span>{languageLabel}</span>
             </div>
           </div>
@@ -177,7 +189,7 @@ export function MeetingCard({
           <div className="shrink-0">
             <ButtonLink
               href={joinAction.href}
-              variant="primary"
+              variant="secondary"
               size="md"
               className="h-10 gap-2 px-4 whitespace-nowrap no-underline"
             >

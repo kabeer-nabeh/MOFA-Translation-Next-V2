@@ -53,7 +53,7 @@ export function getKpis(range: DateRangeKey): KpiModel {
 }
 
 export const LANGUAGE_SHARE = [
-  { name: "Arabic", pct: 48, fill: "#48476e" },
+  { name: "Arabic", pct: 48, fill: "var(--mofa-accent)" },
   { name: "English", pct: 32, fill: "#16a34a" },
   { name: "French", pct: 18, fill: "#2563eb" },
   { name: "Urdu", pct: 12, fill: "#ea580c" },
@@ -108,14 +108,14 @@ export const USER_TYPE_DONUT = [
   {
     name: "MOFA Staff",
     value: 64,
-    fill: "#6e6b8b",
-    legendBar: "#6e6b8b",
+    fill: "var(--mofa-accent)",
+    legendBar: "var(--mofa-accent)",
   },
   {
     name: "External Parties",
     value: 36,
-    fill: "#d5d7da",
-    legendBar: "#d5d7da",
+    fill: "var(--mofa-accent-muted)",
+    legendBar: "var(--mofa-accent-muted)",
   },
 ];
 

@@ -15,7 +15,7 @@ const STATUS_CONFIG: Record<
 > = {
   invited: { label: "Invited — link sent", dot: "#f79009", text: "#b54708" },
   joined:  { label: "In Meeting",          dot: "#17b26a", text: "#067647" },
-  left:    { label: "Left",                dot: "#717680", text: "#717680" },
+  left:    { label: "Left",                dot: "var(--mofa-text-muted)", text: "var(--mofa-text-muted)" },
   revoked: { label: "Access Revoked",      dot: "#f04438", text: "#b42318" },
 };
 
@@ -46,16 +46,16 @@ function RevokeConfirmDialog({
       <div
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-sm rounded-2xl border border-[#e9eaeb] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]"
+        className="w-full max-w-sm rounded-2xl border border-[color:var(--mofa-border-default)] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex size-11 items-center justify-center rounded-full bg-[#fff1f0]">
           <UserX size={18} className="text-[#f04438]" />
         </div>
-        <h2 className="text-base font-semibold text-[#181d27]">
+        <h2 className="text-base font-semibold text-[color:var(--mofa-text-primary)]">
           Revoke {guest.name}'s access?
         </h2>
-        <p className="mt-1.5 text-sm leading-6 text-[#535862]">
+        <p className="mt-1.5 text-sm leading-6 text-[color:var(--mofa-text-subtle)]">
           Their session link will be immediately invalidated. They will be unable to join or
           rejoin this meeting.
         </p>
@@ -63,7 +63,7 @@ function RevokeConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="flex h-9 flex-1 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] transition hover:bg-[#f8f8fb]"
+            className="flex h-9 flex-1 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white text-sm font-semibold text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1"
           >
             Cancel
           </button>
@@ -113,11 +113,11 @@ function GuestCard({
   return (
     <div
       ref={cardRef}
-      className="relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-[#f8f8fb]"
+      className="relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-[color:var(--mofa-btn-outline-hover)]"
     >
       {/* Avatar */}
       <div
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-[#414651]"
+        className="flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-[color:var(--mofa-text-body)]"
         style={{ backgroundColor: guest.bg }}
       >
         {guest.initials}
@@ -126,8 +126,8 @@ function GuestCard({
       {/* Name + status */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="truncate text-xs font-semibold text-[#414651]">{guest.name}</span>
-          <span className="shrink-0 rounded-full border border-[#c8c7d8] bg-[#f3f3f7] px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-[#545469]">
+          <span className="truncate text-xs font-semibold text-[color:var(--mofa-text-body)]">{guest.name}</span>
+          <span className="shrink-0 rounded-full border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)] px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-[color:var(--mofa-text-secondary)]">
             Ext
           </span>
         </div>
@@ -143,8 +143,8 @@ function GuestCard({
         onClick={() => setShowInfo((v) => !v)}
         aria-label="Guest details"
         className={cn(
-          "flex size-6 shrink-0 items-center justify-center rounded-full text-[#9fa3ae] transition hover:bg-[#f0f0f4] hover:text-[#535862]",
-          showInfo && "bg-[#f0f0f4] text-[#535862]",
+          "flex size-6 shrink-0 items-center justify-center rounded-full text-[color:var(--mofa-text-placeholder)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] hover:text-[color:var(--mofa-text-subtle)]",
+          showInfo && "bg-[#f0f0f4] text-[color:var(--mofa-text-subtle)]",
         )}
       >
         <Info size={13} />
@@ -153,23 +153,23 @@ function GuestCard({
       {/* Detail popover */}
       {showInfo && (
         <div
-          className="absolute right-0 top-full z-50 mt-1 w-52 overflow-hidden rounded-xl border border-[#e9eaeb] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.1)] animate-[fadeSlideIn_0.15s_ease-out]"
+          className="absolute right-0 top-full z-50 mt-1 w-52 overflow-hidden rounded-xl border border-[color:var(--mofa-border-default)] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.1)] animate-[fadeSlideIn_0.15s_ease-out]"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="flex flex-col gap-0 divide-y divide-[#f0f0f4]">
             {/* Info block */}
             <div className="flex flex-col gap-0.5 px-3.5 py-3">
-              <p className="text-[11px] font-semibold text-[#414651]">{guest.affiliation}</p>
-              <p className="text-[11px] text-[#717680]">{guest.email}</p>
+              <p className="text-[11px] font-semibold text-[color:var(--mofa-text-body)]">{guest.affiliation}</p>
+              <p className="text-[11px] text-[color:var(--mofa-text-muted)]">{guest.email}</p>
               {(guest.outputs.sendTranscript || guest.outputs.sendSummary) && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {guest.outputs.sendTranscript && (
-                    <span className="rounded-full border border-[#e0dde8] bg-[#f8f8fb] px-2 py-0.5 text-[10px] text-[#545469]">
+                    <span className="rounded-full border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-btn-outline-hover)] px-2 py-0.5 text-[10px] text-[color:var(--mofa-text-secondary)]">
                       📄 Transcript
                     </span>
                   )}
                   {guest.outputs.sendSummary && (
-                    <span className="rounded-full border border-[#e0dde8] bg-[#f8f8fb] px-2 py-0.5 text-[10px] text-[#545469]">
+                    <span className="rounded-full border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-btn-outline-hover)] px-2 py-0.5 text-[10px] text-[color:var(--mofa-text-secondary)]">
                       ✨ Summary
                     </span>
                   )}
@@ -252,10 +252,10 @@ function AddGuestModal({
 
   const fieldClass = (hasError?: boolean) =>
     cn(
-      "h-9 w-full rounded-lg border px-3 text-sm text-[#414651] outline-none placeholder:text-[#9fa3ae] transition focus:ring-2 focus:ring-[#6f6e8a]/30",
+      "h-9 w-full rounded-lg border px-3 text-sm text-[color:var(--mofa-text-body)] outline-none placeholder:text-[color:var(--mofa-text-placeholder)] transition focus:ring-2 focus:ring-[#6f6e8a]/30",
       hasError
         ? "border-[#f04438] bg-[#fff8f7]"
-        : "border-[#d5d7da] bg-white hover:border-[#9fa3ae]"
+        : "border-[color:var(--mofa-border-default)] bg-white hover:border-[#9fa3ae]"
     );
 
   return (
@@ -267,23 +267,23 @@ function AddGuestModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-guest-title"
-        className="w-full max-w-md rounded-2xl border border-[#e9eaeb] bg-white shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]"
+        className="w-full max-w-md rounded-2xl border border-[color:var(--mofa-border-default)] bg-white shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-[#f0f0f4] px-5 py-4">
+        <div className="flex items-start justify-between border-b border-[color:var(--mofa-border-default)] px-5 py-4">
           <div>
-            <h2 id="add-guest-title" className="text-base font-semibold text-[#181d27]">
+            <h2 id="add-guest-title" className="text-base font-semibold text-[color:var(--mofa-text-primary)]">
               Add External Guest
             </h2>
-            <p className="mt-0.5 text-xs text-[#717680]">
+            <p className="mt-0.5 text-xs text-[color:var(--mofa-text-muted)]">
               Guest receives a one-time access link scoped to this session only
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex size-8 items-center justify-center rounded-lg text-[#717680] transition hover:bg-[#f3f3f7]"
+            className="flex size-8 items-center justify-center rounded-lg text-[color:var(--mofa-text-muted)] transition hover:bg-[color:var(--mofa-sidebar-active-bg)]"
             aria-label="Close"
           >
             <X size={16} />
@@ -295,7 +295,7 @@ function AddGuestModal({
           <div className="flex flex-col gap-4 px-5 py-5">
             {/* Full Name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[#414651]">
+              <label className="text-xs font-semibold text-[color:var(--mofa-text-body)]">
                 Full Name <span className="text-[#f04438]">*</span>
               </label>
               <input
@@ -311,7 +311,7 @@ function AddGuestModal({
 
             {/* External Email */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[#414651]">
+              <label className="text-xs font-semibold text-[color:var(--mofa-text-body)]">
                 External Email <span className="text-[#f04438]">*</span>
               </label>
               <input
@@ -326,7 +326,7 @@ function AddGuestModal({
 
             {/* Organization */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[#414651]">
+              <label className="text-xs font-semibold text-[color:var(--mofa-text-body)]">
                 Organization / Affiliation <span className="text-[#f04438]">*</span>
               </label>
               <input
@@ -343,7 +343,7 @@ function AddGuestModal({
 
             {/* Post-meeting outputs */}
             <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold text-[#414651]">Post-Meeting Outputs</p>
+              <p className="text-xs font-semibold text-[color:var(--mofa-text-body)]">Post-Meeting Outputs</p>
               <div className="flex flex-col gap-2">
                 {([
                   {
@@ -368,19 +368,19 @@ function AddGuestModal({
                     className={cn(
                       "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all",
                       checked
-                        ? "border-[#e0dde8] bg-[#f8f8fb]"
-                        : "border-[#f0f0f4] bg-white hover:border-[#e0dde8] hover:bg-[#fafafa]"
+                        ? "border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-btn-outline-hover)]"
+                        : "border-[color:var(--mofa-border-default)] bg-white hover:border-[color:var(--mofa-border-default)] hover:bg-[color:var(--mofa-btn-outline-hover)]"
                     )}
                   >
                     {/* Icon */}
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#eeedf5]">
-                      <Icon size={14} className="text-[#48476e]" />
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[color:var(--mofa-sidebar-active-bg)]">
+                      <Icon size={14} className="text-[color:var(--mofa-accent)]" />
                     </div>
 
                     {/* Text */}
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-[#414651]">{label}</p>
-                      <p className="text-[11px] text-[#9fa3ae]">{description}</p>
+                      <p className="text-xs font-semibold text-[color:var(--mofa-text-body)]">{label}</p>
+                      <p className="text-[11px] text-[color:var(--mofa-text-placeholder)]">{description}</p>
                     </div>
 
                     {/* Custom toggle */}
@@ -394,7 +394,7 @@ function AddGuestModal({
                       <div
                         className={cn(
                           "flex h-5 w-9 items-center rounded-full transition-colors duration-200",
-                          checked ? "bg-[#48476e]" : "bg-[#d5d7da]"
+                          checked ? "bg-[#212121]" : "bg-[#d5d7da]"
                         )}
                       >
                         <div
@@ -411,29 +411,29 @@ function AddGuestModal({
             </div>
 
             {/* Info note */}
-            <div className="flex items-start gap-2.5 rounded-lg border border-[#e0dde8] bg-[#f8f8fb] px-3.5 py-3">
-              <Mail size={13} className="mt-px shrink-0 text-[#48476e]" />
-              <p className="text-[11px] leading-5 text-[#535862]">
+            <div className="flex items-start gap-2.5 rounded-lg border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-btn-outline-hover)] px-3.5 py-3">
+              <Mail size={13} className="mt-px shrink-0 text-[color:var(--mofa-accent)]" />
+              <p className="text-[11px] leading-5 text-[color:var(--mofa-text-subtle)]">
                 Post-meeting outputs are automatically emailed within{" "}
-                <span className="font-semibold text-[#414651]">30 minutes</span> of session end.
+                <span className="font-semibold text-[color:var(--mofa-text-body)]">30 minutes</span> of session end.
                 Guest data is stored only for this meeting's retention period.
               </p>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 border-t border-[#f0f0f4] px-5 py-4">
+          <div className="flex items-center justify-end gap-3 border-t border-[color:var(--mofa-border-default)] px-5 py-4">
             <button
               type="button"
               onClick={onClose}
-              className="h-9 rounded-lg border border-[#d5d7da] bg-white px-4 text-sm font-semibold text-[#414651] transition hover:bg-[#f8f8fb]"
+              className="h-9 rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-4 text-sm font-semibold text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex h-9 items-center gap-2 rounded-lg bg-[#48476e] px-4 text-sm font-semibold text-white transition hover:bg-[#3f3e63] disabled:opacity-60"
+              className="flex h-9 items-center gap-2 rounded-lg bg-[#212121] px-4 text-sm font-semibold text-white transition hover:bg-[#1a1a1a] disabled:opacity-60"
             >
               {loading ? (
                 <>
@@ -520,9 +520,9 @@ export function GuestList({
 
       {/* Section header */}
       <div className="flex items-center gap-2 px-3 pb-1.5 pt-0.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717680]">Guests</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--mofa-text-muted)]">Guests</p>
         {activeGuests.length > 0 && (
-          <span className="rounded-full bg-[#f3f3f7] px-2 py-px text-[10px] font-bold text-[#545469]">
+          <span className="rounded-full bg-[color:var(--mofa-sidebar-active-bg)] px-2 py-px text-[10px] font-bold text-[color:var(--mofa-text-secondary)]">
             {activeGuests.length}
           </span>
         )}
@@ -531,7 +531,7 @@ export function GuestList({
       {/* Guest rows */}
       {guests.length === 0 ? (
         <div className="px-3 py-3 text-center">
-          <p className="text-xs text-[#9fa3ae]">No external guests yet</p>
+          <p className="text-xs text-[color:var(--mofa-text-placeholder)]">No external guests yet</p>
         </div>
       ) : (
         <div className="flex flex-col px-1">
@@ -540,7 +540,7 @@ export function GuestList({
           ))}
           {revokedGuests.length > 0 && (
             <>
-              <p className="mt-2 px-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-[#c1c4cd]">
+              <p className="mt-2 px-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-[color:var(--mofa-text-faint)]">
                 Revoked
               </p>
               {revokedGuests.map((g) => (

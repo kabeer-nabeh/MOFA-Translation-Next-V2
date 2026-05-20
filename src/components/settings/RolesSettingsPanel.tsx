@@ -61,7 +61,7 @@ export function RolesSettingsPanel() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex h-10 items-center justify-between">
-        <div className="text-[18px] font-semibold leading-[27px] text-[#414651]">
+        <div className="text-[18px] font-semibold leading-[27px] text-[color:var(--mofa-text-body)]">
           Role-Based Access Control
         </div>
 
@@ -71,8 +71,8 @@ export function RolesSettingsPanel() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[#eeedf5] bg-white">
-        <div className="grid grid-cols-[131px_1fr_228px_105px] border-b border-[#eeedf5] bg-[#fdfcfc] py-[15px] text-sm font-medium text-[#535862]">
+      <div className="overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-white">
+        <div className="grid grid-cols-[131px_1fr_228px_105px] border-b border-[color:var(--mofa-border-default)] bg-[#fdfcfc] py-[15px] text-sm font-medium text-[color:var(--mofa-text-subtle)]">
           <div className="px-6">Role Name</div>
           <div className="px-6">Description</div>
           <div className="px-6">Permissions</div>
@@ -86,13 +86,13 @@ export function RolesSettingsPanel() {
               key={r.name}
               className={cn(
                 "grid grid-cols-[131px_1fr_228px_105px] items-center py-[17.75px]",
-                !isLast && "border-b border-[#eeedf5]",
+                !isLast && "border-b border-[color:var(--mofa-border-default)]",
               )}
             >
-              <div className="px-6 text-sm font-semibold leading-[21px] text-[#414651]">
+              <div className="px-6 text-sm font-semibold leading-[21px] text-[color:var(--mofa-text-body)]">
                 {r.name}
               </div>
-              <div className="px-6 text-sm leading-[21px] text-[#535862]">
+              <div className="px-6 text-sm leading-[21px] text-[color:var(--mofa-text-subtle)]">
                 {r.description}
               </div>
               <div className="px-6">

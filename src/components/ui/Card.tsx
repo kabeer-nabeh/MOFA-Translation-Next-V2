@@ -12,25 +12,27 @@ type CardComponent = ((props: CardProps) => React.JSX.Element) & {
   Footer: typeof CardFooter;
 };
 
-export const Card: CardComponent = ({ className, ...props }) => {
+export const Card: CardComponent = ({ className, style, ...props }) => {
   return (
     <div
-      className={cn("rounded-xl border border-slate-200 bg-white", className)}
+      className={cn("rounded-xl border bg-[color:var(--mofa-sidebar-bg)]", className)}
+      style={{ borderColor: "var(--mofa-border-default)", ...style }}
       {...props}
     />
   );
 };
 
-function CardHeader({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
+function CardHeader({ className, style, ...props }: React.ComponentPropsWithoutRef<"div">) {
   return (
-    <div className={cn("space-y-1 border-b border-slate-200 p-4", className)} {...props} />
+    <div
+      className={cn("space-y-1 border-b p-4", className)}
+      style={{ borderColor: "var(--mofa-border-default)", ...style }}
+      {...props}
+    />
   );
 }
 
-function CardTitle({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"h3">) {
+function CardTitle({ className, ...props }: React.ComponentPropsWithoutRef<"h3">) {
   return (
     <h3
       className={cn("text-base font-semibold leading-none", className)}
@@ -39,12 +41,13 @@ function CardTitle({
   );
 }
 
-function CardDescription({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"p">) {
+function CardDescription({ className, ...props }: React.ComponentPropsWithoutRef<"p">) {
   return (
-    <p className={cn("text-sm text-slate-600", className)} {...props} />
+    <p
+      className={cn("text-sm", className)}
+      style={{ color: "var(--mofa-text-muted)" }}
+      {...props}
+    />
   );
 }
 
@@ -52,8 +55,14 @@ function CardContent({ className, ...props }: React.ComponentPropsWithoutRef<"di
   return <div className={cn("p-4", className)} {...props} />;
 }
 
-function CardFooter({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
-  return <div className={cn("border-t border-slate-200 p-4", className)} {...props} />;
+function CardFooter({ className, style, ...props }: React.ComponentPropsWithoutRef<"div">) {
+  return (
+    <div
+      className={cn("border-t p-4", className)}
+      style={{ borderColor: "var(--mofa-border-default)", ...style }}
+      {...props}
+    />
+  );
 }
 
 Card.Header = CardHeader;
@@ -61,4 +70,3 @@ Card.Title = CardTitle;
 Card.Description = CardDescription;
 Card.Content = CardContent;
 Card.Footer = CardFooter;
-

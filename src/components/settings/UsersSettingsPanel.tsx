@@ -79,12 +79,13 @@ export function UsersSettingsPanel() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search users"
             placeholder="Search users..."
-            className="h-10 w-full rounded-lg border border-[#eeedf5] bg-white pl-9 pr-3 text-sm text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] placeholder:text-[rgba(65,70,81,0.5)] focus:outline-none"
+            className="h-10 w-full rounded-lg border border-[color:var(--mofa-border-default)] bg-white pl-9 pr-3 text-sm text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] placeholder:text-[color:var(--mofa-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[#6f6e8a]/30"
           />
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#414651]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--mofa-text-body)]"
             aria-hidden="true"
           />
         </div>
@@ -95,8 +96,8 @@ export function UsersSettingsPanel() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[#eeedf5] bg-white">
-        <div className="grid grid-cols-[1fr_205px_183px_156px] border-b border-[#eeedf5] bg-[#fdfcfc] py-[15px] text-sm font-medium text-[#535862]">
+      <div className="overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-white">
+        <div className="grid grid-cols-[1fr_205px_183px_156px] border-b border-[color:var(--mofa-border-default)] bg-[#fdfcfc] py-[15px] text-sm font-medium text-[color:var(--mofa-text-subtle)]">
           <div className="px-6">User / Email</div>
           <div className="px-6">Role (RBAC)</div>
           <div className="px-6">Status</div>
@@ -112,18 +113,18 @@ export function UsersSettingsPanel() {
                 key={u.email}
                 className={cn(
                   "grid grid-cols-[1fr_205px_183px_156px] items-center py-4",
-                  !isLast && "border-b border-[#eeedf5]",
+                  !isLast && "border-b border-[color:var(--mofa-border-default)]",
                 )}
               >
                 <div className="flex items-center gap-3 px-6">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f3f7] text-base font-semibold leading-6 text-[#6e6b8b]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--mofa-sidebar-active-bg)] text-base font-semibold leading-6 text-[#6e6b8b]">
                     {initial}
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold leading-[21px] text-[#414651]">
+                    <div className="truncate text-sm font-semibold leading-[21px] text-[color:var(--mofa-text-body)]">
                       {u.name}
                     </div>
-                    <div className="truncate text-[13px] leading-[19.5px] text-[#535862]">
+                    <div className="truncate text-[13px] leading-[19.5px] text-[color:var(--mofa-text-subtle)]">
                       {u.email}
                     </div>
                   </div>

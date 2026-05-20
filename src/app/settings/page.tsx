@@ -6,7 +6,7 @@ export default function SettingsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-dvh w-full bg-white" />
+        <div className="min-h-dvh w-full bg-[color:var(--mofa-page-bg)]" />
       }
     >
       <SettingsView />

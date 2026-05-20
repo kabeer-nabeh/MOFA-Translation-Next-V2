@@ -22,7 +22,7 @@ const AI_STATUS_CONFIG: Record<
   AiStatus,
   { label: string; dot: string; bg: string; text: string; border: string; pulse?: boolean }
 > = {
-  not_started:       { label: "Not Started",       dot: "#717680", bg: "#e9eaeb", text: "#535862", border: "#d5d7da" },
+  not_started:       { label: "Not Started",       dot: "var(--mofa-text-muted)", bg: "#e9eaeb", text: "var(--mofa-text-subtle)", border: "#d5d7da" },
   processing:        { label: "Processing",        dot: "#4462c8", bg: "#eff4ff", text: "#3145a0", border: "#c3cff5", pulse: true },
   keyword_processed: { label: "Keyword Processed", dot: "#17b26a", bg: "#ecfdf3", text: "#067647", border: "#a8e6c1" },
 };
@@ -93,61 +93,62 @@ export function DiplomaticKeywordsPanel() {
   return (
     <div className="flex flex-col gap-5">
       {/* Header card */}
-      <div className="rounded-2xl border border-[#e9eaeb] bg-white p-6">
+      <div className="rounded-2xl border border-[color:var(--mofa-border-default)] bg-white p-6">
         <div>
           <h2 className="text-base font-semibold text-[#111827]">Diplomatic Keywords</h2>
-          <p className="mt-0.5 text-sm text-[#717680]">
+          <p className="mt-0.5 text-sm text-[color:var(--mofa-text-muted)]">
             Manage specialised terms used during live translation. Enabled keywords are prioritised by the translation engine.
           </p>
         </div>
 
         {/* Stats row */}
-        <div className="mt-4 flex items-center gap-4 rounded-xl bg-[#f8f8fb] px-4 py-3">
-          <div className="text-sm text-[#717680]">
-            <span className="font-semibold text-[#414651]">{keywords.length}</span> total keywords
+        <div className="mt-4 flex items-center gap-4 rounded-xl bg-[color:var(--mofa-btn-outline-hover)] px-4 py-3">
+          <div className="text-sm text-[color:var(--mofa-text-muted)]">
+            <span className="font-semibold text-[color:var(--mofa-text-body)]">{keywords.length}</span> total keywords
           </div>
-          <div className="h-3.5 w-px bg-[#e0dde8]" />
-          <div className="text-sm text-[#717680]">
+          <div className="h-3.5 w-px bg-[color:var(--mofa-sidebar-divider)]" />
+          <div className="text-sm text-[color:var(--mofa-text-muted)]">
             <span className="font-semibold text-[#17b26a]">{enabledCount}</span> enabled
           </div>
-          <div className="h-3.5 w-px bg-[#e0dde8]" />
-          <div className="text-sm text-[#717680]">
-            <span className="font-semibold text-[#717680]">{keywords.length - enabledCount}</span> disabled
+          <div className="h-3.5 w-px bg-[color:var(--mofa-sidebar-divider)]" />
+          <div className="text-sm text-[color:var(--mofa-text-muted)]">
+            <span className="font-semibold text-[color:var(--mofa-text-muted)]">{keywords.length - enabledCount}</span> disabled
           </div>
-          <div className="h-3.5 w-px bg-[#e0dde8]" />
-          <div className="text-sm text-[#717680]">
+          <div className="h-3.5 w-px bg-[color:var(--mofa-sidebar-divider)]" />
+          <div className="text-sm text-[color:var(--mofa-text-muted)]">
             <span className="font-semibold text-[#17b26a]">{processedCount}</span> keyword processed
           </div>
         </div>
       </div>
 
       {/* List card */}
-      <div className="overflow-hidden rounded-2xl border border-[#e9eaeb] bg-white">
+      <div className="overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-white">
 
         {/* Search */}
-        <div className="px-5 py-3 border-b border-[#f0f0f4]">
+        <div className="px-5 py-3 border-b border-[color:var(--mofa-border-default)]">
           <div className="relative">
-            <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#c1c4cd]" aria-hidden />
+            <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--mofa-text-muted)]" aria-hidden />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search keywords"
               placeholder="Search keywords…"
-              className="h-9 w-full rounded-lg border border-[#e9eaeb] bg-white pl-8 pr-3 text-sm text-[#414651] outline-none placeholder:text-[#c1c4cd] transition focus:border-[#c5c3d8] focus:ring-2 focus:ring-[#6f6e8a]/15"
+              className="h-9 w-full rounded-lg border border-[color:var(--mofa-border-default)] bg-white pl-8 pr-3 text-sm text-[color:var(--mofa-text-body)] outline-none placeholder:text-[color:var(--mofa-text-placeholder)] transition focus:border-[color:var(--mofa-accent)]/40 focus:ring-2 focus:ring-[#6f6e8a]/15"
             />
           </div>
         </div>
 
         {/* Column headers */}
-        <div className="grid grid-cols-[2fr_168px_64px] border-b border-[#f0f0f4] bg-[#fafafa] px-5 py-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#b0b3bb]">Keyword (EN)</span>
-          <span className="text-center text-[11px] font-semibold uppercase tracking-wider text-[#b0b3bb]">Model Processing</span>
-          <span className="text-center text-[11px] font-semibold uppercase tracking-wider text-[#b0b3bb]">Status</span>
+        <div className="grid grid-cols-[2fr_168px_64px] border-b border-[color:var(--mofa-border-default)] bg-[#fafafa] px-5 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--mofa-text-faint)]">Keyword (EN)</span>
+          <span className="text-center text-[11px] font-semibold uppercase tracking-wider text-[color:var(--mofa-text-faint)]">Model Processing</span>
+          <span className="text-center text-[11px] font-semibold uppercase tracking-wider text-[color:var(--mofa-text-faint)]">Status</span>
         </div>
 
         {/* Rows */}
         {filtered.length === 0 ? (
-          <div className="px-5 py-12 text-center text-sm text-[#b0b3bb]">
+          <div className="px-5 py-12 text-center text-sm text-[color:var(--mofa-text-faint)]">
             No keywords match your search.
           </div>
         ) : (
@@ -156,7 +157,7 @@ export function DiplomaticKeywordsPanel() {
               <li
                 key={kw.id}
                 className={cn(
-                  "grid grid-cols-[2fr_168px_64px] items-center px-5 py-3 transition-colors hover:bg-[#fafafa]",
+                  "grid grid-cols-[2fr_168px_64px] items-center px-5 py-3 transition-colors hover:bg-[color:var(--mofa-btn-outline-hover)]",
                   !kw.enabled && "opacity-50",
                 )}
               >
@@ -176,7 +177,7 @@ export function DiplomaticKeywordsPanel() {
                     aria-disabled="true"
                     className={cn(
                       "relative inline-flex h-[18px] w-8 shrink-0 cursor-not-allowed items-center rounded-full transition-colors",
-                      kw.enabled ? "bg-[#48476e]/50" : "bg-[#d5d7da]/60",
+                      kw.enabled ? "bg-[color:var(--mofa-accent)]/50" : "bg-[#d5d7da]/60",
                     )}
                   >
                     <span

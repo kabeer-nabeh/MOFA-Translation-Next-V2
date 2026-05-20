@@ -3,18 +3,13 @@
 import * as React from "react";
 import {
   AlertTriangle,
-  Ban,
   Calendar,
-  CalendarPlus,
   CheckCircle,
   ChevronDown,
-  Copy,
   Eye,
   Filter,
   Globe,
-  Link2,
   Monitor,
-  MoreVertical,
   Plus,
   Search,
   User,
@@ -29,6 +24,8 @@ import {
   type RsvpStatus,
   MEETINGS,
 } from "@/components/meetings/meetings-data";
+import { DeclineConfirmationModal, CancelMeetingModal } from "@/components/meetings/ConfirmationDialogs";
+import { MoreMenu } from "@/components/meetings/MoreMenu";
 import { NewMeetingModal } from "@/components/meetings/NewMeetingModal";
 import { Button } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -42,10 +39,10 @@ const PLATFORM_STYLES: Record<
   { bg: string; text: string; border: string; icon: React.ReactNode }
 > = {
   "In App": {
-    bg: "#f3f3f7",
-    text: "#545469",
-    border: "#d5d3e8",
-    icon: <Monitor size={13} className="text-[#545469]" aria-hidden />,
+    bg: "#ECEAE5",
+    text: "#52525B",
+    border: "var(--mofa-border-default)",
+    icon: <Monitor size={13} className="text-[color:var(--mofa-text-secondary)]" aria-hidden />,
   },
   Teams: {
     bg: "#f0eefe",
@@ -173,39 +170,6 @@ export function sortMeetingsForTab(meetings: Meeting[], activeTab: MeetingStatus
 
 export const CURRENT_USER = "Abdullah Al Harbi";
 
-// ─── ICS Calendar Download ────────────────────────────────────────────────────
-
-function _dtStamp(iso: string): string {
-  return new Date(iso).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-}
-
-function downloadICS(meeting: Meeting): void {
-  const lines = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//MOFA//Translation//EN",
-    "BEGIN:VEVENT",
-    `UID:mofa-${meeting.id}@mofa.gov`,
-    `DTSTAMP:${_dtStamp(new Date().toISOString())}`,
-    ...(meeting.startDatetime ? [`DTSTART:${_dtStamp(meeting.startDatetime)}`] : []),
-    ...(meeting.endDatetime ? [`DTEND:${_dtStamp(meeting.endDatetime)}`] : []),
-    `SUMMARY:${meeting.title}`,
-    `ORGANIZER;CN=${meeting.host}:mailto:organizer@mofa.gov`,
-    ...(meeting.meetingLink ? [`URL:${meeting.meetingLink}`] : []),
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ];
-  const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${meeting.id}.ics`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
 // ─── Conflict Detection ───────────────────────────────────────────────────────
 
 export function getConflictIds(meetings: Meeting[]): Set<string> {
@@ -259,14 +223,14 @@ function RelativeTimeChip({ time }: { time: RelativeMeetingTime }) {
 
   if (time.state === "ended") {
     return (
-      <span className="inline-flex items-center rounded-md border border-[#d5d7da] bg-white px-2 py-0.5 text-xs font-semibold text-[#717680]">
+      <span className="inline-flex items-center rounded-md border border-[color:var(--mofa-border-default)] bg-white px-2 py-0.5 text-xs font-semibold text-[color:var(--mofa-text-muted)]">
         {time.label}
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center rounded-md border border-[#d5d3e8] bg-white px-2 py-0.5 text-xs font-semibold text-[#545469]">
+    <span className="inline-flex items-center rounded-md border border-[color:var(--mofa-border-default)] bg-white px-2 py-0.5 text-xs font-semibold text-[color:var(--mofa-text-secondary)]">
       {time.label}
     </span>
   );
@@ -288,7 +252,7 @@ function ParticipantAvatars({
         {visible.map((p, i) => (
           <div
             key={p.id}
-            className="flex size-8 items-center justify-center rounded-full border-2 border-[#f3f3f7] text-[10px] font-semibold text-[#414651]"
+            className="flex size-8 items-center justify-center rounded-full border-2 border-[color:var(--mofa-btn-outline-hover)] text-[10px] font-semibold text-[color:var(--mofa-text-body)]"
             style={{
               backgroundColor: p.bg,
               marginLeft: i > 0 ? "-8px" : 0,
@@ -301,7 +265,7 @@ function ParticipantAvatars({
           </div>
         ))}
       </div>
-      <span className="text-sm text-[#414651]">
+      <span className="text-sm text-[color:var(--mofa-text-body)]">
         <span className="font-semibold">{total}</span> {total === 1 ? "Participant" : "Participants"}
       </span>
     </div>
@@ -325,283 +289,27 @@ function StatusBadge({ status }: { status: MeetingStatus }) {
   );
 }
 
-// ─── More Menu ────────────────────────────────────────────────────────────────
-
-function MoreMenu({
-  open,
-  onToggle,
-  meeting,
-  onRsvp,
-  onRequestDecline,
-  onRequestCancel,
-  isHost = false,
-}: {
-  open: boolean;
-  onToggle: () => void;
-  meeting?: Meeting;
-  onRsvp?: (id: string, status: RsvpStatus) => void;
-  onRequestDecline?: () => void;
-  onRequestCancel?: () => void;
-  isHost?: boolean;
-}) {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const rsvp = meeting?.rsvpStatus ?? "pending";
-  const isUpcoming = meeting?.status === "upcoming";
-  const [copied, setCopied] = React.useState(false);
-
-  const close = React.useCallback(() => {
-    if (open) onToggle();
-  }, [onToggle, open]);
-
-  React.useEffect(() => {
-    if (!open) return;
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onToggle();
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open, onToggle]);
-
-  const handleCopyLink = React.useCallback(() => {
-    const link = meeting?.meetingLink;
-    if (!link) return;
-    navigator.clipboard.writeText(link).then(() => {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    });
-    close();
-  }, [meeting?.meetingLink, close]);
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex size-8 items-center justify-center rounded-lg text-[#717680] transition hover:bg-white/60"
-        aria-label="More options"
-        aria-expanded={open}
-      >
-        {copied ? (
-          <CheckCircle size={16} className="text-[#067647]" />
-        ) : (
-          <MoreVertical size={16} />
-        )}
-      </button>
-      {open && (
-        <div className="absolute right-0 top-9 z-50 min-w-[188px] overflow-hidden rounded-lg border border-[#e9eaeb] bg-white py-1 shadow-lg">
-          {isUpcoming ? (
-            <>
-              {/* Copy meeting link */}
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors",
-                  meeting?.meetingLink
-                    ? "text-[#414651] hover:bg-[#f3f3f7]"
-                    : "cursor-not-allowed text-[#a4a7ae]",
-                )}
-                onClick={meeting?.meetingLink ? handleCopyLink : undefined}
-                disabled={!meeting?.meetingLink}
-              >
-                <Link2 size={14} aria-hidden />
-                Copy meeting link
-              </button>
-
-              {/* Add to calendar */}
-              <button
-                type="button"
-                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-[#414651] hover:bg-[#f3f3f7] transition-colors"
-                onClick={() => {
-                  if (meeting) downloadICS(meeting);
-                  close();
-                }}
-              >
-                <CalendarPlus size={14} aria-hidden />
-                Add to calendar
-              </button>
-
-              {/* Reschedule (placeholder) */}
-              <button
-                type="button"
-                className="flex w-full cursor-not-allowed items-center gap-2.5 px-3 py-2 text-left text-sm text-[#a4a7ae]"
-                disabled
-                title="Coming soon"
-              >
-                <Calendar size={14} aria-hidden />
-                Reschedule
-              </button>
-
-              {/* Divider */}
-              <div className="my-1 border-t border-[#f0f0f4]" />
-
-              {/* RSVP contextual actions */}
-              {rsvp === "accepted" && (
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm font-semibold text-[#b42318] hover:bg-[#fff1f0] transition-colors"
-                  onClick={() => {
-                    close();
-                    onRequestDecline?.();
-                  }}
-                >
-                  <XCircle size={14} aria-hidden />
-                  Decline meeting
-                </button>
-              )}
-              {rsvp === "declined" && (
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm font-semibold text-[#067647] hover:bg-[#ecfdf3] transition-colors"
-                  onClick={() => {
-                    close();
-                    if (meeting) onRsvp?.(meeting.id, "accepted");
-                  }}
-                >
-                  <CheckCircle size={14} aria-hidden />
-                  Revoke decline
-                </button>
-              )}
-
-              {/* Cancel meeting (host only) */}
-              {isHost && (
-                <>
-                  <div className="my-1 border-t border-[#f0f0f4]" />
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm font-semibold text-[#b42318] hover:bg-[#fff1f0] transition-colors"
-                    onClick={() => {
-                      close();
-                      onRequestCancel?.();
-                    }}
-                  >
-                    <Ban size={14} aria-hidden />
-                    Cancel meeting
-                  </button>
-                </>
-              )}
-            </>
-          ) : (
-            [
-              { label: "Copy link", icon: <Copy size={14} aria-hidden /> },
-              { label: "Download transcript", icon: <Eye size={14} aria-hidden /> },
-            ].map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-[#414651] hover:bg-[#f3f3f7] transition-colors"
-                onClick={close}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Date Chip ────────────────────────────────────────────────────────────────
 
 function DateChipBadge({ month, day }: { month: string; day: number }) {
   return (
-    <div className="flex w-16 shrink-0 flex-col items-center overflow-hidden rounded-lg border border-[#e9eaeb] shadow-[0_0_0_2px_white,0_0_0_4px_#8988ab] bg-white">
-      <div className="flex w-full items-center justify-center bg-[#e7e7ee] pb-0.5 pt-1 px-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-[#717680]">
+    <div
+      className="flex w-16 shrink-0 flex-col items-center overflow-hidden rounded-lg border bg-white"
+      style={{
+        borderColor: "var(--mofa-border-default)",
+        boxShadow: "0 0 0 2px #F5F4F1, 0 0 0 3px #C8C4BC",
+      }}
+    >
+      <div
+        className="flex w-full items-center justify-center pb-0.5 pt-1 px-2"
+        style={{ background: "var(--mofa-sidebar-active-bg)" }}
+      >
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--mofa-text-muted)" }}>
           {month}
         </span>
       </div>
       <div className="flex w-full items-center justify-center pb-[3px] pt-px px-2">
-        <span className="text-lg font-bold leading-7 text-[#545469]">{day}</span>
-      </div>
-    </div>
-  );
-}
-
-function DeclineConfirmationModal({
-  meetingTitle,
-  onCancel,
-  onConfirm,
-}: {
-  meetingTitle: string;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-[#0a0d12]/35 px-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="decline-meeting-title"
-    >
-      <div className="w-full max-w-md rounded-xl border border-[#e9eaeb] bg-white p-6 shadow-[0_24px_64px_rgba(10,13,18,0.24)]">
-        <div className="flex flex-col gap-2">
-          <h2 id="decline-meeting-title" className="text-lg font-semibold text-[#414651]">
-            Decline this meeting?
-          </h2>
-          <p className="text-sm leading-6 text-[#535862]">
-            You are about to decline "{meetingTitle}". You can revoke the decline later from the meeting menu.
-          </p>
-        </div>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button variant="secondary" size="md" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            size="md"
-            className="border-[#b42318] bg-[#b42318] hover:bg-[#912018]"
-            onClick={onConfirm}
-          >
-            Decline meeting
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CancelMeetingModal({
-  meetingTitle,
-  onCancel,
-  onConfirm,
-}: {
-  meetingTitle: string;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-[#0a0d12]/35 px-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="cancel-meeting-title"
-    >
-      <div className="w-full max-w-md rounded-xl border border-[#e9eaeb] bg-white p-6 shadow-[0_24px_64px_rgba(10,13,18,0.24)]">
-        <div className="flex flex-col gap-2">
-          <h2 id="cancel-meeting-title" className="text-lg font-semibold text-[#414651]">
-            Cancel this meeting?
-          </h2>
-          <p className="text-sm leading-6 text-[#535862]">
-            You are about to cancel "{meetingTitle}". All attendees will be notified and the meeting will be removed from their calendars.
-          </p>
-        </div>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button variant="secondary" size="md" onClick={onCancel}>
-            Keep meeting
-          </Button>
-          <Button
-            variant="primary"
-            size="md"
-            className="border-[#b42318] bg-[#b42318] hover:bg-[#912018]"
-            onClick={onConfirm}
-          >
-            Cancel meeting
-          </Button>
-        </div>
+        <span className="text-lg font-bold leading-7" style={{ color: "var(--mofa-text-primary)" }}>{day}</span>
       </div>
     </div>
   );
@@ -646,12 +354,12 @@ export function MeetingCard({
   // ── Completed card ──────────────────────────────────────────────────────────
   if (meeting.status === "completed") {
     return (
-      <div className="flex flex-col gap-4 rounded-xl bg-[#f3f3f7] p-5">
+      <div className="flex flex-col gap-4 rounded-xl border-[color:var(--mofa-border-default)] border bg-[#F5F4F1] p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <h3
-                className="line-clamp-1 text-lg font-semibold text-[#414651]"
+                className="line-clamp-1 text-lg font-semibold text-[color:var(--mofa-text-body)]"
                 title={meeting.title}
               >
                 {meeting.title}
@@ -659,17 +367,17 @@ export function MeetingCard({
               {meeting.platform && <PlatformBadge platform={meeting.platform} />}
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-1 text-sm text-[#414651]">
-                <Calendar size={16} className="shrink-0 text-[#717680]" aria-hidden />
+              <div className="flex items-center gap-1 text-sm text-[color:var(--mofa-text-body)]">
+                <Calendar size={16} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
                 <span>{meeting.date} • {meeting.timeRange}</span>
               </div>
-              <div className="flex items-center gap-1 text-sm text-[#414651]">
-                <User size={16} className="shrink-0 text-[#717680]" aria-hidden />
+              <div className="flex items-center gap-1 text-sm text-[color:var(--mofa-text-body)]">
+                <User size={16} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
                 <span>Host: {meeting.host}</span>
               </div>
               {meeting.languages && (
-                <div className="flex items-center gap-1 text-sm text-[#414651]">
-                  <Globe size={16} className="shrink-0 text-[#717680]" aria-hidden />
+                <div className="flex items-center gap-1 text-sm text-[color:var(--mofa-text-body)]">
+                  <Globe size={16} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
                   <span>Language: {meeting.languages}</span>
                 </div>
               )}
@@ -697,7 +405,7 @@ export function MeetingCard({
   return (
     <div
       className={cn(
-        "flex items-center gap-6 rounded-xl bg-[#f3f3f7] p-6 transition",
+        "flex items-center gap-6 rounded-xl border-[color:var(--mofa-border-default)] border bg-[#F5F4F1] p-6 transition",
         isEnded && "opacity-65 grayscale",
       )}
     >
@@ -708,7 +416,7 @@ export function MeetingCard({
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <h3
-            className="line-clamp-1 text-lg font-semibold text-[#414651]"
+            className="line-clamp-1 text-lg font-semibold text-[color:var(--mofa-text-body)]"
             title={meeting.title}
           >
             {meeting.title}
@@ -727,17 +435,17 @@ export function MeetingCard({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 text-sm text-[#414651]">
-            <Calendar size={16} className="shrink-0 text-[#717680]" aria-hidden />
+          <div className="flex items-center gap-1 text-sm text-[color:var(--mofa-text-body)]">
+            <Calendar size={16} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
             <span>{meeting.date} • {meeting.timeRange}</span>
           </div>
-          <div className="flex items-center gap-1 text-sm text-[#414651]">
-            <User size={16} className="shrink-0 text-[#717680]" aria-hidden />
+          <div className="flex items-center gap-1 text-sm text-[color:var(--mofa-text-body)]">
+            <User size={16} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
             <span>Host: {meeting.host}</span>
           </div>
           {meeting.languages && (
-            <div className="flex items-center gap-1 text-sm text-[#414651]">
-              <Globe size={16} className="shrink-0 text-[#717680]" aria-hidden />
+            <div className="flex items-center gap-1 text-sm text-[color:var(--mofa-text-body)]">
+              <Globe size={16} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
               <span>Language: {meeting.languages}</span>
             </div>
           )}
@@ -812,7 +520,7 @@ export function MeetingCard({
                 ) : (
                   <span
                     title="Meeting link not available"
-                    className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-[#d5d7da] bg-white px-3 py-2 text-sm font-semibold text-[#a4a7ae] opacity-60 select-none"
+                    className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-3 py-2 text-sm font-semibold text-[color:var(--mofa-text-disabled)] opacity-60 select-none"
                   >
                     <Video size={16} aria-hidden />
                     Link unavailable
@@ -936,8 +644,8 @@ export function MeetingsPageClient() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           {/* Title */}
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-[#414651]">All Your Meetings</h1>
-            <p className="text-xs text-[#535862]">Showing all your meetings across organizations</p>
+            <h1 className="text-2xl font-semibold text-[color:var(--mofa-text-body)]">All Your Meetings</h1>
+            <p className="text-xs text-[color:var(--mofa-text-subtle)]">Showing all your meetings across organizations</p>
           </div>
 
           {/* Actions - New Meeting button only */}
@@ -955,7 +663,7 @@ export function MeetingsPageClient() {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-[#e9eaeb]">
+        <div className="border-b border-[color:var(--mofa-border-default)]">
           <div className="flex gap-3">
             {TABS.map((tab) => {
               const active = tab.id === activeTab;
@@ -967,15 +675,15 @@ export function MeetingsPageClient() {
                   className={cn(
                     "pb-3 pt-1 text-sm font-semibold transition",
                     active
-                      ? "border-b-2 border-[#6f6e8a] text-[#545469]"
-                      : "text-[#717680] hover:text-[#414651]",
+                      ? "border-b-2 border-[color:var(--mofa-text-primary)] text-[color:var(--mofa-text-primary)]"
+                      : "text-[color:var(--mofa-text-muted)] hover:text-[color:var(--mofa-text-body)]",
                   )}
                 >
                   {tab.label}
                   <span
                     className={cn(
                       "ml-2 rounded-full px-2 py-0.5 text-xs",
-                      active ? "bg-[#e9e9f0] text-[#545469]" : "bg-[#f0f0f4] text-[#717680]",
+                      active ? "bg-[#e9e9f0] text-[color:var(--mofa-text-secondary)]" : "bg-[#f0f0f4] text-[color:var(--mofa-text-muted)]",
                     )}
                   >
                     {tab.id === "upcoming" && rsvpFilter !== "all"
@@ -996,15 +704,16 @@ export function MeetingsPageClient() {
             <div className="relative min-w-[220px] flex-1 max-w-sm">
               <Search
                 size={16}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#717680]"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--mofa-text-muted)]"
                 aria-hidden
               />
               <input
                 type="search"
+                aria-label="Search meetings"
                 placeholder="Search for meetings"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-10 w-full rounded-lg border border-[#d5d7da] bg-white pl-9 pr-3 text-sm text-[#414651] shadow-[0_1px_2px_0_rgba(10,13,18,0.05)] outline-none placeholder:text-[#717680] focus:ring-2 focus:ring-[#6f6e8a]/30"
+                className="h-10 w-full rounded-lg border border-[color:var(--mofa-border-default)] bg-white pl-9 pr-3 text-sm text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_0_rgba(10,13,18,0.05)] outline-none placeholder:text-[color:var(--mofa-text-muted)] focus:ring-2 focus:ring-[#6f6e8a]/30"
               />
             </div>
 
@@ -1021,7 +730,7 @@ export function MeetingsPageClient() {
                 <ChevronDown size={14} className={cn("transition-transform", filtersOpen && "rotate-180")} aria-hidden />
               </Button>
               {filtersOpen && (
-                <div className="absolute right-0 top-12 z-50 min-w-[200px] overflow-hidden rounded-lg border border-[#e9eaeb] bg-white py-1 shadow-lg">
+                <div className="absolute right-0 top-12 z-50 min-w-[200px] overflow-hidden rounded-lg border border-[color:var(--mofa-border-default)] bg-white py-1 shadow-lg">
                   {(activeTab === "completed"
                     ? ["This week", "This month", "Last 3 months", "All time"]
                     : ["Accepted", "Declined", "Pending", "All"]
@@ -1034,7 +743,7 @@ export function MeetingsPageClient() {
                         type="button"
                         className={cn(
                           "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors",
-                          isActive ? "bg-[#e9e9f0] text-[#545469] font-medium" : "text-[#414651] hover:bg-[#f3f3f7]",
+                          isActive ? "bg-[#e9e9f0] text-[color:var(--mofa-text-secondary)] font-medium" : "text-[color:var(--mofa-text-body)] hover:bg-[color:var(--mofa-btn-outline-hover)]",
                         )}
                         onClick={() => {
                           if (activeTab === "upcoming") {
@@ -1056,13 +765,13 @@ export function MeetingsPageClient() {
           {/* Active filter indicator and clear button */}
           {activeTab === "upcoming" && rsvpFilter !== "all" && (
             <div className="flex items-center gap-2">
-              <span className="rounded-full border border-[#d5d3e8] bg-[#f3f3f7] px-3 py-1 text-xs font-medium text-[#545469]">
+              <span className="rounded-full border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)] px-3 py-1 text-xs font-medium text-[color:var(--mofa-text-secondary)]">
                 {rsvpFilter.charAt(0).toUpperCase() + rsvpFilter.slice(1)}
               </span>
               <button
                 type="button"
                 onClick={() => setRsvpFilter("all")}
-                className="text-xs text-[#6f6e8a] hover:text-[#414651] underline transition-colors"
+                className="text-xs text-[color:var(--mofa-text-muted)] hover:text-[color:var(--mofa-text-body)] underline transition-colors"
               >
                 Clear filters
               </button>
@@ -1089,9 +798,9 @@ export function MeetingsPageClient() {
               />
             ))
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#e0dde8] bg-[#fafbfc] px-6 py-16 text-center">
-              <p className="text-sm font-medium text-[#414651]">No meetings found</p>
-              <p className="mt-1 text-sm text-[#717680]">
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-btn-outline-hover)] px-6 py-16 text-center">
+              <p className="text-sm font-medium text-[color:var(--mofa-text-body)]">No meetings found</p>
+              <p className="mt-1 text-sm text-[color:var(--mofa-text-muted)]">
                 {search && rsvpFilter !== "all"
                   ? `No ${rsvpFilter} meetings matching "${search}".`
                   : search
@@ -1104,7 +813,7 @@ export function MeetingsPageClient() {
                 <button
                   type="button"
                   onClick={() => { setSearch(""); setRsvpFilter("all"); }}
-                  className="mt-3 text-sm text-[#6f6e8a] underline hover:text-[#414651] transition-colors"
+                  className="mt-3 text-sm text-[color:var(--mofa-text-muted)] underline hover:text-[color:var(--mofa-text-body)] transition-colors"
                 >
                   Clear filters
                 </button>
@@ -1125,7 +834,7 @@ export function MeetingsPageClient() {
         )}
       >
         {toast ? (
-          <div className="rounded-lg border border-[#d5d7da] bg-white px-4 py-3 text-sm font-semibold text-[#414651] shadow-[0_12px_30px_rgba(10,13,18,0.16)]">
+          <div className="rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--mofa-text-body)] shadow-[0_12px_30px_rgba(10,13,18,0.16)]">
             {toast.message}
           </div>
         ) : null}

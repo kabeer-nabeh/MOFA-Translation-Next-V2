@@ -26,12 +26,12 @@ function SettingsCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#eeedf5] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-      <div className="border-b border-[#eeedf5] bg-[#fdfcfc] px-6 pb-5 pt-5">
-        <div className="text-base font-semibold leading-6 text-[#414651]">
+    <div className="overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      <div className="border-b border-[color:var(--mofa-border-default)] bg-[#fdfcfc] px-6 pb-5 pt-5">
+        <div className="text-base font-semibold leading-6 text-[color:var(--mofa-text-body)]">
           {title}
         </div>
-        <div className="mt-1 text-[13px] leading-[19.5px] text-[#535862]">
+        <div className="mt-1 text-[13px] leading-[19.5px] text-[color:var(--mofa-text-subtle)]">
           {description}
         </div>
       </div>
@@ -112,7 +112,7 @@ export function ProfileSettingsPanel() {
         description="Update your personal photo and details."
       >
         <div className="flex items-center gap-6">
-          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#f3f3f7] text-[28px] font-semibold leading-[42px] text-[#6e6b8b]">
+          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[color:var(--mofa-sidebar-active-bg)] text-[28px] font-semibold leading-[42px] text-[#6e6b8b]">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
@@ -144,13 +144,13 @@ export function ProfileSettingsPanel() {
               />
               <label
                 htmlFor={fileInputId}
-                className="cursor-pointer select-none rounded-lg border border-[#d5d7da] bg-white px-[17px] py-[7px] text-[13px] font-semibold leading-[19.5px] text-[#414651] shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+                className="cursor-pointer select-none rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-[17px] py-[7px] text-[13px] font-semibold leading-[19.5px] text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98]"
               >
                 Upload new avatar
               </label>
               <button
                 type="button"
-                className="text-[13px] font-semibold leading-[19.5px] text-[#64748b] disabled:cursor-not-allowed disabled:opacity-50"
+                className="text-[13px] font-semibold leading-[19.5px] text-[#64748b] hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!avatarUrl}
                 onClick={() => {
                   if (avatarUrl) URL.revokeObjectURL(avatarUrl);
@@ -205,7 +205,7 @@ export function ProfileSettingsPanel() {
       >
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
           <div className="space-y-1.5">
-            <div className="text-[13px] font-medium leading-[19.5px] text-[#414651]">
+            <div className="text-[13px] font-medium leading-[19.5px] text-[color:var(--mofa-text-body)]">
               Default Spoken Language
             </div>
             <SelectMenu
@@ -220,7 +220,7 @@ export function ProfileSettingsPanel() {
             />
           </div>
           <div className="space-y-1.5">
-            <div className="text-[13px] font-medium leading-[19.5px] text-[#414651]">
+            <div className="text-[13px] font-medium leading-[19.5px] text-[color:var(--mofa-text-body)]">
               Default Target Language
             </div>
             <SelectMenu
@@ -247,14 +247,14 @@ export function ProfileSettingsPanel() {
           type="button"
           onClick={onCancel}
           disabled={!dirty || saving}
-          className="h-10 rounded-lg border border-[#d5d7da] bg-white px-[18px] text-sm font-semibold leading-[21px] text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="h-10 rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-[18px] text-sm font-semibold leading-[21px] text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={!canSave}
-          className="h-10 rounded-lg bg-[#48476e] px-5 text-sm font-semibold leading-[21px] text-white shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="h-10 rounded-lg bg-[#212121] px-5 text-sm font-semibold leading-[21px] text-white shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.1)] hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>

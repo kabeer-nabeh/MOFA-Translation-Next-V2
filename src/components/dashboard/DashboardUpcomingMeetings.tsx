@@ -38,7 +38,7 @@ export function DashboardUpcomingMeetings({ maxItems = 6 }: Props) {
 
   if (upcoming.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-[#717680]">
+      <p className="py-6 text-center text-sm text-[color:var(--mofa-text-muted)]">
         No upcoming meetings.
       </p>
     );

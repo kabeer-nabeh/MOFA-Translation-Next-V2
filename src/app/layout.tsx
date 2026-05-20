@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Stack_Sans_Text, IBM_Plex_Sans_Arabic } from "next/font/google";
 
 import "./globals.css";
 import { ActiveMeetingProvider } from "@/contexts/ActiveMeetingContext";
 
-const ibmPlexSans = IBM_Plex_Sans({
+const stackSansText = Stack_Sans_Text({
   subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
-  variable: "--font-ibm-plex-sans",
+  variable: "--font-stack-sans-text",
 });
 
 const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
@@ -29,9 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${ibmPlexSans.variable} ${ibmPlexSansArabic.variable}`}>
+    <html lang="en" className={`${stackSansText.variable} ${ibmPlexSansArabic.variable}`}>
       <body
-        className={`${ibmPlexSans.className} min-h-dvh bg-white font-sans text-slate-900 antialiased`}
+        className={`${stackSansText.className} min-h-dvh bg-[color:var(--mofa-page-bg)] font-sans text-[color:var(--mofa-text-primary)] antialiased`}
       >
         <ActiveMeetingProvider>
           {children}

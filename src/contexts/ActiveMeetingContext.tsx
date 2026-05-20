@@ -84,7 +84,7 @@ function LiveTimer({ startedAt }: { startedAt: number }) {
   const m = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const s = String(elapsed % 60).padStart(2, "0");
   return (
-    <span className="font-mono text-[12px] tabular-nums text-[#535862]">
+    <span className="font-mono text-[12px] tabular-nums text-[color:var(--mofa-text-subtle)]">
       {m}:{s}
     </span>
   );
@@ -98,10 +98,10 @@ function PlatformBadge({ platform }: { platform?: MeetingPlatform }) {
     ) : platform === "Beem" ? (
       <img src="/beam-logo.png" alt="" className="h-3 w-3 object-contain" />
     ) : (
-      <Monitor size={10} className="shrink-0 text-[#717680]" aria-hidden />
+      <Monitor size={10} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
     );
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-[#e0dde8] bg-[#f8f7fc] px-2 py-0.5 text-[11px] font-semibold text-[#535862]">
+    <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-btn-outline-hover)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--mofa-text-subtle)]">
       {icon}
       {label}
     </span>
@@ -171,21 +171,21 @@ function DraggableMinimizedOverlay({
   return (
     <div
       ref={cardRef}
-      className="fixed z-[300] w-72 cursor-grab select-none rounded-2xl border border-[#e0dde8] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.16)] active:cursor-grabbing"
+      className="fixed z-[300] w-72 cursor-grab select-none rounded-2xl border border-[color:var(--mofa-border-default)] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.16)] active:cursor-grabbing"
       style={pos ? { left: pos.left, top: pos.top } : { bottom: 24, left: 24 }}
       onPointerDown={handlePointerDown}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-[#f0f0f4] px-3 pb-2.5 pt-3">
+      <div className="flex items-center gap-2 border-b border-[color:var(--mofa-border-default)] px-3 pb-2.5 pt-3">
         <span className="flex size-2 shrink-0 animate-pulse rounded-full bg-[#16a34a]" />
         {session.platform === "Teams" ? (
           <img src="/teams.png" alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
         ) : session.platform === "Beem" ? (
           <img src="/beam-logo.png" alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
         ) : (
-          <Monitor size={13} className="shrink-0 text-[#717680]" aria-hidden />
+          <Monitor size={13} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
         )}
-        <p className="flex-1 truncate text-[13px] font-semibold leading-snug text-[#181d27]">
+        <p className="flex-1 truncate text-[13px] font-semibold leading-snug text-[color:var(--mofa-text-primary)]">
           {session.title}
         </p>
       </div>
@@ -198,7 +198,7 @@ function DraggableMinimizedOverlay({
       {/* Latest transcript lines */}
       <div className="mt-2 max-h-[96px] space-y-1 overflow-hidden px-3">
         {latestLines.length === 0 ? (
-          <p className="text-[11px] italic text-[#9fa3ae]">Waiting for transcript…</p>
+          <p className="text-[11px] italic text-[color:var(--mofa-text-placeholder)]">Waiting for transcript…</p>
         ) : (
           latestLines.map((line) => (
             <div key={line.id} className="flex items-start gap-1.5">
@@ -210,7 +210,7 @@ function DraggableMinimizedOverlay({
               >
                 {line.initials}
               </span>
-              <p className="line-clamp-2 text-[11px] leading-[1.45] text-[#414651]">
+              <p className="line-clamp-2 text-[11px] leading-[1.45] text-[color:var(--mofa-text-body)]">
                 {line.isYou && (
                   <span className="font-semibold">You: </span>
                 )}
@@ -222,7 +222,7 @@ function DraggableMinimizedOverlay({
       </div>
 
       {/* Footer — timer + actions */}
-      <div className="flex items-center justify-between border-t border-[#f0f0f4] bg-[#fafafa] px-3 py-2.5 mt-2 rounded-b-2xl">
+      <div className="flex items-center justify-between border-t border-[color:var(--mofa-border-default)] bg-[#fafafa] px-3 py-2.5 mt-2 rounded-b-2xl">
         <LiveTimer startedAt={session.startedAt} />
         <div className="flex items-center gap-1.5">
           <button
@@ -230,7 +230,7 @@ function DraggableMinimizedOverlay({
             onClick={onExpand}
             aria-label="Expand meeting"
             title="Expand meeting"
-            className="flex size-7 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[#f3f3f7]"
+            className="flex size-7 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-sidebar-active-bg)]"
           >
             <Maximize2 size={13} />
           </button>

@@ -180,3 +180,50 @@ export async function getUpcomingMeetings(): Promise<
     setTimeout(() => resolve(MOCK_UPCOMING_MEETINGS), 100);
   });
 }
+
+export type CompletedMeeting = {
+  id: string;
+  title: string;
+  dateLabel: string;
+  timeRange: string;
+  hostName: string;
+  languages: string[];
+  platform: Meeting["platform"];
+};
+
+const MOCK_COMPLETED_MEETINGS: CompletedMeeting[] = [
+  {
+    id: "c1",
+    title: "MOFA Live Translation - System Performance Review",
+    dateLabel: "Dec 24, 2025",
+    timeRange: "9:00 AM – 9:30 AM",
+    hostName: "Suliman Alawi",
+    languages: ["Arabic", "English"],
+    platform: "In App",
+  },
+  {
+    id: "c2",
+    title: "Q4 Strategy Review - Leadership Sync",
+    dateLabel: "Dec 20, 2025",
+    timeRange: "2:00 PM – 3:00 PM",
+    hostName: "Abdullah Al Harbi",
+    languages: ["Arabic", "English"],
+    platform: "Teams",
+  },
+  {
+    id: "c3",
+    title: "Translation Pipeline - Technical Walkthrough",
+    dateLabel: "Dec 18, 2025",
+    timeRange: "11:00 AM – 11:45 AM",
+    hostName: "Koray Okumus",
+    languages: ["Arabic", "English", "French"],
+    platform: "Beem",
+  },
+];
+
+/** Returns the 3 most recent completed meetings. */
+export async function getRecentCompletedMeetings(): Promise<CompletedMeeting[]> {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(MOCK_COMPLETED_MEETINGS), 100);
+  });
+}

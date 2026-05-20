@@ -40,7 +40,7 @@ const ROWS: RowProps[] = [
     name: "Microsoft Teams",
     description: "Connect your tenant so MOFA can schedule and join meetings in Teams.",
     icon: (
-      <img src="/teams.png" alt="" className="h-9 w-9" />
+      <img src="/teams.png" alt="" aria-hidden="true" className="h-9 w-9" />
     ),
   },
   {
@@ -49,7 +49,7 @@ const ROWS: RowProps[] = [
     description:
       "Connect Outlook and Microsoft 365 mail so MOFA can send invites and keep calendars in sync.",
     icon: (
-      <img src="/outlook.png" alt="" className="h-9 w-9 object-contain" />
+      <img src="/outlook.png" alt="" aria-hidden="true" className="h-9 w-9 object-contain" />
     ),
   },
   {
@@ -57,7 +57,7 @@ const ROWS: RowProps[] = [
     name: "Beem",
     description: "Link Beem to run interpretation meetings with the same team workflow.",
     icon: (
-      <img src="/beam-logo.png" alt="Beem" className="h-9 w-9 object-contain" />
+      <img src="/beam-logo.png" alt="" aria-hidden="true" className="h-9 w-9 object-contain" />
     ),
   },
 ];
@@ -82,7 +82,7 @@ function StatusPill({
     );
   }
   return (
-    <span className="inline-flex items-center rounded-full bg-[#f3f3f7] px-2.5 py-0.5 text-xs font-medium text-[#64748b]">
+    <span className="inline-flex items-center rounded-full bg-[color:var(--mofa-sidebar-active-bg)] px-2.5 py-0.5 text-xs font-medium text-[#64748b]">
       Not connected
     </span>
   );
@@ -98,12 +98,12 @@ function SettingsCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#eeedf5] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-      <div className="border-b border-[#eeedf5] bg-[#fdfcfc] px-6 pb-5 pt-5">
-        <div className="text-base font-semibold leading-6 text-[#414651]">
+    <div className="overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      <div className="border-b border-[color:var(--mofa-border-default)] bg-[#fdfcfc] px-6 pb-5 pt-5">
+        <div className="text-base font-semibold leading-6 text-[color:var(--mofa-text-body)]">
           {title}
         </div>
-        <div className="mt-1 text-[13px] leading-[19.5px] text-[#535862]">
+        <div className="mt-1 text-[13px] leading-[19.5px] text-[color:var(--mofa-text-subtle)]">
           {description}
         </div>
       </div>
@@ -215,19 +215,19 @@ export function IntegrationsSettingsPanel() {
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="disconnect-title"
-                className="w-full max-w-md rounded-2xl border border-[#eeedf5] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)]"
+                className="w-full max-w-md rounded-2xl border border-[color:var(--mofa-border-default)] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)]"
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <div className="flex items-start justify-between gap-3">
                   <h2
                     id="disconnect-title"
-                    className="text-base font-semibold text-[#181d27]"
+                    className="text-base font-semibold text-[color:var(--mofa-text-primary)]"
                   >
                     Disconnect {dialog.name}?
                   </h2>
                   <button
                     type="button"
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] disabled:opacity-50"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1 disabled:opacity-50"
                     onClick={() => !busy && setDialog(null)}
                     aria-label="Close"
                     disabled={busy}
@@ -235,7 +235,7 @@ export function IntegrationsSettingsPanel() {
                     <X className="h-4 w-4" aria-hidden />
                   </button>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-[#535862]">
+                <p className="mt-2 text-sm leading-6 text-[color:var(--mofa-text-subtle)]">
                   MOFA will remove this connection after you confirm. You can
                   integrate again at any time.
                 </p>
@@ -285,22 +285,22 @@ export function IntegrationsSettingsPanel() {
             <div
               key={row.id}
               className={cn(
-                "flex flex-col gap-4 border-[#eeedf5] py-5 sm:flex-row sm:items-center sm:justify-between",
+                "flex flex-col gap-4 border-[color:var(--mofa-border-default)] py-5 sm:flex-row sm:items-center sm:justify-between",
                 !isLast && "border-b",
               )}
             >
               <div className="flex min-w-0 items-start gap-4">
-                <div className="shrink-0 rounded-xl border border-[#eeedf5] bg-white p-2">
+                <div className="shrink-0 rounded-xl border border-[color:var(--mofa-border-default)] bg-white p-2">
                   {row.icon}
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-sm font-semibold text-[#414651]">
+                    <h3 className="text-sm font-semibold text-[color:var(--mofa-text-body)]">
                       {row.name}
                     </h3>
                     <StatusPill status={s} />
                   </div>
-                  <p className="mt-1 max-w-xl text-[13px] leading-[19.5px] text-[#535862]">
+                  <p className="mt-1 max-w-xl text-[13px] leading-[19.5px] text-[color:var(--mofa-text-subtle)]">
                     {row.description}
                   </p>
                 </div>

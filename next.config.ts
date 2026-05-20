@@ -2,9 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  turbopack: {
-    root: new URL(".", import.meta.url).pathname,
-  },
+  distDir: `${process.cwd()}/.next`,
   images: {
     remotePatterns: [
       {

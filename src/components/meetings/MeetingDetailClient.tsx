@@ -15,6 +15,7 @@ import {
   Globe,
   Hash,
   Link2,
+  Lock,
   MessageSquare,
   Mic,
   MicOff,
@@ -62,6 +63,10 @@ import {
 import { GuestList } from "@/components/meetings/GuestList";
 import { getGuests } from "@/lib/services/guests";
 import type { Guest } from "@/types/meeting";
+import { AISummaryTab } from "@/components/meetings/AISummaryTab";
+import { TranscriptTab, countUnclearMarkers, renderWithUnclearPlaceholders } from "@/components/meetings/TranscriptTab";
+import { ParticipantsTab } from "@/components/meetings/ParticipantsTab";
+import { ParticipantCard, EngagementBadge } from "@/components/meetings/ParticipantCard";
 
 // ─── Waveform ─────────────────────────────────────────────────────────────────
 
@@ -77,7 +82,7 @@ function PlatformIcon({ platform, containerSize }: { platform?: MeetingPlatform;
   if (!platform) return null;
   if (platform === "Teams") return <img src="/teams.png" alt="Teams" className={cn("object-contain shrink-0", containerSize ? "size-4" : "size-5")} />;
   if (platform === "Beem") return <img src="/beam-logo.png" alt="Beem" className={cn("object-contain shrink-0", containerSize ? "size-4" : "size-5")} />;
-  return <Monitor size={containerSize ? 13 : 14} className="text-[#717680] shrink-0" />;
+  return <Monitor size={containerSize ? 13 : 14} className="text-[color:var(--mofa-text-muted)] shrink-0" />;
 }
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
@@ -93,87 +98,87 @@ function Sidebar({
 }) {
   if (!meeting) return null;
   return (
-    <aside className="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto pr-1">
+    <aside className="flex w-72 min-h-0 shrink-0 flex-col gap-4 overflow-y-auto pr-1">
       {/* Meeting info card */}
-      <div className="shrink-0 rounded-xl border border-[#e9eaeb] bg-white overflow-hidden">
+      <div className="shrink-0 rounded-xl border border-[color:var(--mofa-border-default)] bg-white overflow-hidden">
         <div className="px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#717680]">Meeting Info</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--mofa-text-muted)]">Meeting Info</p>
         </div>
         <div className="px-4 pt-2.5 pb-4 flex flex-col gap-4">
           {/* Host */}
           <div className="flex items-center gap-4">
-            <User size={14} className="shrink-0 text-[#717680]" aria-hidden />
-            <span className="w-16 shrink-0 text-xs text-[#9fa3ae]">Host</span>
-            <span className="min-w-0 flex-1 truncate text-xs font-medium text-[#181d27]">{meeting.host}</span>
+            <User size={14} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
+            <span className="w-16 shrink-0 text-xs text-[color:var(--mofa-text-placeholder)]">Host</span>
+            <span className="min-w-0 flex-1 truncate text-xs font-medium text-[color:var(--mofa-text-primary)]">{meeting.host}</span>
           </div>
           {/* Date & Time */}
           <div className="flex gap-4">
-            <Calendar size={14} className="shrink-0 text-[#717680] mt-0.5" aria-hidden />
+            <Calendar size={14} className="shrink-0 text-[color:var(--mofa-text-muted)] mt-0.5" aria-hidden />
             <div className="flex flex-col w-16">
-              <span className="text-xs text-[#9fa3ae]">Date & Time</span>
+              <span className="text-xs text-[color:var(--mofa-text-placeholder)]">Date & Time</span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-[#181d27]">{meeting.date}</p>
-              <p className="truncate text-xs font-medium text-[#181d27] mt-0.5">{meeting.timeRange}</p>
+              <p className="truncate text-xs font-medium text-[color:var(--mofa-text-primary)]">{meeting.date}</p>
+              <p className="truncate text-xs font-medium text-[color:var(--mofa-text-primary)] mt-0.5">{meeting.timeRange}</p>
             </div>
           </div>
           {/* Duration */}
           <div className="flex items-center gap-4">
-            <Clock size={14} className="shrink-0 text-[#717680]" aria-hidden />
-            <span className="w-16 shrink-0 text-xs text-[#9fa3ae]">Duration</span>
-            <span className="min-w-0 flex-1 truncate text-xs font-medium text-[#181d27]">{detail.totalSpeakingTime}</span>
+            <Clock size={14} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
+            <span className="w-16 shrink-0 text-xs text-[color:var(--mofa-text-placeholder)]">Duration</span>
+            <span className="min-w-0 flex-1 truncate text-xs font-medium text-[color:var(--mofa-text-primary)]">{detail.totalSpeakingTime}</span>
           </div>
           {/* Platform */}
           {meeting.platform && (
             <div className="flex items-center gap-4">
               <PlatformIcon platform={meeting.platform} />
-              <span className="w-16 shrink-0 text-xs text-[#9fa3ae]">Platform</span>
-              <span className="min-w-0 flex-1 truncate text-xs font-medium text-[#181d27]">{meeting.platform}</span>
+              <span className="w-16 shrink-0 text-xs text-[color:var(--mofa-text-placeholder)]">Platform</span>
+              <span className="min-w-0 flex-1 truncate text-xs font-medium text-[color:var(--mofa-text-primary)]">{meeting.platform}</span>
             </div>
           )}
           {/* Languages */}
           {meeting.languages && (
             <div className="flex items-center gap-4">
-              <Globe size={14} className="shrink-0 text-[#717680]" aria-hidden />
-              <span className="w-16 shrink-0 text-xs text-[#9fa3ae]">Languages</span>
-              <span className="min-w-0 flex-1 truncate text-xs font-medium text-[#181d27]">{meeting.languages}</span>
+              <Globe size={14} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
+              <span className="w-16 shrink-0 text-xs text-[color:var(--mofa-text-placeholder)]">Languages</span>
+              <span className="min-w-0 flex-1 truncate text-xs font-medium text-[color:var(--mofa-text-primary)]">{meeting.languages}</span>
             </div>
           )}
           {/* Participants */}
           <div className="flex items-center gap-4">
-            <Users size={14} className="shrink-0 text-[#717680]" aria-hidden />
-            <span className="w-16 shrink-0 text-xs text-[#9fa3ae]">Participants</span>
-            <span className="min-w-0 flex-1 truncate text-xs font-medium text-[#181d27]">{meeting.participantCount} people</span>
+            <Users size={14} className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden />
+            <span className="w-16 shrink-0 text-xs text-[color:var(--mofa-text-placeholder)]">Participants</span>
+            <span className="min-w-0 flex-1 truncate text-xs font-medium text-[color:var(--mofa-text-primary)]">{meeting.participantCount} people</span>
           </div>
         </div>
       </div>
 
       {/* Speakers quick list */}
-      <div className="shrink-0 rounded-xl border border-[#e9eaeb] bg-white overflow-hidden flex flex-col">
-        <p className="px-4 pt-4 pb-3 text-xs font-semibold uppercase tracking-wider text-[#717680]">Speakers</p>
+      <div className="shrink-0 rounded-xl border border-[color:var(--mofa-border-default)] bg-white overflow-hidden flex flex-col">
+        <p className="px-4 pt-4 pb-3 text-xs font-semibold uppercase tracking-wider text-[color:var(--mofa-text-muted)]">Speakers</p>
         <div className="flex flex-col gap-2 px-4 pb-4 overflow-y-auto max-h-48">
           {detail.participants.map((p) => {
             const dot = p.engagement === "Very High" ? "#17b26a"
               : p.engagement === "High" ? "#2e90fa"
               : p.engagement === "Medium" ? "#f79009"
               : p.engagement === "Low" ? "#f04438"
-              : "#717680";
+              : "var(--mofa-text-muted)";
             return (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => onParticipantClick?.(p.id)}
-                className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition hover:bg-[#f3f3f7]"
+                className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition hover:bg-[color:var(--mofa-btn-outline-hover)]"
               >
-                <div className="relative flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-[#414651]"
+                <div className="relative flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-[color:var(--mofa-text-body)]"
                   style={{ backgroundColor: p.bg }}>
                   {p.initials}
                   <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-white"
                     style={{ backgroundColor: dot }} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-[#414651]">{p.name}</p>
-                  <p className="text-[10px] text-[#717680]">{p.wordPercent}% · {p.speakingTime}</p>
+                  <p className="truncate text-xs font-medium text-[color:var(--mofa-text-body)]">{p.name}</p>
+                  <p className="text-[10px] text-[color:var(--mofa-text-muted)]">{p.wordPercent}% · {p.speakingTime}</p>
                 </div>
               </button>
             );
@@ -182,12 +187,12 @@ function Sidebar({
       </div>
 
       {/* Keywords */}
-      <div className="shrink-0 rounded-xl border border-[#e9eaeb] bg-white overflow-hidden flex flex-col">
-        <p className="px-4 pt-4 pb-3 text-xs font-semibold uppercase tracking-wider text-[#717680]">Keywords</p>
-        <div className="flex flex-wrap gap-1.5 px-4 pb-4 overflow-y-auto max-h-32">
+      <div className="flex-1 min-h-0 rounded-xl border border-[color:var(--mofa-border-default)] bg-white overflow-hidden flex flex-col">
+        <p className="shrink-0 px-4 pt-4 pb-3 text-xs font-semibold uppercase tracking-wider text-[color:var(--mofa-text-muted)]">Keywords</p>
+        <div className="flex flex-1 flex-wrap content-start gap-1.5 overflow-y-auto px-4 pb-4">
           {detail.keywords.map((kw) => (
             <span key={kw} dir="rtl"
-              className="rounded-full border border-[#e0dde8] bg-[#f3f3f7] px-2 py-0.5 text-[11px] font-medium text-[#545469]">
+              className="rounded-full border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)] px-2 py-0.5 text-[11px] font-medium text-[color:var(--mofa-text-secondary)]">
               {kw}
             </span>
           ))}
@@ -201,281 +206,6 @@ function Sidebar({
 
 type TabId = "summary" | "transcript" | "participants";
 
-// ─── Engagement badge ─────────────────────────────────────────────────────────
-
-const ENGAGEMENT_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  "Very High": { bg: "#ecfdf3", text: "#067647", border: "#abefc6" },
-  "High":      { bg: "#eff8ff", text: "#175cd3", border: "#b2ddff" },
-  "Medium":    { bg: "#fffaeb", text: "#b54708", border: "#fedf89" },
-  "Low":       { bg: "#fff1f0", text: "#b42318", border: "#fecdca" },
-  "Very Low":  { bg: "#f9fafb", text: "#717680", border: "#d5d7da" },
-};
-
-function EngagementBadge({ level }: { level: string }) {
-  const style = ENGAGEMENT_STYLES[level] ?? ENGAGEMENT_STYLES["Medium"]!;
-  return (
-    <span className="rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap"
-      style={{ background: style.bg, color: style.text, borderColor: style.border }}>
-      {level} Engagement
-    </span>
-  );
-}
-
-// ─── Participant Card ─────────────────────────────────────────────────────────
-
-function ParticipantCard({ p, id }: { p: ParticipantDetail; id?: string }) {
-  return (
-    <div id={id} className="rounded-xl border border-[#e9eaeb] bg-white p-5 scroll-mt-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-[#414651]"
-            style={{ backgroundColor: p.bg }}>
-            {p.initials}
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-[#414651]">{p.name}</p>
-            <p className="text-xs text-[#717680]">{p.role ?? "Participant"}</p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <EngagementBadge level={p.engagement} />
-          <p className="text-xs text-[#717680]">{p.speakingTime} speaking time</p>
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <div className="mb-1.5 flex items-center justify-between text-xs">
-          <span className="text-[#717680]">Participation Level</span>
-          <span className="font-semibold text-[#414651]">
-            {p.wordCount.toLocaleString()} words translated ({p.wordPercent}%)
-          </span>
-        </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-[#f0f0f4]">
-          <div className="h-full rounded-full bg-[#48476e] transition-all" style={{ width: `${p.participationLevel}%` }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── AI Summary Tab ───────────────────────────────────────────────────────────
-
-function AISummaryTab({ detail }: { detail: MeetingDetail }) {
-  return (
-    <div className="flex flex-col gap-8">
-      <section>
-        <div className="mb-4 flex items-center gap-2">
-          <TrendingUp size={16} className="text-[#48476e]" aria-hidden />
-          <h2 className="text-sm font-semibold text-[#414651]">Meeting Overview</h2>
-        </div>
-        <div className="grid grid-cols-4 divide-x divide-[#e9eaeb] rounded-xl border border-[#e9eaeb] bg-white">
-          {[
-            { label: "Total Speakers", value: detail.totalSpeakers },
-            { label: "Total Words", value: detail.totalWords.toLocaleString() },
-            { label: "Speaking Time", value: detail.totalSpeakingTime },
-            { label: "Avg Speed", value: `${detail.avgSpeakingRate} wpm` },
-          ].map(({ label, value }) => (
-            <div key={label} className="flex flex-col items-center py-5">
-              <span className="text-2xl font-bold text-[#414651]">{value}</span>
-              <span className="mt-1 text-xs text-[#717680]">{label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="border-t border-[#f0f0f4]" />
-
-      <section>
-        <div className="mb-3 flex items-center gap-2">
-          <Sparkles size={16} className="text-[#48476e]" aria-hidden />
-          <h2 className="text-sm font-semibold text-[#414651]">Executive Summary</h2>
-        </div>
-        <p className="leading-8 text-sm text-[#535862]" dir="rtl">{detail.executiveSummary}</p>
-      </section>
-
-      <div className="border-t border-[#f0f0f4]" />
-
-      <section>
-        <div className="mb-3 flex items-center gap-2">
-          <Hash size={16} className="text-[#48476e]" aria-hidden />
-          <h2 className="text-sm font-semibold text-[#414651]">Keywords</h2>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {detail.keywords.map((kw) => (
-            <span key={kw} dir="rtl"
-              className="rounded-full border border-[#e0dde8] bg-[#f3f3f7] px-3 py-1 text-sm font-medium text-[#545469]">
-              {kw}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <div className="border-t border-[#f0f0f4]" />
-
-      <section>
-        <div className="mb-3 flex items-center gap-2">
-          <Users size={16} className="text-[#48476e]" aria-hidden />
-          <h2 className="text-sm font-semibold text-[#414651]">Participant Engagement</h2>
-        </div>
-        <div className="flex flex-col gap-3">
-          {detail.participants.map((p) => <ParticipantCard key={p.id} p={p} />)}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-// ─── Language Badge Config ────────────────────────────────────────────────────
-
-const LANGUAGE_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
-  EN: { label: "EN", bg: "#e8f0fa", text: "#4a72a8" },
-  ES: { label: "ES", bg: "#f0e8fa", text: "#6b40b0" },
-  JA: { label: "JA", bg: "#e8fae8", text: "#3f6f3f" },
-  KO: { label: "KO", bg: "#fae8e8", text: "#8b3a3a" },
-  ZH: { label: "ZH", bg: "#f5e8fa", text: "#6b4a7f" },
-  TL: { label: "TL", bg: "#fae8f0", text: "#7f4a5f" },
-  PT: { label: "PT", bg: "#e8f5fa", text: "#3a6b7f" },
-  FR: { label: "FR", bg: "#faf5e8", text: "#7f6b3a" },
-};
-
-function getLanguageConfig(lang?: string) {
-  return LANGUAGE_CONFIG[lang || "EN"] || LANGUAGE_CONFIG["EN"];
-}
-
-// ─── Transcript Tab ───────────────────────────────────────────────────────────
-
-function TranscriptTab({
-  entries,
-  search,
-}: {
-  entries: TranscriptEntry[];
-  search: string;
-}) {
-  const filtered = React.useMemo(() => {
-    if (!search.trim()) return entries;
-    const q = search.toLowerCase();
-    return entries.filter(
-      (e) => e.text.toLowerCase().includes(q) || e.speakerName.toLowerCase().includes(q),
-    );
-  }, [entries, search]);
-
-  if (filtered.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#e0dde8] bg-[#fafbfc] py-16 text-center">
-        <p className="text-sm font-medium text-[#414651]">No results found</p>
-        <p className="mt-1 text-sm text-[#717680]">Try a different search term.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      {filtered.map((entry, idx) => {
-        const prevSpeaker = idx > 0 ? filtered[idx - 1]?.speakerId : null;
-        const showHeader = entry.speakerId !== prevSpeaker;
-        const arUnclearCount = entry.arabicTranslation ? countUnclearMarkers(entry.arabicTranslation) : 0;
-        const totalUnclear = arUnclearCount;
-        const hasUnclear = totalUnclear > 0;
-        return (
-          <div key={entry.id} className={cn(showHeader && idx > 0 && "mt-5")}>
-            {showHeader && (
-              <div className="mb-2 flex items-center gap-2">
-                <div
-                  className="flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-[#414651]"
-                  style={{ backgroundColor: entry.speakerBg }}
-                >
-                  {entry.speakerInitials}
-                </div>
-                <span className="text-xs font-semibold text-[#414651]">{entry.speakerName}</span>
-                <span className="text-[11px] tabular-nums text-[#b0b3bb]">{entry.timestamp}</span>
-                {hasUnclear && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 text-[10px] font-semibold text-[#b45309]">
-                    <AlertTriangle size={9} className="shrink-0" aria-hidden />
-                    {totalUnclear} word{totalUnclear > 1 ? "s" : ""} unclear
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Card: Source language + AR translation */}
-            <div className={cn("ml-8 overflow-hidden rounded-xl border bg-white", hasUnclear ? "border-[#fde68a]" : "border-[#e9eaeb]")}>
-              {/* Source language row */}
-              {(() => {
-                const langConfig = getLanguageConfig(entry.language);
-                return (
-                  <div className="flex items-start gap-2.5 px-4 py-3">
-                    <span
-                      className="mt-[3px] shrink-0 rounded-[4px] px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-wide"
-                      style={{ backgroundColor: langConfig.bg, color: langConfig.text }}
-                    >
-                      {langConfig.label}
-                    </span>
-                    <p className="flex-1 text-sm leading-6 text-[#414651]">
-                      {search.trim() ? <HighlightedText text={entry.text} query={search} /> : entry.text}
-                    </p>
-                  </div>
-                );
-              })()}
-              {entry.arabicTranslation && (
-                <div className="flex items-start gap-2.5 border-t border-[#f0eff6] bg-[#faf9fd] px-4 py-3">
-                  <span className="mt-[3px] shrink-0 rounded-[4px] bg-[#ede8f8] px-1.5 py-[1px] text-[9px] font-bold uppercase tracking-wide text-[#6b40b0]">
-                    AR
-                  </span>
-                  <p
-                    dir="rtl"
-                    className="flex-1 text-sm leading-7 text-[#535862]"
-                    style={{ fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" }}
-                  >
-                    {renderWithUnclearPlaceholders(entry.arabicTranslation, { isRtl: true, highlightKeywords: true })}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function HighlightedText({ text, query }: { text: string; query: string }) {
-  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
-  const parts = text.split(regex);
-  return (
-    <>
-      {parts.map((part, i) =>
-        regex.test(part)
-          ? <mark key={i} className="rounded bg-[#fef3c7] px-0.5 text-[#414651]">{part}</mark>
-          : part,
-      )}
-    </>
-  );
-}
-
-// ─── Participants Tab ─────────────────────────────────────────────────────────
-
-function ParticipantsTab({ detail }: { detail: MeetingDetail }) {
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-4 divide-x divide-[#e9eaeb] rounded-xl border border-[#e9eaeb] bg-white">
-        {[
-          { label: "Total Speakers", value: detail.totalSpeakers },
-          { label: "Total Words Translated", value: detail.totalWords.toLocaleString() },
-          { label: "Speaking Time", value: detail.totalSpeakingTime },
-          { label: "Translation Accuracy", value: "92.3%" },
-        ].map(({ label, value }) => (
-          <div key={label} className="flex flex-col items-center py-5">
-            <span className="text-2xl font-bold text-[#414651]">{value}</span>
-            <span className="mt-1 text-xs text-[#717680]">{label}</span>
-          </div>
-        ))}
-      </div>
-      {detail.participants.map((p) => (
-        <ParticipantCard key={p.id} p={p} id={`participant-${p.id}`} />
-      ))}
-    </div>
-  );
-}
 
 // ─── Meeting Minutes Tab ──────────────────────────────────────────────────────
 
@@ -506,16 +236,16 @@ function MeetingMinutesTab({ items }: { items: MinuteItem[] }) {
                 <span className="size-1.5 rounded-full" style={{ backgroundColor: style.dot }} />
                 {style.label}s
               </span>
-              <span className="text-xs text-[#717680]">{list.length} item{list.length !== 1 ? "s" : ""}</span>
+              <span className="text-xs text-[color:var(--mofa-text-muted)]">{list.length} item{list.length !== 1 ? "s" : ""}</span>
             </div>
             <div className="flex flex-col gap-2">
               {list.map((item, i) => (
-                <div key={i} className="flex gap-3 rounded-xl border border-[#e9eaeb] bg-white px-4 py-3">
+                <div key={i} className="flex gap-3 rounded-xl border border-[color:var(--mofa-border-default)] bg-white px-4 py-3">
                   <span className="mt-1.5 size-1.5 shrink-0 rounded-full" style={{ backgroundColor: style.dot }} />
                   <div>
-                    <p className="text-sm text-[#414651]">{item.text}</p>
+                    <p className="text-sm text-[color:var(--mofa-text-body)]">{item.text}</p>
                     {item.owner && (
-                      <p className="mt-1 text-xs text-[#717680]">Owner: <span className="font-medium">{item.owner}</span></p>
+                      <p className="mt-1 text-xs text-[color:var(--mofa-text-muted)]">Owner: <span className="font-medium">{item.owner}</span></p>
                     )}
                   </div>
                 </div>
@@ -545,54 +275,6 @@ const PARTICIPANT_DIRECTORY: Record<string, { name: string; role: string }> = {
   p5: { name: "Rania Nasser", role: "Design" },
 };
 
-// ─── Diplomatic keyword highlighting ─────────────────────────────────────────
-
-/** Arabic translations of "Keyword Processed" glossary entries */
-const DIPLOMATIC_TERMS_AR = [
-  "الحصانة الدبلوماسية",
-  "اتفاقية ثنائية",
-  "مذكرة تفاهم",
-  "الشؤون القنصلية",
-  "زيارة دولة",
-  "وزارة الخارجية",
-  "سفير فوق العادة",
-  "برقية دبلوماسية",
-  "شخص غير مرغوب فيه",
-];
-
-function highlightDiplomaticTerms(text: string): React.ReactNode {
-  if (!text) return text;
-  const escaped = DIPLOMATIC_TERMS_AR.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  const pattern = new RegExp(`(${escaped.join("|")})`, "g");
-  const parts = text.split(pattern);
-  if (parts.length === 1) return text;
-  return parts.map((part, i) =>
-    DIPLOMATIC_TERMS_AR.includes(part) ? (
-      <span key={i} className="group/kw relative inline-block">
-        <mark
-          className="rounded-sm px-1 py-0.5 font-bold not-italic cursor-default"
-          style={{
-            backgroundColor: "#dddcf0",
-            color: "#35346b",
-            boxShadow: "inset 0 0 0 1px #c5c3de",
-            fontStyle: "normal",
-            textDecoration: "none",
-          }}
-        >
-          {part}
-        </mark>
-        {/* Tooltip */}
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2d2c4a] px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/kw:opacity-100">
-          Diplomatic Keyword
-          {/* Arrow */}
-          <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#2d2c4a]" />
-        </span>
-      </span>
-    ) : (
-      <React.Fragment key={i}>{part}</React.Fragment>
-    )
-  );
-}
 
 type LiveTranscriptMessage = {
   id: string;
@@ -606,118 +288,6 @@ type LiveTranscriptMessage = {
   hasUnclear?: boolean;
 };
 
-/** Counts [unclear] tokens in a string */
-function countUnclearMarkers(text: string): number {
-  return (text.match(/\[unclear\]/gi) ?? []).length;
-}
-
-/** Strips [unclear] tokens from text, replacing with a subtle ellipsis placeholder */
-function stripUnclearMarkers(text: string): string {
-  return text.replace(/\[unclear\]/gi, "· · ·");
-}
-
-// ─── Inline unclear placeholder (clickable → editable) ────────────────────────
-
-function UnclearPlaceholder({ isRtl }: { isRtl?: boolean }) {
-  const [editing, setEditing] = React.useState(false);
-  const [filled, setFilled] = React.useState("");
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  const commit = () => {
-    setEditing(false);
-  };
-
-  React.useEffect(() => {
-    if (editing) inputRef.current?.focus();
-  }, [editing]);
-
-  if (filled && !editing) {
-    // Filled state — show the word with a subtle confirmed style
-    return (
-      <span
-        className="group/filled relative inline-block cursor-pointer"
-        onClick={() => setEditing(true)}
-        title="Click to edit"
-      >
-        <span
-          className="rounded-sm px-1 py-0.5 text-sm font-medium"
-          style={{
-            backgroundColor: "#d1fae5",
-            color: "#065f46",
-            boxShadow: "inset 0 0 0 1px #a7f3d0",
-          }}
-        >
-          {filled}
-        </span>
-      </span>
-    );
-  }
-
-  if (editing) {
-    return (
-      <span className="relative inline-block align-baseline">
-        <input
-          ref={inputRef}
-          dir={isRtl ? "rtl" : "ltr"}
-          type="text"
-          value={filled}
-          onChange={(e) => setFilled(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); commit(); }
-            if (e.key === "Escape") { setFilled(""); setEditing(false); }
-          }}
-          placeholder="type word…"
-          className="inline-block w-28 rounded-md border border-[#fbbf24] bg-[#fffbeb] px-2 py-0.5 text-sm text-[#92400e] outline-none placeholder:text-[#d97706]/60 focus:ring-2 focus:ring-[#fbbf24]/40"
-          style={{ verticalAlign: "baseline" }}
-        />
-      </span>
-    );
-  }
-
-  // Default — dashed clickable placeholder
-  return (
-    <span
-      onClick={() => setEditing(true)}
-      title="Click to fill unclear word"
-      className="group/unclear relative inline-block cursor-text select-none"
-    >
-      <span
-        className="rounded-sm px-2 py-0.5 text-xs font-semibold tracking-widest transition-colors duration-100 group-hover/unclear:bg-[#fef3c7]"
-        style={{
-          color: "#d97706",
-          border: "1.5px dashed #fbbf24",
-          backgroundColor: "#fffbeb",
-        }}
-      >
-        · · ·
-      </span>
-    </span>
-  );
-}
-
-/**
- * Replaces [unclear] markers in `text` with interactive UnclearPlaceholder components.
- * Preserves surrounding text and diplomatic keyword highlighting on Arabic segments.
- */
-function renderWithUnclearPlaceholders(
-  text: string,
-  options?: { isRtl?: boolean; highlightKeywords?: boolean },
-): React.ReactNode {
-  const parts = text.split(/(\[unclear\])/gi);
-  if (parts.length === 1) {
-    return options?.highlightKeywords ? highlightDiplomaticTerms(text) : text;
-  }
-  return parts.map((part, i) => {
-    if (/^\[unclear\]$/i.test(part)) {
-      return <UnclearPlaceholder key={i} isRtl={options?.isRtl} />;
-    }
-    const content = options?.highlightKeywords
-      ? highlightDiplomaticTerms(part)
-      : part;
-    return <React.Fragment key={i}>{content}</React.Fragment>;
-  });
-}
 
 /** Messages use relative participant indices: the first participant (index 0) = "You" */
 function buildLiveMessages(participants: ReturnType<typeof normalizeLiveParticipants>): LiveTranscriptMessage[] {
@@ -764,7 +334,7 @@ function LiveParticipantTile({
       className={cn(
         "group relative flex h-full w-full flex-col items-center justify-center gap-2.5 overflow-hidden rounded-xl border bg-gradient-to-b from-[#f5f5f5] to-[#e9eaeb] py-5 transition-all duration-500 ease-out animate-[fadeSlideIn_0.3s_ease-out_both]",
         isSpeaking
-          ? "border-[rgba(0,0,0,0.1)] shadow-[0_0_0_2px_white,0_0_0_4px_#8988ab]"
+          ? "border-[rgba(0,0,0,0.1)] shadow-[0_0_0_2px_#F5F4F1,0_0_0_3px_#C8C4BC]"
           : "border-[rgba(0,0,0,0.1)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:border-[rgba(0,0,0,0.15)]",
       )}
       style={{ animationDelay: `${index * 80}ms` }}
@@ -774,7 +344,7 @@ function LiveParticipantTile({
 
       {/* Avatar */}
       <div
-        className="relative flex size-16 shrink-0 items-center justify-center rounded-full border border-[rgba(0,0,0,0.08)] text-lg font-semibold text-[#414651] transition-transform duration-300 group-hover:scale-105"
+        className="relative flex size-16 shrink-0 items-center justify-center rounded-full border border-[rgba(0,0,0,0.08)] text-lg font-semibold text-[color:var(--mofa-text-body)] transition-transform duration-300 group-hover:scale-105"
         style={{ backgroundColor: participant.bg }}
       >
         {participant.initials}
@@ -783,16 +353,16 @@ function LiveParticipantTile({
       {/* Name + role */}
       <div className="flex w-full min-w-0 flex-col items-center gap-0.5 px-3">
         <div className="flex w-full min-w-0 items-center justify-center gap-1.5">
-          <p className="min-w-0 truncate text-sm font-semibold text-[#414651]">
+          <p className="min-w-0 truncate text-sm font-semibold text-[color:var(--mofa-text-body)]">
             {participant.name}
           </p>
           {isYou && (
-            <span className="shrink-0 rounded-full border border-[#d0cfdd] bg-[#fcfcfd] px-2 py-0.5 text-[10px] font-medium text-[#545469]">
+            <span className="shrink-0 rounded-full border border-[color:var(--mofa-border-default)] bg-white px-2 py-0.5 text-[10px] font-medium text-[color:var(--mofa-text-secondary)]">
               You
             </span>
           )}
         </div>
-        <p className="w-full truncate text-center text-[11px] text-[#535862]">
+        <p className="w-full truncate text-center text-[11px] text-[color:var(--mofa-text-subtle)]">
           ({participant.role})
         </p>
       </div>
@@ -833,14 +403,14 @@ function MoreParticipantsTile({
           if (!ref.current?.contains(e.relatedTarget as Node)) setOpen(false);
         }}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#d5d7da] bg-[#f5f5f7] transition-colors duration-200 hover:bg-[#eeeff6]"
+        className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[color:var(--mofa-border-default)] bg-[#f5f5f7] transition-colors duration-200 hover:bg-[color:var(--mofa-btn-outline-hover)]"
       >
-        <div className="flex size-10 items-center justify-center rounded-full border border-[#d5d7da] bg-white">
-          <Users size={18} className="text-[#717680]" />
+        <div className="flex size-10 items-center justify-center rounded-full border border-[color:var(--mofa-border-default)] bg-white">
+          <Users size={18} className="text-[color:var(--mofa-text-muted)]" />
         </div>
         <div className="flex flex-col items-center gap-0.5">
-          <p className="text-sm font-semibold text-[#414651]">+{participants.length} more</p>
-          <p className="text-[10px] text-[#9fa3ae]">Hover to view</p>
+          <p className="text-sm font-semibold text-[color:var(--mofa-text-body)]">+{participants.length} more</p>
+          <p className="text-[10px] text-[color:var(--mofa-text-placeholder)]">Hover to view</p>
         </div>
       </button>
 
@@ -849,10 +419,10 @@ function MoreParticipantsTile({
         <div
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
-          className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-[260px] overflow-hidden rounded-2xl border border-[#e9eaeb] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.15s_ease-out_both]"
+          className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-[260px] overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.15s_ease-out_both]"
         >
-          <div className="border-b border-[#eeedf5] px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#9fa3ae]">
+          <div className="border-b border-[color:var(--mofa-border-default)] px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--mofa-text-placeholder)]">
               {participants.length} Participants
             </p>
           </div>
@@ -860,16 +430,16 @@ function MoreParticipantsTile({
             {participants.map((p) => {
               const isPinned = pinnedIds.has(p.id);
               return (
-                <li key={p.id} className="flex items-center gap-2.5 rounded-lg px-3 py-2 hover:bg-[#f5f5f7]">
+                <li key={p.id} className="flex items-center gap-2.5 rounded-lg px-3 py-2 hover:bg-[color:var(--mofa-btn-outline-hover)]">
                   <div
-                    className="flex size-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-[#414651]"
+                    className="flex size-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-[color:var(--mofa-text-body)]"
                     style={{ backgroundColor: p.bg }}
                   >
                     {p.initials}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-[#414651]">{p.name}</p>
-                    <p className="truncate text-[10px] text-[#717680]">{p.role}</p>
+                    <p className="truncate text-sm font-medium text-[color:var(--mofa-text-body)]">{p.name}</p>
+                    <p className="truncate text-[10px] text-[color:var(--mofa-text-muted)]">{p.role}</p>
                   </div>
                   <button
                     type="button"
@@ -878,11 +448,11 @@ function MoreParticipantsTile({
                     className={cn(
                       "shrink-0 rounded-md p-1.5 transition-colors duration-150",
                       isPinned
-                        ? "text-[#8988ab] hover:bg-[#eeeff6]"
-                        : "text-[#9fa3ae] hover:bg-[#f3f3f7] hover:text-[#414651]",
+                        ? "text-[color:var(--mofa-accent)] hover:bg-[color:var(--mofa-btn-outline-hover)]"
+                        : "text-[color:var(--mofa-text-placeholder)] hover:bg-[color:var(--mofa-btn-outline-hover)] hover:text-[color:var(--mofa-text-body)]",
                     )}
                   >
-                    <Pin size={13} className={isPinned ? "fill-[#8988ab]" : ""} />
+                    <Pin size={13} className={isPinned ? "fill-[color:var(--mofa-accent)]" : ""} />
                   </button>
                 </li>
               );
@@ -992,33 +562,33 @@ function LiveTranscriptPanel({
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
       {/* Compact language bar — single row, minimal height */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-[#f0f0f4] bg-white px-4 pb-2.5 pt-0">
+      <div className="flex shrink-0 items-center gap-2 border-b border-[color:var(--mofa-border-default)] bg-white px-4 pb-2.5 pt-0">
         {/* Source — label + value */}
-        <span className="text-xs font-medium text-[#9fa3ae]">Source</span>
+        <span className="text-xs font-medium text-[color:var(--mofa-text-placeholder)]">Source</span>
         <div className="flex items-center gap-1">
-          <Globe size={12} className="shrink-0 text-[#717680]" />
-          <span className="text-xs font-semibold text-[#535862]">{sourceLang}</span>
+          <Globe size={12} className="shrink-0 text-[color:var(--mofa-text-muted)]" />
+          <span className="text-xs font-semibold text-[color:var(--mofa-text-subtle)]">{sourceLang}</span>
         </div>
-        <ArrowRight size={12} className="shrink-0 text-[#c1c4cd]" />
+        <ArrowRight size={12} className="shrink-0 text-[color:var(--mofa-text-faint)]" />
         {/* Target — label + interactive value */}
-        <span className="text-xs font-medium text-[#9fa3ae]">Target</span>
+        <span className="text-xs font-medium text-[color:var(--mofa-text-placeholder)]">Target</span>
         <div ref={langMenuRef} className="relative">
           <button
             type="button"
             onClick={() => setShowLangMenu((v) => !v)}
-            className="flex items-center gap-1 rounded-md px-1.5 py-0.5 transition-colors hover:bg-[#eeedf5]"
+            className="flex items-center gap-1 rounded-md px-1.5 py-0.5 transition-colors hover:bg-[color:var(--mofa-btn-outline-hover)]"
           >
-            <Globe size={12} className="shrink-0 text-[#48476e]" />
-            <span className="text-xs font-semibold text-[#48476e]">{targetLang}</span>
+            <Globe size={12} className="shrink-0 text-[color:var(--mofa-accent)]" />
+            <span className="text-xs font-semibold text-[color:var(--mofa-accent)]">{targetLang}</span>
             <ChevronDown
               size={11}
-              className={cn("shrink-0 text-[#8988ab] transition-transform duration-150", showLangMenu && "rotate-180")}
+              className={cn("shrink-0 text-[color:var(--mofa-accent)] transition-transform duration-150", showLangMenu && "rotate-180")}
             />
           </button>
 
           {showLangMenu && (
-            <div className="absolute left-0 top-full z-50 mt-1 min-w-[152px] overflow-hidden rounded-xl border border-[#e9eaeb] bg-white py-1 shadow-[0_8px_24px_rgba(0,0,0,0.1)] animate-[fadeSlideIn_0.15s_ease-out]">
-              <p className="px-3 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-wider text-[#9fa3ae]">
+            <div className="absolute left-0 top-full z-50 mt-1 min-w-[152px] overflow-hidden rounded-xl border border-[color:var(--mofa-border-default)] bg-white py-1 shadow-[0_8px_24px_rgba(0,0,0,0.1)] animate-[fadeSlideIn_0.15s_ease-out]">
+              <p className="px-3 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-wider text-[color:var(--mofa-text-placeholder)]">
                 Translate to
               </p>
               {AVAILABLE_LANGUAGES.map((lang) => (
@@ -1029,12 +599,12 @@ function LiveTranscriptPanel({
                   className={cn(
                     "flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors",
                     lang === targetLang
-                      ? "bg-[#f3f3f7] font-semibold text-[#48476e]"
-                      : "text-[#414651] hover:bg-[#f8f8fb]",
+                      ? "bg-[color:var(--mofa-sidebar-active-bg)] font-semibold text-[color:var(--mofa-accent)]"
+                      : "text-[color:var(--mofa-text-body)] hover:bg-[color:var(--mofa-btn-outline-hover)]",
                   )}
                 >
                   <span className="flex w-3 shrink-0 items-center justify-center">
-                    {lang === targetLang && <Check size={11} className="text-[#48476e]" />}
+                    {lang === targetLang && <Check size={11} className="text-[color:var(--mofa-accent)]" />}
                   </span>
                   {lang}
                 </button>
@@ -1072,7 +642,7 @@ function LiveTranscriptPanel({
                       <div className="size-8" /> /* spacer to keep alignment */
                     ) : (
                       <div
-                        className="flex size-8 items-center justify-center rounded-full text-[10px] font-bold text-[#414651]"
+                        className="flex size-8 items-center justify-center rounded-full text-[10px] font-bold text-[color:var(--mofa-text-body)]"
                         style={{ backgroundColor: participant.bg }}
                       >
                         {participant.initials}
@@ -1096,10 +666,10 @@ function LiveTranscriptPanel({
                         {!isSameAsPrev && (
                           <div className={cn("flex items-center justify-between gap-2", isYou ? "flex-row-reverse" : "flex-row")}>
                             <div className={cn("flex items-center gap-2", isYou ? "flex-row-reverse" : "flex-row")}>
-                              <span className="text-xs font-semibold text-[#414651]">
+                              <span className="text-xs font-semibold text-[color:var(--mofa-text-body)]">
                                 {isYou ? "You" : participant.name}
                               </span>
-                              <span className="text-[10px] text-[#9fa3ae]">{message.time}</span>
+                              <span className="text-[10px] text-[color:var(--mofa-text-placeholder)]">{message.time}</span>
                             </div>
                             {hasUnclear && (
                               <span className="inline-flex items-center gap-1 rounded-full border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 text-[10px] font-semibold text-[#b45309]">
@@ -1114,12 +684,12 @@ function LiveTranscriptPanel({
                         <div
                           dir={showArabic ? "rtl" : undefined}
                           className={cn(
-                            "relative border px-3 py-2 text-sm leading-7 text-[#181d27] transition-colors duration-200",
+                            "relative border px-3 py-2 text-sm leading-7 text-[color:var(--mofa-text-primary)] transition-colors duration-200",
                             showArabic && "text-right",
                             hasUnclear && "border-[#fde68a]",
                             isYou
-                              ? "rounded-bl-lg rounded-br-lg rounded-tl-lg border-[#d0cfdd] bg-[#e7e7ee] hover:bg-[#dfdfe8]"
-                              : "rounded-bl-lg rounded-br-lg rounded-tr-lg border-[#e9eaeb] bg-[#fafafa] hover:bg-[#f3f3f7]",
+                              ? "rounded-bl-lg rounded-br-lg rounded-tl-lg border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)] hover:bg-[color:var(--mofa-btn-outline-hover)]"
+                              : "rounded-bl-lg rounded-br-lg rounded-tr-lg border-[color:var(--mofa-border-default)] bg-[#fafafa] hover:bg-[color:var(--mofa-btn-outline-hover)]",
                           )}
                           style={showArabic ? { fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" } : undefined}
                         >
@@ -1157,7 +727,7 @@ function LiveTranscriptPanel({
         <button
           type="button"
           onClick={scrollToBottom}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full border border-[#d5d7da] bg-white px-3 py-1.5 text-xs font-semibold text-[#414651] shadow-md transition-all duration-200 hover:bg-[#f3f3f7] animate-[fadeSlideIn_0.2s_ease-out]"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--mofa-border-default)] bg-white px-3 py-1.5 text-xs font-semibold text-[color:var(--mofa-text-body)] shadow-md transition-all duration-200 hover:bg-[color:var(--mofa-btn-outline-hover)] animate-[fadeSlideIn_0.2s_ease-out]"
         >
           <ChevronDown size={12} />
           Jump to latest
@@ -1194,7 +764,7 @@ function LiveParticipantsPanel({
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       {/* ── Internal participants ── */}
       <div className="px-4 pb-2 pt-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-[#717680]">
+        <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--mofa-text-muted)]">
           Participants · {participants.length}
         </p>
       </div>
@@ -1206,11 +776,11 @@ function LiveParticipantsPanel({
           return (
             <div
               key={participant.id}
-              className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors duration-150 hover:bg-[#f3f3f7] animate-[fadeSlideIn_0.3s_ease-out_both]"
+              className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors duration-150 hover:bg-[color:var(--mofa-btn-outline-hover)] animate-[fadeSlideIn_0.3s_ease-out_both]"
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <div
-                className="relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-[#414651]"
+                className="relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-[color:var(--mofa-text-body)]"
                 style={{ backgroundColor: participant.bg }}
               >
                 {participant.initials}
@@ -1224,18 +794,18 @@ function LiveParticipantsPanel({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <p className="truncate text-xs font-medium text-[#414651]">{participant.name}</p>
+                  <p className="truncate text-xs font-medium text-[color:var(--mofa-text-body)]">{participant.name}</p>
                   {isYou && (
-                    <span className="shrink-0 rounded-full border border-[#d0cfdd] bg-[#fcfcfd] px-1.5 py-px text-[10px] font-medium text-[#545469]">
+                    <span className="shrink-0 rounded-full border border-[color:var(--mofa-border-default)] bg-white px-1.5 py-px text-[10px] font-medium text-[color:var(--mofa-text-secondary)]">
                       You
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-[#717680]">{participant.role}</p>
+                <p className="text-[10px] text-[color:var(--mofa-text-muted)]">{participant.role}</p>
               </div>
               <span className={cn(
                 "shrink-0 text-[11px] font-medium",
-                isSpeaking ? "text-[#067647]" : "text-[#98a2b3]",
+                isSpeaking ? "text-[#067647]" : "text-[color:var(--mofa-text-placeholder)]",
               )}>
                 {isSpeaking ? "Speaking" : "Listening"}
               </span>
@@ -1258,7 +828,7 @@ function LiveParticipantsPanel({
               />
             ) : (
               <div className="flex items-center justify-center py-4">
-                <span className="size-4 animate-spin rounded-full border-2 border-[#d5d7da] border-t-[#48476e]" />
+                <span className="size-4 animate-spin rounded-full border-2 border-[color:var(--mofa-border-default)] border-t-[color:var(--mofa-accent)]" />
               </div>
             )}
           </div>
@@ -1279,7 +849,7 @@ function LiveTimer() {
   const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const ss = String(elapsed % 60).padStart(2, "0");
   return (
-    <p className="tabular-nums text-xs font-medium text-[#535862]">
+    <p className="tabular-nums text-xs font-medium text-[color:var(--mofa-text-subtle)]">
       {mm}<span className="animate-pulse">:</span>{ss}
     </p>
   );
@@ -1372,37 +942,37 @@ function MicrophoneTestScreen({
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-gradient-to-br from-[#fafafa] to-[#f3f3f7] p-6">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-gradient-to-br from-[color:var(--mofa-page-bg)] to-[color:var(--mofa-sidebar-active-bg)] p-6">
       {/* Title */}
       <div className="text-center">
-        <h1 className="text-2xl font-semibold text-[#181d27]">Microphone Test</h1>
-        <p className="mt-1 text-sm text-[#717680]">Checking your audio setup before we start</p>
+        <h1 className="text-2xl font-semibold text-[color:var(--mofa-text-primary)]">Microphone Test</h1>
+        <p className="mt-1 text-sm text-[color:var(--mofa-text-muted)]">Checking your audio setup before we start</p>
       </div>
 
       {/* Test stages */}
       <div className="w-full max-w-sm space-y-4">
         {/* Stage 1: Mic detection */}
-        <div className="rounded-lg border border-[#e9eaeb] bg-white p-4">
+        <div className="rounded-lg border border-[color:var(--mofa-border-default)] bg-white p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className={cn(
                 "flex size-8 items-center justify-center rounded-lg",
-                status === "checking" ? "bg-[#f3f3f7]" : status === "failed" ? "bg-[#fee2e2]" : "bg-[#dcfce7]"
+                status === "checking" ? "bg-[color:var(--mofa-sidebar-active-bg)]" : status === "failed" ? "bg-[#fee2e2]" : "bg-[#dcfce7]"
               )}>
                 {status === "failed" ? (
                   <Mic size={16} className="text-[#d92d20]" />
                 ) : (
-                  <Mic size={16} className={status === "checking" ? "text-[#717680]" : "text-[#17b26a]"} />
+                  <Mic size={16} className={status === "checking" ? "text-[color:var(--mofa-text-muted)]" : "text-[#17b26a]"} />
                 )}
               </div>
-              <span className="text-sm font-medium text-[#414651]">Microphone detection</span>
+              <span className="text-sm font-medium text-[color:var(--mofa-text-body)]">Microphone detection</span>
             </div>
             {status === "checking" ? (
               <div className="flex gap-1">
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
-                    className="size-1.5 rounded-full bg-[#8988ab] animate-bounce"
+                    className="size-1.5 rounded-full bg-[color:var(--mofa-accent)] animate-bounce"
                     style={{ animationDelay: `${i * 150}ms` }}
                   />
                 ))}
@@ -1414,13 +984,13 @@ function MicrophoneTestScreen({
             )}
           </div>
           {status === "failed" && (
-            <p className="mt-2 text-xs text-[#717680]">No microphone detected. Please connect a microphone and try again.</p>
+            <p className="mt-2 text-xs text-[color:var(--mofa-text-muted)]">No microphone detected. Please connect a microphone and try again.</p>
           )}
         </div>
 
         {/* Stage 2: Volume test */}
         {status !== "failed" && (
-          <div className="rounded-lg border border-[#e9eaeb] bg-white p-4">
+          <div className="rounded-lg border border-[color:var(--mofa-border-default)] bg-white p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className={cn(
@@ -1429,9 +999,9 @@ function MicrophoneTestScreen({
                 )}>
                   <Volume2 size={16} className={volumeLevel > 30 ? "text-[#17b26a]" : "text-[#f59e0b]"} />
                 </div>
-                <span className="text-sm font-medium text-[#414651]">Volume level</span>
+                <span className="text-sm font-medium text-[color:var(--mofa-text-body)]">Volume level</span>
               </div>
-              <span className="text-xs text-[#717680]">{Math.round(volumeLevel)}%</span>
+              <span className="text-xs text-[color:var(--mofa-text-muted)]">{Math.round(volumeLevel)}%</span>
             </div>
             {/* Volume bar */}
             <div className="h-2 w-full overflow-hidden rounded-full bg-[#e9eaeb]">
@@ -1443,7 +1013,7 @@ function MicrophoneTestScreen({
                 style={{ width: `${volumeLevel}%` }}
               />
             </div>
-            <p className="mt-2 text-xs text-[#717680]">
+            <p className="mt-2 text-xs text-[color:var(--mofa-text-muted)]">
               {volumeLevel < 10
                 ? "Speak into your microphone to test volume"
                 : volumeLevel < 30
@@ -1460,20 +1030,20 @@ function MicrophoneTestScreen({
           <button
             type="button"
             onClick={handleRetry}
-            className="flex h-10 items-center justify-center rounded-lg border border-[#48476e] bg-[#48476e] px-4 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#3d3c52] active:scale-[0.98]"
+            className="flex h-10 items-center justify-center rounded-lg border border-[#212121] bg-[#212121] px-4 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#1a1a1a] active:scale-[0.98]"
           >
             Retry Test
           </button>
           <button
             type="button"
             onClick={() => setShowSkipWarning(true)}
-            className="flex h-10 items-center justify-center rounded-lg border border-[#d5d7da] bg-white px-4 text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+            className="flex h-10 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-4 text-sm font-semibold text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1"
           >
             Skip for now
           </button>
         </div>
       ) : status === "passed" ? (
-        <div className="flex items-center gap-2 rounded-lg border border-[#e7e7ee] bg-white px-4 py-2 animate-[fadeSlideIn_0.3s_ease-out]">
+        <div className="flex items-center gap-2 rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-4 py-2 animate-[fadeSlideIn_0.3s_ease-out]">
           <div className="size-2 rounded-full bg-[#17b26a]" />
           <span className="text-xs font-semibold text-[#067647]">Ready to enter meeting</span>
         </div>
@@ -1482,21 +1052,21 @@ function MicrophoneTestScreen({
           <button
             type="button"
             onClick={handleProceed}
-            className="flex h-10 items-center justify-center rounded-lg border border-[#48476e] bg-[#48476e] px-6 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#3d3c52] active:scale-[0.98]"
+            className="flex h-10 items-center justify-center rounded-lg border border-[#212121] bg-[#212121] px-6 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#1a1a1a] active:scale-[0.98]"
           >
             Proceed to Meeting
           </button>
           <button
             type="button"
             onClick={handleRetry}
-            className="flex h-10 items-center justify-center rounded-lg border border-[#d5d7da] bg-white px-4 text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+            className="flex h-10 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-4 text-sm font-semibold text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1"
           >
             Retry Test
           </button>
           <button
             type="button"
             onClick={() => setShowSkipWarning(true)}
-            className="flex h-10 items-center justify-center rounded-lg border border-[#d5d7da] bg-white px-4 text-sm font-semibold text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+            className="flex h-10 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-4 text-sm font-semibold text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1"
           >
             Skip
           </button>
@@ -1506,16 +1076,16 @@ function MicrophoneTestScreen({
       {/* Skip confirmation warning */}
       {showSkipWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 animate-[fadeSlideIn_0.15s_ease-out]">
-          <div className="w-full max-w-xs rounded-2xl border border-[#e9eaeb] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]">
-            <h3 className="text-base font-semibold text-[#181d27]">Skip microphone test?</h3>
-            <p className="mt-2 text-sm text-[#535862]">
+          <div className="w-full max-w-xs rounded-2xl border border-[color:var(--mofa-border-default)] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]">
+            <h3 className="text-base font-semibold text-[color:var(--mofa-text-primary)]">Skip microphone test?</h3>
+            <p className="mt-2 text-sm text-[color:var(--mofa-text-subtle)]">
               Skipping this test may affect translation quality. Make sure your microphone is working properly before proceeding.
             </p>
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
                 onClick={() => setShowSkipWarning(false)}
-                className="flex h-9 flex-1 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all hover:bg-[#f8f8fb] active:scale-[0.98]"
+                className="flex h-9 flex-1 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white text-sm font-semibold text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1"
               >
                 Cancel
               </button>
@@ -1571,11 +1141,11 @@ function MeetingConnectingScreen({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-gradient-to-br from-[#fafafa] to-[#f3f3f7] p-6">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-gradient-to-br from-[color:var(--mofa-page-bg)] to-[color:var(--mofa-sidebar-active-bg)] p-6">
       {/* Meeting title */}
       <div className="text-center">
-        <h1 className="text-3xl font-semibold text-[#181d27]">{meeting.title}</h1>
-        <p className="mt-2 text-sm text-[#717680]">Connecting to meeting room...</p>
+        <h1 className="text-3xl font-semibold text-[color:var(--mofa-text-primary)]">{meeting.title}</h1>
+        <p className="mt-2 text-sm text-[color:var(--mofa-text-muted)]">Connecting to meeting room...</p>
       </div>
 
       {/* Participant avatars preview */}
@@ -1583,7 +1153,7 @@ function MeetingConnectingScreen({
         {participants.slice(0, 4).map((p, idx) => (
           <div
             key={p.id}
-            className="flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-white text-base font-bold text-[#414651] shadow-md transition-all duration-500 hover:scale-110 animate-[fadeSlideIn_0.3s_ease-out_both]"
+            className="flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-white text-base font-bold text-[color:var(--mofa-text-body)] shadow-md transition-all duration-500 hover:scale-110 animate-[fadeSlideIn_0.3s_ease-out_both]"
             style={{
               backgroundColor: p.bg,
               animationDelay: `${idx * 100}ms`,
@@ -1593,7 +1163,7 @@ function MeetingConnectingScreen({
           </div>
         ))}
         {participants.length > 4 && (
-          <div className="flex size-14 items-center justify-center rounded-full border-2 border-white bg-[#e9eaeb] text-sm font-bold text-[#414651] shadow-md animate-[fadeSlideIn_0.3s_ease-out_both]" style={{ animationDelay: '400ms' }}>
+          <div className="flex size-14 items-center justify-center rounded-full border-2 border-white bg-[#e9eaeb] text-sm font-bold text-[color:var(--mofa-text-body)] shadow-md animate-[fadeSlideIn_0.3s_ease-out_both]" style={{ animationDelay: '400ms' }}>
             +{participants.length - 4}
           </div>
         )}
@@ -1605,7 +1175,7 @@ function MeetingConnectingScreen({
           {[0, 1, 2].map((i) => (
             <span
               key={i}
-              className="size-2.5 rounded-full bg-[#8988ab] animate-bounce"
+              className="size-2.5 rounded-full bg-[color:var(--mofa-accent)] animate-bounce"
               style={{
                 animationDelay: `${i * 150}ms`,
                 animationDuration: '1s',
@@ -1613,13 +1183,13 @@ function MeetingConnectingScreen({
             />
           ))}
         </div>
-        <p className="text-sm font-medium text-[#535862]">
+        <p className="text-sm font-medium text-[color:var(--mofa-text-subtle)]">
           {participants.length} participants
         </p>
       </div>
 
       {/* Ready indicator */}
-      <div className="flex items-center gap-2 rounded-lg border border-[#e7e7ee] bg-white px-4 py-2">
+      <div className="flex items-center gap-2 rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-4 py-2">
         <div className="size-2 animate-pulse rounded-full bg-[#17b26a]" />
         <span className="text-xs font-semibold text-[#067647]">Ready to join</span>
       </div>
@@ -1655,30 +1225,30 @@ function LeaveConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="leave-title"
-        className="w-full max-w-sm rounded-2xl border border-[#e9eaeb] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]"
+        className="w-full max-w-sm rounded-2xl border border-[color:var(--mofa-border-default)] bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.12)] animate-[fadeSlideIn_0.2s_ease-out]"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="flex size-12 items-center justify-center rounded-full bg-[#f3f3f7] mb-4">
-          <LogOut size={20} className="text-[#48476e]" />
+        <div className="flex size-12 items-center justify-center rounded-full bg-[color:var(--mofa-sidebar-active-bg)] mb-4">
+          <LogOut size={20} className="text-[color:var(--mofa-accent)]" />
         </div>
-        <h2 id="leave-title" className="text-base font-semibold text-[#181d27]">
+        <h2 id="leave-title" className="text-base font-semibold text-[color:var(--mofa-text-primary)]">
           Leave MOFA Translation view?
         </h2>
-        <p className="mt-1 text-sm text-[#535862]">
-          This closes the live translation panel only. Your call on <span className="font-medium text-[#414651]">Beem or Teams</span> will continue uninterrupted — you can rejoin the translation view anytime from the meetings page.
+        <p className="mt-1 text-sm text-[color:var(--mofa-text-subtle)]">
+          This closes the live translation panel only. Your call on <span className="font-medium text-[color:var(--mofa-text-body)]">Beem or Teams</span> will continue uninterrupted — you can rejoin the translation view anytime from the meetings page.
         </p>
         <div className="mt-6 flex gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="flex h-10 flex-1 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f8f8fb] active:scale-[0.98]"
+            className="flex h-10 flex-1 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white text-sm font-semibold text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1"
           >
             Stay
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="flex h-10 flex-1 items-center gap-2 justify-center rounded-lg border border-[#d5d7da] bg-white text-sm font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f3f3f7] active:scale-[0.98]"
+            className="flex h-10 flex-1 items-center gap-2 justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white text-sm font-semibold text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1"
           >
             <LogOut size={14} aria-hidden />
             Leave View
@@ -1721,11 +1291,11 @@ function PipTranscriptContent({
   return (
     <div className="flex h-screen flex-col bg-white" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
       {/* Header */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-[#e9eaeb] bg-[#fafafa] px-3 py-2.5">
-        <span className="text-[11px] font-extrabold tracking-tight text-[#48476e]">MOFA</span>
+      <div className="flex shrink-0 items-center gap-2 border-b border-[color:var(--mofa-border-default)] bg-[#fafafa] px-3 py-2.5">
+        <span className="text-[11px] font-extrabold tracking-tight text-[color:var(--mofa-accent)]">MOFA</span>
         {platform === "Teams" && <img src="/teams.png" alt="Teams" className="size-3.5 shrink-0 object-contain" />}
         {platform === "Beem" && <img src="/beam-logo.png" alt="Beem" className="size-3.5 shrink-0 object-contain" />}
-        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-[#414651]">{meetingTitle}</span>
+        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-[color:var(--mofa-text-body)]">{meetingTitle}</span>
         <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-medium text-[#067647]">
           <span className="size-1.5 animate-pulse rounded-full bg-[#17b26a]" />
           Live
@@ -1734,7 +1304,7 @@ function PipTranscriptContent({
           type="button"
           onClick={onClose}
           title="Close"
-          className="flex size-5 shrink-0 items-center justify-center rounded text-[#9fa3ae] transition-colors hover:bg-[#f3f3f7] hover:text-[#414651]"
+          className="flex size-5 shrink-0 items-center justify-center rounded text-[color:var(--mofa-text-placeholder)] transition-colors hover:bg-[color:var(--mofa-btn-outline-hover)] hover:text-[color:var(--mofa-text-body)]"
           aria-label="Close floating transcript"
         >
           <X size={12} />
@@ -1743,8 +1313,8 @@ function PipTranscriptContent({
 
       {/* Live feed label */}
       <div className="flex shrink-0 items-center justify-between px-3 pb-1 pt-2">
-        <span className="text-[9px] font-medium uppercase tracking-wider text-[#9fa3ae]">Live feed</span>
-        <span className="text-[9px] text-[#9fa3ae]">{messages.length} messages</span>
+        <span className="text-[9px] font-medium uppercase tracking-wider text-[color:var(--mofa-text-placeholder)]">Live feed</span>
+        <span className="text-[9px] text-[color:var(--mofa-text-placeholder)]">{messages.length} messages</span>
       </div>
 
       {/* Messages */}
@@ -1772,7 +1342,7 @@ function PipTranscriptContent({
                     ? <div className="size-5 shrink-0" />
                     : (
                       <div
-                        className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-[#414651]"
+                        className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-[color:var(--mofa-text-body)]"
                         style={{ backgroundColor: participant.bg }}
                       >
                         {participant.initials}
@@ -1784,12 +1354,12 @@ function PipTranscriptContent({
                   {/* Name + meta — only first in a consecutive group */}
                   {!isSameAsPrev && (
                     <div className={cn("flex flex-wrap items-center gap-1", isYou ? "flex-row-reverse" : "flex-row")}>
-                      <span className="text-[10px] font-semibold text-[#414651]">
+                      <span className="text-[10px] font-semibold text-[color:var(--mofa-text-body)]">
                         {isYou ? "You" : participant.name}
                       </span>
-                      <span className="text-[9px] text-[#9fa3ae]">{message.time}</span>
+                      <span className="text-[9px] text-[color:var(--mofa-text-placeholder)]">{message.time}</span>
                       {message.language && (
-                        <span className="inline-flex items-center gap-px rounded-full border border-[#e0dde8] bg-white px-1 py-px text-[8px] text-[#717680]">
+                        <span className="inline-flex items-center gap-px rounded-full border border-[color:var(--mofa-border-default)] bg-white px-1 py-px text-[8px] text-[color:var(--mofa-text-muted)]">
                           <Globe size={7} />
                           {message.language}
                         </span>
@@ -1812,8 +1382,8 @@ function PipTranscriptContent({
                           "px-2.5 py-1.5 text-[12px] leading-[18px]",
                           showArabic && "text-right",
                           isYou
-                            ? "rounded-bl-xl rounded-br-xl rounded-tl-xl border border-[#d0cfdd] bg-[#e7e7ee] text-[#181d27]"
-                            : "rounded-bl-xl rounded-br-xl rounded-tr-xl border border-[#e9eaeb] bg-[#fafafa] text-[#181d27]",
+                            ? "rounded-bl-xl rounded-br-xl rounded-tl-xl border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)] text-[color:var(--mofa-text-primary)]"
+                            : "rounded-bl-xl rounded-br-xl rounded-tr-xl border border-[color:var(--mofa-border-default)] bg-[#fafafa] text-[color:var(--mofa-text-primary)]",
                         )}
                         style={showArabic ? { fontFamily: "var(--font-ibm-plex-sans-arabic, var(--font-ibm-plex-sans))" } : undefined}
                       >
@@ -1829,8 +1399,8 @@ function PipTranscriptContent({
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 border-t border-[#f0f0f4] px-3 py-1.5 text-center">
-        <span className="text-[9px] text-[#c1c4cd]">Read-only · Powered by MOFA Translation</span>
+      <div className="shrink-0 border-t border-[color:var(--mofa-border-default)] px-3 py-1.5 text-center">
+        <span className="text-[9px] text-[color:var(--mofa-text-faint)]">Read-only · Powered by MOFA Translation</span>
       </div>
     </div>
   );
@@ -2143,15 +1713,15 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
           onClick={() => { minimizeSession(); router.back(); }}
           title="Back to meetings"
           aria-label="Back to meetings"
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-text-muted)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] hover:text-[color:var(--mofa-text-body)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1"
         >
           <ArrowLeft size={15} />
         </button>
 
         {/* Title + platform badge grouped together */}
-        <h1 className="text-xl font-medium text-[#414651]">{meeting.title}</h1>
+        <h1 className="text-xl font-medium text-[color:var(--mofa-text-body)]">{meeting.title}</h1>
         {meeting.platform && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e0dde8] bg-[#f8f7fc] px-2.5 py-1 text-[11px] font-semibold text-[#535862]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-btn-outline-hover)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--mofa-text-subtle)]">
             <PlatformIcon platform={meeting.platform} containerSize />
             {meeting.platform}
           </span>
@@ -2166,7 +1736,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
             <button
               type="button"
               onClick={() => setShowShareModal((v) => !v)}
-              className="flex items-center gap-1.5 rounded-lg border border-[#d5d7da] bg-white px-3 py-1.5 text-xs font-semibold text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[#f3f3f7] active:scale-[0.98]"
+              className="flex items-center gap-1.5 rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-3 py-1.5 text-xs font-semibold text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98]"
             >
               <Share2 size={12} aria-hidden />
               Invite Guest
@@ -2181,39 +1751,47 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
                   onClick={() => setShowShareModal(false)}
                 />
                 {/* Popover card */}
-                <div className="absolute right-0 top-full z-50 mt-2 w-[340px] rounded-2xl border border-[#e9eaeb] bg-white p-5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="invite-guest-title"
+                  className="absolute right-0 top-full z-50 mt-2 w-[min(340px,calc(100vw-2rem))] rounded-2xl border border-[color:var(--mofa-border-default)] bg-white p-5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+                >
                   <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-[#111827]">Invite Guest to Meeting</h2>
+                    <h2 id="invite-guest-title" className="text-sm font-semibold text-[color:var(--mofa-text-body)]">Invite Guest to Meeting</h2>
                     <button
                       type="button"
+                      aria-label="Close"
                       onClick={() => setShowShareModal(false)}
-                      className="flex size-6 items-center justify-center rounded-md text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]"
+                      className="flex size-6 items-center justify-center rounded-md text-[color:var(--mofa-text-muted)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] hover:text-[color:var(--mofa-text-body)]"
                     >
-                      <X size={14} />
+                      <X size={14} aria-hidden />
                     </button>
                   </div>
 
-                  {/* Meeting info */}
-                  <div className="mb-4 rounded-xl border border-[#e9eaeb] bg-[#fafafa] px-4 py-3">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-[#9da4ae]">Meeting</p>
-                    <p className="mt-0.5 text-sm font-semibold text-[#414651] leading-snug">{meeting.title}</p>
+                  {/* Meeting info — flat section, no nested card */}
+                  <div className="mb-4 border-b border-[color:var(--mofa-border-subtle)] pb-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[color:var(--mofa-text-muted)]">Meeting</p>
+                    <p className="mt-1 text-sm font-semibold leading-snug text-[color:var(--mofa-text-body)]">{meeting.title}</p>
                   </div>
 
                   {/* Meeting Link */}
                   <div className="mb-3">
-                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[color:var(--mofa-text-muted)]">
                       <Link2 size={12} aria-hidden />
                       Meeting Link
                     </p>
-                    <div className="flex items-center gap-2 rounded-lg border border-[#e9eaeb] bg-[#f9fafb] px-3 py-2">
-                      <span className="flex-1 truncate font-mono text-xs text-[#374151]">{meetingLink}</span>
+                    <div className="flex items-center gap-2 rounded-lg border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)] px-3 py-2">
+                      <span className="flex-1 truncate text-xs text-[color:var(--mofa-text-body)]">{meetingLink}</span>
                       <button
                         type="button"
                         onClick={() => copyToClipboard(meetingLink, "link")}
-                        className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition hover:bg-[#e9eaeb]"
-                        style={{ color: copiedLink ? "#16a34a" : "#6b7280" }}
+                        className={cn(
+                          "flex min-h-7 shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition hover:bg-[color:var(--mofa-btn-outline-hover)]",
+                          copiedLink ? "text-[#16a34a]" : "text-[color:var(--mofa-text-muted)]"
+                        )}
                       >
-                        {copiedLink ? <Check size={11} /> : <Copy size={11} />}
+                        {copiedLink ? <Check size={11} aria-hidden /> : <Copy size={11} aria-hidden />}
                         {copiedLink ? "Copied!" : "Copy"}
                       </button>
                     </div>
@@ -2221,40 +1799,43 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
 
                   {/* Password */}
                   <div className="mb-4">
-                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[color:var(--mofa-text-muted)]">
+                      <Lock size={12} aria-hidden />
                       Password
                     </p>
-                    <div className="flex items-center gap-2 rounded-lg border border-[#e9eaeb] bg-[#f9fafb] px-3 py-2">
-                      <span className="flex-1 font-mono text-xs tracking-widest text-[#374151]">{meetingPassword}</span>
+                    <div className="flex items-center gap-2 rounded-lg border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)] px-3 py-2">
+                      <span className="flex-1 text-xs tracking-widest text-[color:var(--mofa-text-body)]">{meetingPassword}</span>
                       <button
                         type="button"
                         onClick={() => copyToClipboard(meetingPassword, "password")}
-                        className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition hover:bg-[#e9eaeb]"
-                        style={{ color: copiedPassword ? "#16a34a" : "#6b7280" }}
+                        className={cn(
+                          "flex min-h-7 shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition hover:bg-[color:var(--mofa-btn-outline-hover)]",
+                          copiedPassword ? "text-[#16a34a]" : "text-[color:var(--mofa-text-muted)]"
+                        )}
                       >
-                        {copiedPassword ? <Check size={11} /> : <Copy size={11} />}
+                        {copiedPassword ? <Check size={11} aria-hidden /> : <Copy size={11} aria-hidden />}
                         {copiedPassword ? "Copied!" : "Copy"}
                       </button>
                     </div>
                   </div>
 
                   {/* Email toggles */}
-                  <div className="mb-4 rounded-xl border border-[#e9eaeb] divide-y divide-[#e9eaeb]">
+                  <div className="mb-4 rounded-xl border border-[color:var(--mofa-border-default)] divide-y divide-[color:var(--mofa-border-subtle)]">
                     {/* Send AI Summary */}
                     <div className="flex items-center justify-between px-4 py-3">
                       <div>
-                        <p className="text-xs font-medium text-[#374151]">Send AI Summary</p>
-                        <p className="text-[11px] text-[#9da4ae]">Email the meeting summary to guests</p>
+                        <p className="text-xs font-medium text-[color:var(--mofa-text-body)]">Send AI Summary</p>
+                        <p className="text-[11px] text-[color:var(--mofa-text-muted)]">Email the meeting summary to guests</p>
                       </div>
                       <button
                         type="button"
                         role="switch"
                         aria-checked={sendSummary}
+                        aria-label="Send AI Summary"
                         onClick={() => setSendSummary((v) => !v)}
                         className={cn(
-                          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                          sendSummary ? "bg-[#48476e]" : "bg-[#d1d5db]"
+                          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-2",
+                          sendSummary ? "bg-[color:var(--mofa-btn-primary-bg)]" : "bg-[#ccc5bb]"
                         )}
                       >
                         <span
@@ -2268,17 +1849,18 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
                     {/* Send Transcript */}
                     <div className="flex items-center justify-between px-4 py-3">
                       <div>
-                        <p className="text-xs font-medium text-[#374151]">Send Transcript</p>
-                        <p className="text-[11px] text-[#9da4ae]">Email the full transcript to guests</p>
+                        <p className="text-xs font-medium text-[color:var(--mofa-text-body)]">Send Transcript</p>
+                        <p className="text-[11px] text-[color:var(--mofa-text-muted)]">Email the full transcript to guests</p>
                       </div>
                       <button
                         type="button"
                         role="switch"
                         aria-checked={sendTranscript}
+                        aria-label="Send Transcript"
                         onClick={() => setSendTranscript((v) => !v)}
                         className={cn(
-                          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                          sendTranscript ? "bg-[#48476e]" : "bg-[#d1d5db]"
+                          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-2",
+                          sendTranscript ? "bg-[color:var(--mofa-btn-primary-bg)]" : "bg-[#ccc5bb]"
                         )}
                       >
                         <span
@@ -2315,7 +1897,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
       {/* Two-column body */}
       <div className="flex min-h-0 flex-1 gap-6">
         {/* ── Call area ── */}
-        <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#d5d7da] bg-[#fafafa] p-4">
+        <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-page-bg)] p-4">
           {/* Participant grid — flex-wrap so tiles center and wrap naturally */}
           <div className="flex min-h-0 flex-1 items-center justify-center p-2">
             <div className="flex flex-wrap justify-center gap-4">
@@ -2347,7 +1929,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
           </div>
 
           {/* Control bar */}
-          <div className="flex shrink-0 items-center justify-between border-t border-[#ebebef] px-4 pb-3 pt-3">
+          <div className="flex shrink-0 items-center justify-between border-t border-[color:var(--mofa-border-default)] px-4 pb-3 pt-3">
             {/* Left: timer */}
             <LiveTimer />
 
@@ -2368,7 +1950,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
                         "relative flex size-11 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-95",
                         micOn
                           ? "border-[#d92d20]/20 bg-[#d92d20] text-white shadow-[0_4px_12px_rgba(217,45,32,0.35)]"
-                          : "border-[#e9eaeb] bg-white text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7] hover:text-[#414651]",
+                          : "border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-text-muted)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[color:var(--mofa-btn-outline-hover)] hover:text-[color:var(--mofa-text-body)]",
                       )}
                     >
                       {micOn && (
@@ -2384,7 +1966,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
                         micOn ? "opacity-0" : "opacity-0 group-hover:opacity-100",
                       )}
                     >
-                      <div className="relative flex items-center gap-1.5 rounded-lg bg-[#18181b] px-2.5 py-1.5 shadow-xl ring-1 ring-white/10">
+                      <div className="relative flex items-center gap-1.5 rounded-lg bg-[#181d27] px-2.5 py-1.5 shadow-xl ring-1 ring-white/10">
                         <span className="whitespace-nowrap text-[11px] font-medium text-white/70">Hold</span>
                         <kbd className="inline-flex items-center rounded-[5px] border border-white/20 bg-white/15 px-1.5 py-0.5 font-sans text-[11px] font-semibold leading-none tracking-wide text-white shadow-[inset_0_-1px_0_rgba(0,0,0,0.3)]">
                           Space
@@ -2396,7 +1978,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
                     </div>
                   </div>
 
-                  <span className={cn("text-[10px] font-medium", micOn ? "text-[#d92d20]" : "text-[#9fa3ae]")}>
+                  <span className={cn("text-[10px] font-medium", micOn ? "text-[#d92d20]" : "text-[color:var(--mofa-text-placeholder)]")}>
                     {micOn ? "Live" : "Muted"}
                   </span>
                 </div>
@@ -2411,13 +1993,13 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
                     className={cn(
                       "flex size-11 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-95",
                       speakerOn
-                        ? "border-[#e9eaeb] bg-white text-[#48476e] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7]"
-                        : "border-[#e9eaeb] bg-white text-[#9fa3ae] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[#f3f3f7]",
+                        ? "border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-accent)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[color:var(--mofa-btn-outline-hover)]"
+                        : "border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-text-placeholder)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] hover:bg-[color:var(--mofa-btn-outline-hover)]",
                     )}
                   >
                     {speakerOn ? <Volume2 size={16} aria-hidden /> : <VolumeX size={16} aria-hidden />}
                   </button>
-                  <span className="text-[10px] font-medium text-[#9fa3ae]">
+                  <span className="text-[10px] font-medium text-[color:var(--mofa-text-placeholder)]">
                     {speakerOn ? "Speaker" : "Silent"}
                   </span>
                 </div>
@@ -2431,7 +2013,7 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
             <button
               type="button"
               onClick={() => setShowLeaveDialog(true)}
-              className="flex h-8 items-center gap-1.5 rounded-full border border-[#e9eaeb] bg-white px-4 text-[12px] font-semibold text-[#717680] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[#f3f3f7] hover:text-[#414651] active:scale-95"
+              className="flex h-8 items-center gap-1.5 rounded-full border border-[color:var(--mofa-border-default)] bg-white px-4 text-[12px] font-semibold text-[color:var(--mofa-text-muted)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200 hover:bg-[color:var(--mofa-btn-outline-hover)] hover:text-[color:var(--mofa-text-body)] active:scale-95"
               aria-label="Leave MOFA view"
               title={isInApp ? "Leave meeting" : "Leave MOFA view — your call on Beem/Teams continues"}
             >
@@ -2442,10 +2024,10 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
         </section>
 
         {/* ── Transcript / Participants sidebar ── */}
-        <aside className="flex min-h-0 w-[417px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#e9eaeb] bg-white">
+        <aside className="flex min-h-0 w-[417px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-white">
           {/* Segment-style tab bar + pop-out button */}
           <div className="shrink-0 flex items-center gap-2 p-4">
-            <div className="flex flex-1 rounded-[10px] bg-[#fafafa] border border-[#e9eaeb] p-1">
+            <div role="tablist" className="flex flex-1 rounded-[10px] bg-[color:var(--mofa-sidebar-active-bg)] border border-[color:var(--mofa-border-default)] p-1">
               {([
                 { id: "transcript" as const, label: "Transcript" },
                 { id: "participants" as const, label: "Participants" },
@@ -2455,12 +2037,14 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
                   <button
                     key={tab.id}
                     type="button"
+                    role="tab"
+                    aria-selected={active}
                     onClick={() => setActivePanel(tab.id)}
                     className={cn(
-                      "flex h-9 flex-1 items-center justify-center rounded-md text-sm font-semibold transition-all duration-200",
+                      "flex h-9 flex-1 items-center justify-center rounded-md text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1",
                       active
-                        ? "bg-white text-[#414651] shadow-[0_1px_3px_rgba(10,13,18,0.1),0_1px_2px_-1px_rgba(10,13,18,0.1)]"
-                        : "text-[#717680] hover:text-[#535862]",
+                        ? "bg-white text-[color:var(--mofa-text-body)] shadow-[0_1px_3px_rgba(10,13,18,0.1),0_1px_2px_-1px_rgba(10,13,18,0.1)]"
+                        : "text-[color:var(--mofa-text-muted)] hover:text-[color:var(--mofa-text-subtle)]",
                     )}
                   >
                     {tab.label}
@@ -2479,8 +2063,8 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
                   // size-11 = 44px square, matches the tab pill height (p-1 wrapper + h-9 inner buttons)
                   "flex size-11 items-center justify-center rounded-[10px] border font-semibold shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition-all duration-200",
                   isPipOpen
-                    ? "border-[#c8c7d8] bg-[#eeedf5] text-[#48476e] hover:bg-[#e4e3f0] hover:border-[#b8b7cc]"
-                    : "border-[#d5d7da] bg-white text-[#414651] hover:bg-[#f9fafb] hover:border-[#c2c6cd]",
+                    ? "border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)] text-[color:var(--mofa-accent)] hover:bg-[color:var(--mofa-btn-outline-hover)] hover:border-[color:var(--mofa-border-default)]"
+                    : "border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-text-body)] hover:bg-[color:var(--mofa-btn-outline-hover)] hover:border-[color:var(--mofa-border-default)]",
                 )}
               >
                 {isPipOpen ? <PictureInPicture2 size={18} /> : <PictureInPicture size={18} />}
@@ -2488,18 +2072,18 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
 
               {/* Hover tooltip label */}
               <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 origin-top scale-95 opacity-0 transition-all duration-150 group-hover:scale-100 group-hover:opacity-100">
-                <div className="whitespace-nowrap rounded-lg border border-[#e9eaeb] bg-[#181d27] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg">
+                <div className="whitespace-nowrap rounded-lg border border-[color:var(--mofa-border-default)] bg-[#181d27] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg">
                   {isPipOpen ? "Close floating transcript" : "Pop out transcript"}
                   {/* Arrow */}
-                  <div className="absolute -top-1 right-3.5 size-2 rotate-45 border-l border-t border-[#e9eaeb] bg-[#181d27]" />
+                  <div className="absolute -top-1 right-3.5 size-2 rotate-45 border-l border-t border-[color:var(--mofa-border-default)] bg-[#181d27]" />
                 </div>
               </div>
 
               {/* Popup blocked tooltip — shown when the browser's popup blocker fires */}
               {pipPopupBlocked && (
-                <div className="absolute right-0 top-full z-50 mt-1.5 w-60 rounded-lg border border-[#e9eaeb] bg-white px-3 py-2.5 shadow-lg animate-[fadeSlideIn_0.15s_ease-out]">
-                  <p className="text-[11px] font-semibold text-[#414651]">Popup blocked</p>
-                  <p className="mt-0.5 text-[11px] leading-[17px] text-[#717680]">
+                <div className="absolute right-0 top-full z-50 mt-1.5 w-60 rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-3 py-2.5 shadow-lg animate-[fadeSlideIn_0.15s_ease-out]">
+                  <p className="text-[11px] font-semibold text-[color:var(--mofa-text-body)]">Popup blocked</p>
+                  <p className="mt-0.5 text-[11px] leading-[17px] text-[color:var(--mofa-text-muted)]">
                     Allow popups for this site in your browser settings, then try again.
                   </p>
                 </div>
@@ -2547,12 +2131,12 @@ function DownloadMenu() {
         <ChevronDown size={12} className={cn("transition-transform", open && "rotate-180")} />
       </Button>
       {open && (
-        <div className="absolute right-0 top-10 z-50 min-w-[188px] overflow-hidden rounded-xl border border-[#e9eaeb] bg-white py-1 shadow-lg">
+        <div className="absolute right-0 top-10 z-50 min-w-[188px] overflow-hidden rounded-xl border border-[color:var(--mofa-border-default)] bg-white py-1 shadow-lg">
           {DOWNLOAD_FORMATS.map((f) => (
             <button
               key={f.ext}
               type="button"
-              className="flex w-full items-center justify-between gap-3 px-3 py-2 text-sm text-[#414651] hover:bg-[#f3f3f7] transition-colors"
+              className="flex w-full items-center justify-between gap-3 px-3 py-2 text-sm text-[color:var(--mofa-text-body)] hover:bg-[color:var(--mofa-btn-outline-hover)] transition-colors"
               onClick={() => {
                 setDownloaded(f.ext);
                 setOpen(false);
@@ -2563,7 +2147,7 @@ function DownloadMenu() {
               <span className="flex items-center gap-1">
                 {downloaded === f.ext
                   ? <Check size={13} className="text-[#067647]" />
-                  : <span className="text-xs text-[#717680]">{f.ext}</span>}
+                  : <span className="text-xs text-[color:var(--mofa-text-muted)]">{f.ext}</span>}
               </span>
             </button>
           ))}
@@ -2595,8 +2179,8 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
   if (!meeting) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 py-24">
-        <p className="text-base font-semibold text-[#414651]">Meeting not found</p>
-        <Link href="/meetings" className="text-sm text-[#6f6e8a] underline hover:text-[#414651]">
+        <p className="text-base font-semibold text-[color:var(--mofa-text-body)]">Meeting not found</p>
+        <Link href="/meetings" className="text-sm text-[color:var(--mofa-text-muted)] underline hover:text-[color:var(--mofa-text-body)]">
           Back to meetings
         </Link>
       </div>
@@ -2619,8 +2203,8 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
   if (!detail) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 py-24">
-        <p className="text-base font-semibold text-[#414651]">Meeting details unavailable</p>
-        <Link href="/meetings" className="text-sm text-[#6f6e8a] underline hover:text-[#414651]">
+        <p className="text-base font-semibold text-[color:var(--mofa-text-body)]">Meeting details unavailable</p>
+        <Link href="/meetings" className="text-sm text-[color:var(--mofa-text-muted)] underline hover:text-[color:var(--mofa-text-body)]">
           Back to meetings
         </Link>
       </div>
@@ -2638,10 +2222,10 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
       {/* Header row: back + title + actions */}
       <div className="mb-5 flex items-center gap-3">
         <Link href="/meetings"
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#e7e7ee] bg-white text-[#717680] transition hover:bg-[#f3f3f7] hover:text-[#414651]">
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-text-muted)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] hover:text-[color:var(--mofa-text-body)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1">
           <ArrowLeft size={15} />
         </Link>
-        <h1 className="flex-1 truncate text-xl font-semibold text-[#414651]">{meeting.title}</h1>
+        <h1 className="flex-1 truncate text-xl font-semibold text-[color:var(--mofa-text-body)]">{meeting.title}</h1>
         <div className="flex shrink-0 items-center gap-0.5">
           <Button variant="tertiary" size="sm" className="gap-1.5">
             <Share2 size={14} aria-hidden />
@@ -2663,25 +2247,26 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
         />
 
         {/* ── Main content ── */}
-        <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-[#e9eaeb] bg-white overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-[color:var(--mofa-border-default)] bg-white overflow-hidden">
           {/* Toolbar: search (transcript only) + download */}
           <div className="flex shrink-0 items-center justify-between gap-4 px-5 py-3">
             <div className={cn("relative flex-1 max-w-xs transition-all", activeTab !== "transcript" && "opacity-40 pointer-events-none")}>
-              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#717680]" aria-hidden />
+              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--mofa-text-muted)]" aria-hidden />
               <input
                 type="search"
+                aria-label="Search transcript"
                 placeholder="Search transcript…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 disabled={activeTab !== "transcript"}
-                className="h-8 w-full rounded-lg border border-[#d5d7da] bg-white pl-8 pr-3 text-sm text-[#414651] outline-none placeholder:text-[#717680] focus:ring-2 focus:ring-[#6f6e8a]/30"
+                className="h-8 w-full rounded-lg border border-[color:var(--mofa-border-default)] bg-white pl-8 pr-3 text-sm text-[color:var(--mofa-text-body)] outline-none placeholder:text-[color:var(--mofa-text-muted)] focus:ring-2 focus:ring-[#6f6e8a]/30"
               />
             </div>
             <DownloadMenu />
           </div>
 
           {/* Tabs */}
-          <div className="shrink-0 border-b border-[#e9eaeb] px-5">
+          <div className="shrink-0 border-b border-[color:var(--mofa-border-default)] px-5">
             <div className="flex gap-0.5">
               {TABS.map((tab) => {
                 const active = tab.id === activeTab;
@@ -2693,8 +2278,8 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
                     className={cn(
                       "flex items-center gap-1.5 px-3 pb-3 pt-3 text-xs font-semibold transition whitespace-nowrap",
                       active
-                        ? "border-b-2 border-[#6f6e8a] text-[#545469]"
-                        : "text-[#717680] hover:text-[#414651]",
+                        ? "border-b-2 border-[color:var(--mofa-active-tab)] text-[color:var(--mofa-active-tab)]"
+                        : "text-[color:var(--mofa-text-muted)] hover:text-[color:var(--mofa-text-body)]",
                     )}
                   >
                     {tab.icon}
@@ -2702,7 +2287,7 @@ export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
                     {tab.count !== undefined && (
                       <span className={cn(
                         "rounded-full px-1.5 py-0.5 text-[10px]",
-                        active ? "bg-[#e9e9f0] text-[#545469]" : "bg-[#f0f0f4] text-[#717680]",
+                        active ? "bg-[#e9e9f0] text-[color:var(--mofa-text-secondary)]" : "bg-[#f0f0f4] text-[color:var(--mofa-text-muted)]",
                       )}>
                         {tab.count}
                       </span>

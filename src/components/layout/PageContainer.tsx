@@ -7,7 +7,7 @@ export type PageContainerProps = React.ComponentPropsWithoutRef<"main">;
 export function PageContainer({ className, ...props }: PageContainerProps) {
   return (
     <main
-      className={cn("mx-auto w-full max-w-6xl px-4 py-10", className)}
+      className={cn("w-full max-w-6xl mx-auto px-8 py-8", className)}
       {...props}
     />
   );

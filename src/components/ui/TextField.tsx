@@ -27,7 +27,7 @@ export function TextField({
     <div className={cn("space-y-1.5", className)}>
       <label
         htmlFor={id}
-        className="block text-[13px] font-medium leading-[19.5px] text-[#414651]"
+        className="block text-[13px] font-medium leading-[19.5px] text-[color:var(--mofa-text-body)]"
       >
         {label}
       </label>
@@ -40,8 +40,8 @@ export function TextField({
         className={cn(
           "h-10 w-full rounded-lg border px-3 text-sm shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] outline-none transition-shadow",
           disabled
-            ? "cursor-not-allowed border-[#eeedf5] bg-[#f9f9fb] text-[#535862]"
-            : "border-[#eeedf5] bg-white text-[#414651]",
+            ? "cursor-not-allowed border-[color:var(--mofa-border-default)] bg-[#f9f9fb] text-[color:var(--mofa-text-subtle)]"
+            : "border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-text-body)]",
           error ? "border-[#fca5a5]" : null,
           !disabled &&
             "focus:shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1),0_0_0_2px_var(--mofa-btn-outline-focus-halo)]",

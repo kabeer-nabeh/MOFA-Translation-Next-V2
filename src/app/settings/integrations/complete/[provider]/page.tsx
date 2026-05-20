@@ -64,22 +64,22 @@ export default function IntegrationCompletePage() {
           : "Integration";
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-[#f3f3f7] px-4">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-[color:var(--mofa-sidebar-active-bg)] px-4">
       <div
         className={cn(
-          "w-full max-w-md rounded-2xl border border-[#eeedf5] bg-white p-8 text-center shadow-[0_12px_24px_rgba(0,0,0,0.06)]",
+          "w-full max-w-md rounded-2xl border border-[color:var(--mofa-border-default)] bg-white p-8 text-center shadow-[0_12px_24px_rgba(0,0,0,0.06)]",
         )}
       >
         {state === "working" ? (
           <>
             <Loader2
-              className="mx-auto h-10 w-10 animate-spin text-[#48476e]"
+              className="mx-auto h-10 w-10 animate-spin text-[color:var(--mofa-accent)]"
               aria-hidden
             />
-            <h1 className="mt-4 text-lg font-semibold text-[#181d27]">
+            <h1 className="mt-4 text-lg font-semibold text-[color:var(--mofa-text-primary)]">
               Finishing {label}…
             </h1>
-            <p className="mt-2 text-sm text-[#535862]">
+            <p className="mt-2 text-sm text-[color:var(--mofa-text-subtle)]">
               Securing your connection to MOFA.
             </p>
           </>
@@ -91,10 +91,10 @@ export default function IntegrationCompletePage() {
               className="mx-auto h-10 w-10 text-[#008236]"
               aria-hidden
             />
-            <h1 className="mt-4 text-lg font-semibold text-[#181d27]">
+            <h1 className="mt-4 text-lg font-semibold text-[color:var(--mofa-text-primary)]">
               {label} connected
             </h1>
-            <p className="mt-2 text-sm text-[#535862]">
+            <p className="mt-2 text-sm text-[color:var(--mofa-text-subtle)]">
               Redirecting you back to Settings…
             </p>
           </>
@@ -102,7 +102,7 @@ export default function IntegrationCompletePage() {
 
         {state === "err" ? (
           <>
-            <h1 className="text-lg font-semibold text-[#181d27]">Something went wrong</h1>
+            <h1 className="text-lg font-semibold text-[color:var(--mofa-text-primary)]">Something went wrong</h1>
             <p className="mt-2 text-sm text-[#b91c1c]">
               {errMsg ?? "Please try again."}
             </p>

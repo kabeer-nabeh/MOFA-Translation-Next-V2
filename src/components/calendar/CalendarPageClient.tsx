@@ -46,11 +46,11 @@ const variantClass: Record<
   { block: string; title: string }
 > = {
   neutral: {
-    block: "border border-[#d6d3d0] bg-[#f0f0f0]",
+    block: "border border-[color:var(--mofa-border-default)] bg-[#f0f0f0]",
     title: "text-[#1d1d1f]",
   },
   soft: {
-    block: "border border-[#e0dde8] bg-[#f3f3f7]",
+    block: "border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)]",
     title: "text-[#1d1d1f]",
   },
   indigo: {
@@ -133,31 +133,31 @@ export function CalendarPageClient() {
   return (
     <div className="flex min-h-0 flex-1 flex-col pt-6">
       {/* Outer card — contains both the header row and the timeline, matching the local design */}
-      <div className="flex h-[min(1400px,calc(100dvh-10rem))] min-h-0 max-h-[min(1400px,calc(100dvh-10rem))] flex-1 flex-col overflow-hidden rounded-xl border border-[#e9eaeb] bg-white shadow-sm">
+      <div className="flex h-[min(1400px,calc(100dvh-10rem))] min-h-0 max-h-[min(1400px,calc(100dvh-10rem))] flex-1 flex-col overflow-hidden rounded-xl border border-[color:var(--mofa-border-default)] bg-white shadow-sm">
         {/* Header row inside the card */}
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 px-6 py-5">
           <div className="flex min-w-0 items-start gap-3">
             {/* Two-row date chip: month short on top, day number below */}
             <div
-              className="flex w-16 shrink-0 flex-col items-center overflow-hidden rounded-lg border border-[#e9eaeb] bg-white"
+              className="flex w-16 shrink-0 flex-col items-center overflow-hidden rounded-lg border border-[color:var(--mofa-border-default)] bg-white"
               aria-label={dateChipText(selected)}
             >
               <div className="flex w-full items-center justify-center bg-[#fafafa] pb-0.5 pt-1 px-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-[#717680]">
+                <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--mofa-text-muted)]">
                   {selected.toLocaleString("en-US", { month: "short" })}
                 </span>
               </div>
               <div className="flex w-full items-center justify-center pb-[3px] pt-px px-2">
-                <span className="text-lg font-bold leading-7 text-[#545469]">
+                <span className="text-lg font-bold leading-7 text-[color:var(--mofa-text-secondary)]">
                   {selected.getDate()}
                 </span>
               </div>
             </div>
             <div className="flex min-w-0 flex-1 flex-col items-start justify-center gap-0.5">
-              <p className="text-lg font-semibold text-[#181d27]">
+              <p className="text-lg font-semibold text-[color:var(--mofa-text-primary)]">
                 {longDateText(selected)}
               </p>
-              <p className="text-sm text-[#535862]">
+              <p className="text-sm text-[color:var(--mofa-text-subtle)]">
                 {weekdayText(selected)}
               </p>
             </div>
@@ -171,7 +171,7 @@ export function CalendarPageClient() {
                 onChange={setView}
                 options={calendarViewOptions}
                 leadingIcon={
-                  <CalendarDays size={16} strokeWidth={1.7} className="text-[#535862]" />
+                  <CalendarDays size={16} strokeWidth={1.7} className="text-[color:var(--mofa-text-subtle)]" />
                 }
               />
             </div>
@@ -179,14 +179,14 @@ export function CalendarPageClient() {
           </div>
         </div>
         <div className="flex h-full min-h-0 w-full flex-1 flex-col items-stretch lg:flex-row">
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-[#e9eaeb] lg:border-b-0 lg:border-r lg:border-[#e9eaeb]">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-[color:var(--mofa-border-default)] lg:border-b-0 lg:border-r lg:border-[color:var(--mofa-border-default)]">
             {view === "week" ? (
               <div
                 className="flex min-h-[320px] items-center justify-center p-4 sm:p-6"
                 role="status"
               >
-                <div className="rounded-lg border border-dashed border-[#e0dde8] bg-[#fafbfc] px-6 py-12 text-center">
-                  <p className="text-sm text-[#535862]">
+                <div className="rounded-lg border border-dashed border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-btn-outline-hover)] px-6 py-12 text-center">
+                  <p className="text-sm text-[color:var(--mofa-text-subtle)]">
                     Week view is not available yet. Use Day view to see your timeline.
                   </p>
                 </div>
@@ -201,14 +201,14 @@ export function CalendarPageClient() {
                     {VISIBLE_HOUR_LABELS.map((row) => (
                       <div
                         key={row.hour}
-                        className="flex h-24 items-start justify-end pt-0 text-xs text-[#717680]"
+                        className="flex h-24 items-start justify-end pt-0 text-xs text-[color:var(--mofa-text-muted)]"
                       >
                         {row.label}
                       </div>
                     ))}
                   </div>
                   <div
-                    className="relative min-w-0 flex-1 border-l border-[#e9eaeb]"
+                    className="relative min-w-0 flex-1 border-l border-[color:var(--mofa-border-default)]"
                     style={{ minHeight: TIMELINE_HEIGHT_PX }}
                   >
                     <div
@@ -292,7 +292,7 @@ export function CalendarPageClient() {
                   <button
                     type="button"
                     onClick={prevMonth}
-                    className="inline-flex size-8 items-center justify-center rounded-md text-[#535862] transition hover:bg-[#f0f0f0]"
+                    className="inline-flex size-8 items-center justify-center rounded-md text-[color:var(--mofa-text-subtle)] transition hover:bg-[color:var(--mofa-btn-outline-hover)]"
                     aria-label="Previous month"
                   >
                     <ChevronLeft size={18} />
@@ -300,7 +300,7 @@ export function CalendarPageClient() {
                   <button
                     type="button"
                     onClick={nextMonth}
-                    className="inline-flex size-8 items-center justify-center rounded-md text-[#535862] transition hover:bg-[#f0f0f0]"
+                    className="inline-flex size-8 items-center justify-center rounded-md text-[color:var(--mofa-text-subtle)] transition hover:bg-[color:var(--mofa-btn-outline-hover)]"
                     aria-label="Next month"
                   >
                     <ChevronRight size={18} />
@@ -309,7 +309,7 @@ export function CalendarPageClient() {
               </div>
               <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
                 {WEEKDAYS.map((d) => (
-                  <div key={d} className="mb-1 text-[10px] font-medium text-[#9aa0a6]">
+                  <div key={d} className="mb-1 text-[10px] font-medium text-[color:var(--mofa-text-faint)]">
                     {d}
                   </div>
                 ))}
@@ -327,8 +327,8 @@ export function CalendarPageClient() {
                         "relative mx-auto flex size-8 items-center justify-center rounded-full text-xs transition",
                         !inM && "text-[#b8bcc2]",
                         inM && "text-[#1d1d1f]",
-                        isSelected && "bg-[#48476e] font-semibold text-white",
-                        !isSelected && inM && "hover:bg-[#f0f0f0]",
+                        isSelected && "bg-[color:var(--mofa-accent)] font-semibold text-white",
+                        !isSelected && inM && "hover:bg-[color:var(--mofa-btn-outline-hover)]",
                       )}
                     >
                       {day}
@@ -376,10 +376,10 @@ export function CalendarPageClient() {
               </>
             ) : (
               <div
-                className="row-start-2 min-h-0 border-t border-[#e9eaeb] pt-4 [min-height:0]"
+                className="row-start-2 min-h-0 border-t border-[color:var(--mofa-border-default)] pt-4 [min-height:0]"
                 role="status"
               >
-                <div className="rounded-lg border border-dashed border-[#e0dde8] bg-[#fafbfc] px-4 py-8 text-center text-sm text-[#535862]">
+                <div className="rounded-lg border border-dashed border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-btn-outline-hover)] px-4 py-8 text-center text-sm text-[color:var(--mofa-text-subtle)]">
                   No meetings on this day. Add a new meeting to get started.
                 </div>
               </div>
@@ -408,7 +408,7 @@ function EventDetailScrollBody({
         <div className="flex shrink-0 items-center gap-0.5">
           <button
             type="button"
-            className="inline-flex size-9 items-center justify-center rounded-md text-[#535862] transition hover:bg-[#f0f0f0]"
+            className="inline-flex size-9 items-center justify-center rounded-md text-[color:var(--mofa-text-subtle)] transition hover:bg-[color:var(--mofa-btn-outline-hover)]"
             aria-label="Copy event"
             onClick={() => {
               void navigator.clipboard?.writeText(detail.meetingLink);
@@ -418,14 +418,14 @@ function EventDetailScrollBody({
           </button>
           <button
             type="button"
-            className="inline-flex size-9 items-center justify-center rounded-md text-[#535862] transition hover:bg-[#f0f0f0]"
+            className="inline-flex size-9 items-center justify-center rounded-md text-[color:var(--mofa-text-subtle)] transition hover:bg-[color:var(--mofa-btn-outline-hover)]"
             aria-label="Delete event"
           >
             <Trash2 size={16} />
           </button>
           <button
             type="button"
-            className="inline-flex size-9 items-center justify-center rounded-md text-[#535862] transition hover:bg-[#f0f0f0]"
+            className="inline-flex size-9 items-center justify-center rounded-md text-[color:var(--mofa-text-subtle)] transition hover:bg-[color:var(--mofa-btn-outline-hover)]"
             aria-label="Edit event"
           >
             <Pencil size={16} />
@@ -433,9 +433,9 @@ function EventDetailScrollBody({
         </div>
       </div>
 
-      <ul className="space-y-3 text-sm text-[#414651]">
+      <ul className="space-y-3 text-sm text-[color:var(--mofa-text-body)]">
         <li className="flex items-start gap-2">
-          <Calendar size={16} className="mt-0.5 shrink-0 text-[#535862]" aria-hidden />
+          <Calendar size={16} className="mt-0.5 shrink-0 text-[color:var(--mofa-text-subtle)]" aria-hidden />
           <span>
             <span className="font-medium text-[#1d1d1f]">
               {detail.monthLabel} · {detail.weekday}
@@ -443,13 +443,13 @@ function EventDetailScrollBody({
           </span>
         </li>
         <li className="flex items-start gap-2">
-          <Clock size={16} className="mt-0.5 shrink-0 text-[#535862]" aria-hidden />
+          <Clock size={16} className="mt-0.5 shrink-0 text-[color:var(--mofa-text-subtle)]" aria-hidden />
           <span>
             {detail.timeRange} (ends {detail.endTimeLabel})
           </span>
         </li>
         <li className="flex items-start gap-2">
-          <Bell size={16} className="mt-0.5 shrink-0 text-[#535862]" aria-hidden />
+          <Bell size={16} className="mt-0.5 shrink-0 text-[color:var(--mofa-text-subtle)]" aria-hidden />
           <span>Reminder · {detail.remindLabel}</span>
         </li>
       </ul>
@@ -468,17 +468,17 @@ function EventDetailScrollBody({
           ))}
         </div>
         {detail.otherGuestsInitials ? (
-          <div className="inline-flex size-8 items-center justify-center rounded-full border-2 border-dashed border-[#c8cdd4] bg-white text-sm text-[#535862]">
+          <div className="inline-flex size-8 items-center justify-center rounded-full border-2 border-dashed border-[color:var(--mofa-border-default)] bg-white text-sm text-[color:var(--mofa-text-subtle)]">
             <Plus size={16} />
           </div>
         ) : null}
       </div>
 
-      <p className="text-xs text-[#717680]">{detail.rsvpSummary}</p>
+      <p className="text-xs text-[color:var(--mofa-text-muted)]">{detail.rsvpSummary}</p>
 
       <div>
         <h4 className="mb-1.5 text-sm font-medium text-[#1d1d1f]">About this event</h4>
-        <p className="pb-1 text-sm leading-relaxed text-[#414651]">{detail.about}</p>
+        <p className="pb-1 text-sm leading-relaxed text-[color:var(--mofa-text-body)]">{detail.about}</p>
       </div>
     </div>
   );

@@ -43,12 +43,12 @@ export function RadioCardGroup<T extends string>({
               "flex flex-1 items-start gap-3 rounded-lg border px-4 py-3 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
               layout === "row" && "min-w-[120px]",
               selected
-                ? "border-[#48476e] bg-[#f8f8fb] text-[#48476e]"
-                : "border-[#d5d7da] bg-white text-[#414651] hover:border-[#c5c7ca] hover:bg-[#f3f3f7]"
+                ? "border-[color:var(--mofa-accent)] bg-[color:var(--mofa-accent-light)] text-[color:var(--mofa-accent)]"
+                : "border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-text-body)] hover:border-[#c5c7ca] hover:bg-[color:var(--mofa-sidebar-active-bg)]"
             )}
           >
             {opt.icon && (
-              <span className={cn("shrink-0", selected ? "text-[#48476e]" : "text-[#717680]")}>
+              <span className={cn("shrink-0", selected ? "text-[color:var(--mofa-accent)]" : "text-[color:var(--mofa-text-muted)]")}>
                 {opt.icon}
               </span>
             )}
@@ -58,7 +58,7 @@ export function RadioCardGroup<T extends string>({
                 <span
                   className={cn(
                     "truncate whitespace-nowrap text-[12px] font-normal leading-[18px]",
-                    selected ? "text-[#48476e]" : "text-[#717680]",
+                    selected ? "text-[color:var(--mofa-accent)]" : "text-[color:var(--mofa-text-muted)]",
                   )}
                 >
                   {opt.description}

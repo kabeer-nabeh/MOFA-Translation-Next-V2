@@ -44,19 +44,19 @@ export function InAppMeetingRoom({ meeting }: { meeting: Meeting }) {
       <div className="mb-4 flex shrink-0 items-center justify-between gap-3">
         <Link
           href="/meetings"
-          className="inline-flex items-center gap-1.5 text-sm text-[#717680] transition hover:text-[#414651]"
+          className="inline-flex items-center gap-1.5 text-sm text-[color:var(--mofa-text-muted)] transition hover:text-[color:var(--mofa-text-body)]"
         >
           <ArrowLeft size={15} />
           Back to Meetings
         </Link>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h1 className="truncate text-lg font-semibold text-[#414651]">{meeting.title}</h1>
+          <h1 className="truncate text-lg font-semibold text-[color:var(--mofa-text-body)]">{meeting.title}</h1>
           <span
             className={cn(
               "shrink-0 rounded-md border px-2.5 py-0.5 text-xs font-semibold",
               live
                 ? "border-[#fecdca] bg-[#fff1f0] text-[#b42318]"
-                : "border-[#e9eaeb] bg-[#f9fafb] text-[#535862]",
+                : "border-[color:var(--mofa-border-default)] bg-[#f9fafb] text-[color:var(--mofa-text-subtle)]",
             )}
           >
             {live ? "Live" : "Scheduled"}
@@ -129,16 +129,16 @@ export function InAppMeetingRoom({ meeting }: { meeting: Meeting }) {
         </div>
 
         {/* Side panel */}
-        <aside className="flex w-full max-w-[320px] shrink-0 flex-col rounded-xl border border-[#e9eaeb] bg-white shadow-sm">
-          <div className="flex border-b border-[#e9eaeb]">
+        <aside className="flex w-full max-w-[320px] shrink-0 flex-col rounded-xl border border-[color:var(--mofa-border-default)] bg-white shadow-sm">
+          <div className="flex border-b border-[color:var(--mofa-border-default)]">
             <button
               type="button"
               onClick={() => setRightTab("transcript")}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 px-3 py-3 text-xs font-semibold transition",
                 rightTab === "transcript"
-                  ? "border-b-2 border-[#6f6e8a] text-[#545469]"
-                  : "text-[#717680] hover:text-[#414651]",
+                  ? "border-b-2 border-[color:var(--mofa-active-tab)] text-[color:var(--mofa-active-tab)]"
+                  : "text-[color:var(--mofa-text-muted)] hover:text-[color:var(--mofa-text-body)]",
               )}
             >
               <MessageSquare size={13} aria-hidden />
@@ -150,13 +150,13 @@ export function InAppMeetingRoom({ meeting }: { meeting: Meeting }) {
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 px-3 py-3 text-xs font-semibold transition",
                 rightTab === "participants"
-                  ? "border-b-2 border-[#6f6e8a] text-[#545469]"
-                  : "text-[#717680] hover:text-[#414651]",
+                  ? "border-b-2 border-[color:var(--mofa-active-tab)] text-[color:var(--mofa-active-tab)]"
+                  : "text-[color:var(--mofa-text-muted)] hover:text-[color:var(--mofa-text-body)]",
               )}
             >
               <Users size={13} aria-hidden />
               Participants
-              <span className="rounded-full bg-[#f0f0f4] px-1.5 py-0.5 text-[10px] font-semibold text-[#717680]">
+              <span className="rounded-full bg-[#f0f0f4] px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--mofa-text-muted)]">
                 {meeting.participantCount}
               </span>
             </button>
@@ -175,10 +175,10 @@ export function InAppMeetingRoom({ meeting }: { meeting: Meeting }) {
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-baseline gap-2">
-                        <span className="font-semibold text-[#414651]">{line.speaker}</span>
-                        <span className="text-xs text-[#9aa0a6]">{line.time}</span>
+                        <span className="font-semibold text-[color:var(--mofa-text-body)]">{line.speaker}</span>
+                        <span className="text-xs text-[color:var(--mofa-text-faint)]">{line.time}</span>
                       </div>
-                      <p className="mt-0.5 text-[#535862]">{line.text}</p>
+                      <p className="mt-0.5 text-[color:var(--mofa-text-subtle)]">{line.text}</p>
                     </div>
                   </li>
                 ))}
@@ -188,7 +188,7 @@ export function InAppMeetingRoom({ meeting }: { meeting: Meeting }) {
                 {meeting.participants.map((p) => (
                   <li
                     key={p.id}
-                    className="flex items-center gap-3 rounded-lg border border-[#e9eaeb] px-3 py-2"
+                    className="flex items-center gap-3 rounded-lg border border-[color:var(--mofa-border-default)] px-3 py-2"
                   >
                     <div
                       className="flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-[#27272f]"
@@ -196,7 +196,7 @@ export function InAppMeetingRoom({ meeting }: { meeting: Meeting }) {
                     >
                       {p.initials}
                     </div>
-                    <span className="text-sm font-medium text-[#414651]">Participant</span>
+                    <span className="text-sm font-medium text-[color:var(--mofa-text-body)]">Participant</span>
                   </li>
                 ))}
               </ul>

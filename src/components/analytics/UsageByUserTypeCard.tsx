@@ -27,15 +27,15 @@ export function UsageByUserTypeCard() {
 
   return (
     <div
-      className="flex w-full flex-col items-center gap-5 rounded-2xl border border-[#eeedf5] bg-white p-[25px]"
+      className="flex w-full flex-col items-center gap-5 rounded-2xl border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-bg)] p-[25px]"
       data-name="Usage by User Type"
       data-node-id="166:2688"
     >
       <div className="flex h-9 w-full shrink-0 items-center gap-2.5">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] bg-[#f3f3f7]">
-          <Users size={18} className="text-[#414651]" aria-hidden />
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--mofa-accent-muted)] bg-white/70">
+          <Users size={18} className="text-[color:var(--mofa-accent-dark)]" aria-hidden />
         </div>
-        <h2 className="text-lg font-medium leading-7 text-[#414651]">
+        <h2 className="text-lg font-medium leading-7 text-[color:var(--mofa-text-body)]">
           Usage by User Type
         </h2>
       </div>
@@ -54,7 +54,7 @@ export function UsageByUserTypeCard() {
                 outerRadius={95}
                 paddingAngle={4}
                 cornerRadius={6}
-                stroke="#ffffff"
+                stroke="rgba(255,255,255,0.85)"
                 strokeWidth={2}
               >
                 {data.map((entry) => (
@@ -65,7 +65,7 @@ export function UsageByUserTypeCard() {
                 formatter={(v) => [`${asNumber(v)}%`, ""]}
                 contentStyle={{
                   borderRadius: 8,
-                  border: "1px solid #e5e7eb",
+                  border: "1px solid var(--mofa-border-default)",
                   fontSize: 12,
                 }}
               />
@@ -89,16 +89,16 @@ export function UsageByUserTypeCard() {
                 className="h-3.5 w-1 shrink-0 rounded-full"
                 style={{ backgroundColor: row.legendBar }}
               />
-              <span className="whitespace-nowrap text-center text-[13px] font-medium leading-[19.5px] text-[#535862]">
+              <span className="whitespace-nowrap text-center text-[13px] font-medium leading-[19.5px] text-[color:var(--mofa-text-subtle)]">
                 {row.name}
               </span>
               <Info
-                className="size-3.5 shrink-0 text-[#98a2b3]"
+                className="size-3.5 shrink-0 text-[color:var(--mofa-text-placeholder)]"
                 aria-hidden
                 strokeWidth={2}
               />
             </div>
-            <p className="text-center text-2xl font-semibold leading-8 tracking-tight text-[#414651]">
+            <p className="text-center text-2xl font-semibold leading-8 tracking-tight text-[color:var(--mofa-text-body)]">
               {row.value}%
             </p>
           </div>

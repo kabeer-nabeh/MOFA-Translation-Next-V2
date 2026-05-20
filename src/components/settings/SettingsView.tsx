@@ -3,22 +3,17 @@
 import {
   BarChart3,
   BookKey,
-  Calendar,
-  Globe2,
-  Home,
   Plug2,
   Shield,
   User,
   Users,
-  Video,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
-import { Navbar } from "@/components/layout/Navbar";
+import { AppShell } from "@/components/layout/AppShell";
 import { DiplomaticKeywordsPanel } from "@/components/settings/DiplomaticKeywordsPanel";
 import { IntegrationsSettingsPanel } from "@/components/settings/IntegrationsSettingsPanel";
-import { SETTINGS_AVATAR, SETTINGS_LOGO } from "@/components/settings/settings-assets";
 import { ProfileSettingsPanel } from "@/components/settings/ProfileSettingsPanel";
 import { RolesSettingsPanel } from "@/components/settings/RolesSettingsPanel";
 import { UsageCostsPanel } from "@/components/settings/UsageCostsPanel";
@@ -75,26 +70,8 @@ export function SettingsView({ className }: { className?: string }) {
   );
 
   return (
-    <div className={cn("min-h-dvh bg-white", className)}>
-      <Navbar
-        className="bg-white pt-3"
-        containerClassName="max-w-[1440px] px-[120px]"
-        logo={{ src: SETTINGS_LOGO, alt: "Baseer Voice for MOFA", width: 160, height: 44 }}
-        items={[
-          { label: "Home", href: "/", icon: Home },
-          { label: "Meetings", href: "/meetings", icon: Video },
-          { label: "Calendar", href: "/calendar", icon: Calendar },
-          { label: "Analytics", href: "/analytics", icon: BarChart3 },
-        ]}
-        activeHref="/settings"
-        activeStyle="brand"
-        language={{ label: "عربي", href: "/ar", icon: Globe2 }}
-        notificationsHref="/notifications"
-        settingsHref="/settings"
-        user={{ name: "Abdullah Al Harbi", avatarSrc: SETTINGS_AVATAR }}
-      />
-
-      <main className="mx-auto w-full max-w-[1440px] px-[120px] pb-16">
+    <AppShell>
+      <main className={cn("w-full max-w-6xl mx-auto px-8 py-8 pb-16", className)}>
         <div className="flex items-start gap-[60px]">
           <aside className="w-[200px] shrink-0">
             <div className="text-2xl font-medium leading-8 text-black">
@@ -110,16 +87,15 @@ export function SettingsView({ className }: { className?: string }) {
                     type="button"
                     onClick={() => setTabWithUrl(item.id)}
                     className={cn(
-                      "relative flex h-[37px] w-full items-center rounded-lg px-3 text-left text-sm font-medium leading-[21px]",
-                      active ? "bg-[#eeedf5] text-[#111827]" : "text-[#64748b]",
+                      "relative flex h-[37px] w-full items-center rounded-lg border px-3 text-left text-sm font-medium leading-[21px] transition-colors",
+                      active
+                        ? "border-[color:var(--mofa-sidebar-active-border)] bg-[color:var(--mofa-sidebar-active-bg)] text-[color:var(--mofa-text-primary)]"
+                        : "border-transparent text-[color:var(--mofa-text-muted)] hover:bg-[color:var(--mofa-btn-outline-hover)]",
                     )}
                   >
                     <Icon
                       size={16}
-                      className={cn(
-                        "mr-3",
-                        active ? "text-[#111827]" : "text-[#64748b]",
-                      )}
+                      className="mr-3"
                       aria-hidden="true"
                     />
                     {item.label}
@@ -139,7 +115,7 @@ export function SettingsView({ className }: { className?: string }) {
           </section>
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }
 

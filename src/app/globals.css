@@ -3,7 +3,7 @@
 @theme {
   /* Arabic font is included as a fallback so the browser uses it automatically
      for Arabic Unicode glyphs even on elements that only have font-sans applied. */
-  --font-sans: var(--font-ibm-plex-sans), var(--font-ibm-plex-sans-arabic), "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-stack-sans-text), var(--font-ibm-plex-sans-arabic), "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
   --font-arabic: var(--font-ibm-plex-sans-arabic), "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -15,24 +15,54 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: light; /* v2 */
 
-  /* MOFA button tokens (outline / secondary control) */
-  --mofa-btn-outline-border: #e7e7ee;
-  --mofa-btn-outline-hover: #f3f3f7;
-  /* Slightly stronger than hover so selection is visible */
-  --mofa-btn-outline-selected: #eeeff6;
-  --mofa-btn-outline-focus-halo: rgba(101, 144, 199, 0.22);
+  /* ── Page & layout ─────────────────────────────────────────────── */
+  --mofa-page-bg: #FCFCFB;
 
-  /* MOFA Primary Button Tokens */
-  --mofa-btn-primary-bg: #48476e;
-  --mofa-btn-primary-border: #5a597d;
-  --mofa-btn-primary-hover: #3f3e63;
+  /* ── Sidebar ───────────────────────────────────────────────────── */
+  --mofa-sidebar-bg: #F5F4F1;
+  --mofa-sidebar-text: #3D3D3D;
+  --mofa-sidebar-text-muted: #7A7A7A;
+  --mofa-sidebar-active-bg: #ECEAE5;
+  --mofa-sidebar-active-border: #F0EBE2;
+  --mofa-sidebar-active-text: #1A1A1A;
+  --mofa-sidebar-divider: #F0EBE2;
+  --mofa-sidebar-width: 220px;
+
+  /* ── Accent ────────────────────────────────────────────────────── */
+  --mofa-accent: #104631;
+  --mofa-accent-hover: #0d3828;
+  --mofa-accent-light: #e6f5ee;
+  --mofa-accent-muted: #cce8d8;
+  --mofa-accent-dark: #0a2a1e;
+  --mofa-active-tab: var(--mofa-text-primary);
+
+  /* ── Primary button ────────────────────────────────────────────── */
+  --mofa-btn-primary-bg: #212121;
+  --mofa-btn-primary-border: #212121;
+  --mofa-btn-primary-hover: #333333;
   --mofa-btn-primary-text: #ffffff;
 
-  /* Global UI Tokens */
-  --mofa-text-primary: #414651;
-  --mofa-border-subtle: #eeedf5;
+  /* ── Secondary / outline button ────────────────────────────────── */
+  --mofa-btn-outline-border: #F0EBE2;
+  --mofa-btn-outline-hover: #ECEAE5;
+  --mofa-btn-outline-selected: #ECEAE5;
+  --mofa-btn-outline-focus-halo: rgba(16, 70, 49, 0.15);
+
+  /* ── Borders ───────────────────────────────────────────────────── */
+  --mofa-border-default: rgba(195, 178, 159, 0.35);
+  --mofa-border-subtle: rgba(195, 178, 159, 0.2);
+
+  /* ── Text ──────────────────────────────────────────────────────── */
+  --mofa-text-primary: #1A1A1A;
+  --mofa-text-secondary: #52525B;
+  --mofa-text-muted: #7A7A7A;
+  --mofa-text-body: #414651;
+  --mofa-text-subtle: #535862;
+  --mofa-text-placeholder: #9fa3ae;
+  --mofa-text-disabled: #a4a7ae;
+  --mofa-text-faint: #b0b3bb;
 }
 
 html,
@@ -67,5 +97,16 @@ summary {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ─── Reduced motion: disable all decorative animations ──────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

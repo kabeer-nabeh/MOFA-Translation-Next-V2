@@ -77,7 +77,7 @@ export function AnalyticsChartsClient() {
   const sessionData = SESSION_TRENDS[range];
 
   return (
-    <div className="flex flex-col gap-6 pt-6">
+    <div className="flex flex-col pt-6">
       <div className="flex h-10 items-center justify-between gap-4">
         <h1 className="text-2xl font-medium tracking-tight text-black">
           Analytics Overview
@@ -99,7 +99,7 @@ export function AnalyticsChartsClient() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 divide-y divide-[#eeedf5] rounded-2xl border border-[#e9eaeb] bg-white sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-y-0">
+      <div className="mt-5 grid grid-cols-1 divide-y divide-[color:var(--mofa-border-subtle)] rounded-2xl border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-bg)] sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-y-0">
         <KpiCell
           primary={kpis.active.value}
           secondary={kpis.active.plus}
@@ -127,7 +127,7 @@ export function AnalyticsChartsClient() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+      <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-stretch">
         <ChartShell
           title="Most Used Languages"
           icon={Languages}
@@ -140,12 +140,12 @@ export function AnalyticsChartsClient() {
                 data={languageBars}
                 margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--mofa-border-default)" />
                 <XAxis type="number" domain={[0, 50]} tickFormatter={(v) => `${v}%`} />
                 <YAxis type="category" dataKey="name" width={72} tick={{ fontSize: 12 }} />
                 <Tooltip
                   formatter={(value) => [`${asNumber(value)}%`, "Share"]}
-                  contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb" }}
+                  contentStyle={{ borderRadius: 8, border: "1px solid var(--mofa-border-default)" }}
                 />
                 <Bar dataKey="pct" radius={[0, 6, 6, 0]} maxBarSize={18}>
                   {languageBars.map((entry) => (
@@ -169,11 +169,11 @@ export function AnalyticsChartsClient() {
               <AreaChart data={wordsData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="wordsFillAnalytics" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#48476e" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#48476e" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--mofa-accent)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="var(--mofa-accent)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--mofa-border-default)" />
                 <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                 <YAxis
                   tickFormatter={(v) => `${v / 1000}K`}
@@ -182,15 +182,15 @@ export function AnalyticsChartsClient() {
                 />
                 <Tooltip
                   formatter={(v) => [`${(asNumber(v) / 1000).toFixed(1)}K`, "Words"]}
-                  contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb" }}
+                  contentStyle={{ borderRadius: 8, border: "1px solid var(--mofa-border-default)" }}
                 />
                 <Area
                   type="monotone"
                   dataKey="words"
-                  stroke="#48476e"
+                  stroke="var(--mofa-accent)"
                   strokeWidth={2}
                   fill="url(#wordsFillAnalytics)"
-                  dot={{ r: 3, fill: "#48476e" }}
+                  dot={{ r: 3, fill: "var(--mofa-accent)" }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -200,7 +200,7 @@ export function AnalyticsChartsClient() {
         </ChartShell>
       </div>
 
-      <ChartShell title="Translation Latency" icon={Activity} className="min-h-[340px]">
+      <ChartShell title="Translation Latency" icon={Activity} className="mt-5 min-h-[340px]">
         {mounted ? (
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart data={LATENCY_SERIES} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
@@ -210,7 +210,7 @@ export function AnalyticsChartsClient() {
                   <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid vertical={false} stroke="#e5e7eb" strokeDasharray="0 0" />
+              <CartesianGrid vertical={false} stroke="var(--mofa-border-default)" strokeDasharray="0 0" />
               <XAxis
                 dataKey="t"
                 tick={{ fontSize: 11, fill: "#6b7280" }}
@@ -226,7 +226,7 @@ export function AnalyticsChartsClient() {
               />
               <Tooltip
                 formatter={(v) => [`${asNumber(v)} ms`, ""]}
-                contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb" }}
+                contentStyle={{ borderRadius: 8, border: "1px solid var(--mofa-border-default)" }}
               />
               <Legend
                 verticalAlign="bottom"
@@ -261,8 +261,12 @@ export function AnalyticsChartsClient() {
         )}
       </ChartShell>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ChartShell title="Session Trends" icon={BarChart3} className="min-h-[340px]">
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <ChartShell
+          title="Session Trends"
+          icon={BarChart3}
+          className="min-h-[340px]"
+        >
           {mounted ? (
             <div className="-ml-2 -mb-1">
               <ResponsiveContainer width="100%" height={260}>
@@ -270,7 +274,7 @@ export function AnalyticsChartsClient() {
                   data={sessionData}
                   margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--mofa-border-default)" />
                   <XAxis
                     dataKey="day"
                     tick={{ fontSize: 12, fill: "#6b7280" }}
@@ -286,9 +290,9 @@ export function AnalyticsChartsClient() {
                   />
                 <Tooltip
                   formatter={(v) => [asNumber(v), "Sessions"]}
-                  contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb" }}
+                  contentStyle={{ borderRadius: 8, border: "1px solid var(--mofa-border-default)" }}
                 />
-                <Bar dataKey="sessions" fill="#5d5d7a" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="sessions" fill="var(--mofa-accent)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -342,18 +346,17 @@ function KpiCell({
   secondary?: string;
   hint: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
-  /** "+" uses smaller superscript-style weight */
   secondaryStyle?: "plus" | "unit";
 }) {
   return (
     <div className="px-5 py-5">
       <div className="flex items-center justify-between gap-3">
-        <p className="min-w-0 flex-1 text-[36px] font-medium leading-[44px] tracking-tight text-[#414651]">
+        <p className="min-w-0 flex-1 text-[36px] font-medium leading-[44px] tracking-tight text-[color:var(--mofa-text-body)]">
           {primary}
           {secondary ? (
             <span
               className={cn(
-                "font-medium text-[#6e6b8b]",
+                "font-medium text-[color:var(--mofa-accent)]",
                 secondaryStyle === "plus" ? "text-2xl" : "ml-1 text-base",
               )}
             >
@@ -361,11 +364,11 @@ function KpiCell({
             </span>
           ) : null}
         </p>
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] bg-[#f3f3f7]">
-          <Icon className="text-[#414651]" size={18} />
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)]">
+          <Icon className="text-[color:var(--mofa-text-body)]" size={18} />
         </div>
       </div>
-      <p className="mt-2 text-[13px] leading-[18px] text-[#535862]">{hint}</p>
+      <p className="mt-2 text-[13px] leading-[18px] text-[color:var(--mofa-text-subtle)]">{hint}</p>
     </div>
   );
 }
@@ -374,26 +377,21 @@ function ChartShell({
   title,
   icon: Icon,
   className,
+  contentClassName,
   children,
 }: {
   title: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
   className?: string;
+  contentClassName?: string;
   children: React.ReactNode;
 }) {
   return (
-    <Card
-      className={cn(
-        "border border-[#eeedf5] bg-white shadow-none",
-        className,
-      )}
-    >
-      <Card.Content className="flex flex-col gap-3 p-5 pt-5">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-full border border-[#e5e7eb] bg-[#f3f3f7]">
-            <Icon className="text-[#414651]" size={18} />
-          </div>
-          <h2 className="text-lg font-medium text-[#414651]">{title}</h2>
+    <Card className={cn("shadow-none", className)}>
+      <Card.Content className={cn("flex flex-col gap-4 p-5", contentClassName)}>
+        <div className="flex items-center gap-1.5">
+          <Icon className="shrink-0 text-[color:var(--mofa-text-muted)]" size={13} />
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[color:var(--mofa-text-muted)]">{title}</h2>
         </div>
         {children}
       </Card.Content>
@@ -405,7 +403,7 @@ function ChartPlaceholder({ tall }: { tall?: boolean }) {
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-500",
+        "flex items-center justify-center rounded-lg text-sm",
         tall ? "h-[280px]" : "h-[260px]",
       )}
     >

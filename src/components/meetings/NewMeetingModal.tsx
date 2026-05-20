@@ -137,17 +137,17 @@ function AttendeesMultiSelect({
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
           "flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border bg-white px-[14px] py-[10px] text-left shadow-[0_1px_2px_rgba(10,13,18,0.05)]",
-          error ? "border-[#fca5a5]" : "border-[#d5d7da]",
+          error ? "border-[#fca5a5]" : "border-[color:var(--mofa-border-default)]",
         )}
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
-          <Users size={18} aria-hidden="true" className="shrink-0 text-[#717680]" />
+          <Users size={18} aria-hidden="true" className="shrink-0 text-[color:var(--mofa-text-muted)]" />
           {selectedPeople.length > 0 ? (
             <span className="flex min-w-0 flex-wrap items-center gap-2">
               {selectedPeople.slice(0, 2).map((person) => (
                 <span
                   key={person.id}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#eeedf5] px-2.5 py-1 text-sm font-medium text-[#414651]"
+                  className="inline-flex items-center gap-2 rounded-full bg-[color:var(--mofa-sidebar-active-bg)] px-2.5 py-1 text-sm font-medium text-[color:var(--mofa-text-body)]"
                 >
                   <Avatar
                     src={person.avatarSrc ?? null}
@@ -159,7 +159,7 @@ function AttendeesMultiSelect({
                 </span>
               ))}
               {selectedPeople.length > 2 ? (
-                <span className="text-sm font-medium text-[#535862]">
+                <span className="text-sm font-medium text-[color:var(--mofa-text-subtle)]">
                   +{selectedPeople.length - 2} more
                 </span>
               ) : null}
@@ -168,20 +168,20 @@ function AttendeesMultiSelect({
             <span className="text-[rgba(65,70,81,0.5)]">Select Attendees</span>
           )}
         </span>
-        <ChevronDown size={18} className="shrink-0 text-[#535862]" aria-hidden="true" />
+        <ChevronDown size={18} className="shrink-0 text-[color:var(--mofa-text-subtle)]" aria-hidden="true" />
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+8px)] z-[90] w-full overflow-hidden rounded-2xl border border-[#e4e7ec] bg-white shadow-[0_20px_32px_rgba(10,13,18,0.16)]">
-          <div className="border-b border-[#eef0f3] p-3">
-            <div className="flex items-center gap-2 rounded-lg border border-[#d5d7da] bg-white px-3 py-2">
-              <Search size={16} className="text-[#717680]" aria-hidden="true" />
+        <div className="absolute left-0 top-[calc(100%+8px)] z-[90] w-full overflow-hidden rounded-2xl border border-[color:var(--mofa-border-default)] bg-white shadow-[0_20px_32px_rgba(10,13,18,0.16)]">
+          <div className="border-b border-[color:var(--mofa-border-default)] p-3">
+            <div className="flex items-center gap-2 rounded-lg border border-[color:var(--mofa-border-default)] bg-white px-3 py-2">
+              <Search size={16} className="text-[color:var(--mofa-text-muted)]" aria-hidden="true" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search attendees"
-                className="w-full bg-transparent text-sm text-[#181d27] outline-none placeholder:text-[#98a2b3]"
+                className="w-full bg-transparent text-sm text-[color:var(--mofa-text-primary)] outline-none placeholder:text-[color:var(--mofa-text-placeholder)]"
               />
             </div>
           </div>
@@ -199,7 +199,7 @@ function AttendeesMultiSelect({
                     onClick={() => togglePerson(person.id)}
                     className={cn(
                       "flex w-full items-center gap-3 px-4 py-3 text-left",
-                      selected ? "bg-[#f5f7ff]" : "hover:bg-[#f8f9fc]",
+                      selected ? "bg-[#f5f7ff]" : "hover:bg-[color:var(--mofa-btn-outline-hover)]",
                     )}
                   >
                     <Avatar
@@ -209,7 +209,7 @@ function AttendeesMultiSelect({
                       className="h-10 w-10 bg-[#ece9f8] text-[12px]"
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-[#181d27]">
+                      <span className="block truncate text-sm font-semibold text-[color:var(--mofa-text-primary)]">
                         {person.label}
                       </span>
                       <span className="block truncate text-sm text-[#667085]">
@@ -220,8 +220,8 @@ function AttendeesMultiSelect({
                       className={cn(
                         "flex h-5 w-5 items-center justify-center rounded-full border",
                         selected
-                          ? "border-[#52528c] bg-[#52528c] text-white"
-                          : "border-[#d0d5dd] bg-white text-transparent",
+                          ? "border-[color:var(--mofa-accent)] bg-[color:var(--mofa-accent)] text-white"
+                          : "border-[color:var(--mofa-border-default)] bg-white text-transparent",
                       )}
                     >
                       <Check size={12} aria-hidden="true" />
@@ -336,14 +336,14 @@ export function NewMeetingModal({
         className="flex w-full max-w-[980px] max-h-[calc(100vh-80px)] flex-col rounded-3xl bg-white py-6 shadow-[0_12px_24px_rgba(0,0,0,0.18)]"
       >
         <div className="flex items-start justify-between px-6">
-          <div className="text-[18px] font-semibold leading-7 text-[#181d27]">
+          <div className="text-[18px] font-semibold leading-7 text-[color:var(--mofa-text-primary)]">
             Create a New Meeting
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#d5d7da] bg-white text-[#414651] shadow-[0_1px_2px_rgba(10,13,18,0.05)]"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--mofa-border-default)] bg-white text-[color:var(--mofa-text-body)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] transition hover:bg-[color:var(--mofa-btn-outline-hover)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--mofa-accent)]/50 focus-visible:ring-offset-1"
             aria-label="Close"
           >
             <X size={18} aria-hidden="true" />
@@ -351,12 +351,12 @@ export function NewMeetingModal({
         </div>
 
         <div className="mt-5 flex-1 overflow-y-auto px-6">
-          <div className="rounded-2xl border border-[#e9eaeb] bg-[#f3f3f7] p-6">
+          <div className="rounded-2xl border border-[color:var(--mofa-border-default)] bg-[color:var(--mofa-sidebar-active-bg)] p-6">
             <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[#414651]">
+              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[color:var(--mofa-text-body)]">
                 Meeting Title
               </div>
-              <div className="min-w-[480px] max-w-[512px] flex-1">
+              <div className="w-full max-w-[512px] flex-1">
                 <input
                   ref={titleRef}
                   value={title}
@@ -368,8 +368,8 @@ export function NewMeetingModal({
                   aria-invalid={!!errors.title}
                   aria-describedby={errors.title ? "new-meeting-title-error" : undefined}
                   className={cn(
-                    "h-11 w-full rounded-lg border bg-white px-[14px] py-[10px] text-[16px] text-[#181d27] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none placeholder:text-[#717680] focus:shadow-[0_1px_2px_rgba(10,13,18,0.05),0_0_0_2px_var(--mofa-btn-outline-focus-halo)]",
-                    errors.title ? "border-[#fca5a5]" : "border-[#d5d7da]",
+                    "h-11 w-full rounded-lg border bg-white px-[14px] py-[10px] text-[16px] text-[color:var(--mofa-text-primary)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none placeholder:text-[color:var(--mofa-text-muted)] focus:shadow-[0_1px_2px_rgba(10,13,18,0.05),0_0_0_2px_var(--mofa-btn-outline-focus-halo)]",
+                    errors.title ? "border-[#fca5a5]" : "border-[color:var(--mofa-border-default)]",
                   )}
                 />
                 {errors.title ? (
@@ -386,10 +386,10 @@ export function NewMeetingModal({
             <div className="my-4 h-px w-full bg-[#e9eaeb]" />
 
             <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[#414651]">
+              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[color:var(--mofa-text-body)]">
                 Invite Attendees
               </div>
-              <div className="min-w-[480px] max-w-[512px] flex-1">
+              <div className="w-full max-w-[512px] flex-1">
                 <AttendeesMultiSelect
                   value={attendees}
                   onChange={(nextAttendees) => {
@@ -412,10 +412,10 @@ export function NewMeetingModal({
             <div className="my-4 h-px w-full bg-[#e9eaeb]" />
 
             <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[#414651]">
+              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[color:var(--mofa-text-body)]">
                 Where do you want to take meeting
               </div>
-              <div className="min-w-[480px] max-w-[512px] flex-1">
+              <div className="w-full max-w-[512px] flex-1">
                 <RadioCardGroup
                   value={location}
                   onChange={setLocation}
@@ -427,10 +427,10 @@ export function NewMeetingModal({
             <div className="my-4 h-px w-full bg-[#e9eaeb]" />
 
             <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[#414651]">
+              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[color:var(--mofa-text-body)]">
                 My Language during this meeting
               </div>
-              <div className="min-w-[480px] max-w-[512px] flex-1">
+              <div className="w-full max-w-[512px] flex-1">
                 <SelectMenu
                   value={myLanguage}
                   onChange={(v) => {
@@ -444,7 +444,7 @@ export function NewMeetingModal({
                   id="new-meeting-my-language"
                   buttonClassName={cn(
                     "h-11 px-[14px] py-[10px] shadow-[0_1px_2px_rgba(10,13,18,0.05)]",
-                    errors.myLanguage ? "border-[#fca5a5]" : "border-[#d5d7da]",
+                    errors.myLanguage ? "border-[#fca5a5]" : "border-[color:var(--mofa-border-default)]",
                   )}
                 />
                 {errors.myLanguage ? (
@@ -458,21 +458,21 @@ export function NewMeetingModal({
             <div className="my-4 h-px w-full bg-[#e9eaeb]" />
 
             <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[#414651]">
+              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[color:var(--mofa-text-body)]">
                 <span className="inline-flex items-center gap-1">
-                  Meeting Date & Time <HelpCircle size={16} className="text-[#717680]" aria-hidden="true" />
+                  Meeting Date & Time <HelpCircle size={16} className="text-[color:var(--mofa-text-muted)]" aria-hidden="true" />
                 </span>
               </div>
-              <div className="min-w-[480px] max-w-[512px] flex-1">
+              <div className="w-full max-w-[512px] flex-1">
                 <div className="flex items-center gap-4">
                   <div className="flex-1">
-                    <div className="mb-2 text-sm text-[#717680]">Start date</div>
+                    <div className="mb-2 text-sm text-[color:var(--mofa-text-muted)]">Start date</div>
                     <div className="relative">
                       <DatePicker value={startDate} onChange={setStartDate} />
                     </div>
                   </div>
                   <div className="flex-1">
-                    <div className="mb-2 text-sm text-[#717680]">Start time</div>
+                    <div className="mb-2 text-sm text-[color:var(--mofa-text-muted)]">Start time</div>
                     <SelectMenu
                       value={startTime}
                       onChange={(v) => {
@@ -485,7 +485,7 @@ export function NewMeetingModal({
                       id="new-meeting-start-time"
                       buttonClassName={cn(
                         "h-11 px-[14px] py-[10px] shadow-[0_1px_2px_rgba(10,13,18,0.05)]",
-                        errors.startTime ? "border-[#fca5a5]" : "border-[#d5d7da]",
+                        errors.startTime ? "border-[#fca5a5]" : "border-[color:var(--mofa-border-default)]",
                       )}
                     />
                     {errors.startTime ? (
@@ -495,7 +495,7 @@ export function NewMeetingModal({
                     ) : null}
                   </div>
                   <div className="flex-1">
-                    <div className="mb-2 text-sm text-[#717680]">End time</div>
+                    <div className="mb-2 text-sm text-[color:var(--mofa-text-muted)]">End time</div>
                     <SelectMenu
                       value={endTime}
                       onChange={(v) => {
@@ -508,7 +508,7 @@ export function NewMeetingModal({
                       id="new-meeting-end-time"
                       buttonClassName={cn(
                         "h-11 px-[14px] py-[10px] shadow-[0_1px_2px_rgba(10,13,18,0.05)]",
-                        errors.endTime ? "border-[#fca5a5]" : "border-[#d5d7da]",
+                        errors.endTime ? "border-[#fca5a5]" : "border-[color:var(--mofa-border-default)]",
                       )}
                     />
                     {errors.endTime ? (
@@ -524,15 +524,15 @@ export function NewMeetingModal({
             <div className="my-4 h-px w-full bg-[#e9eaeb]" />
 
             <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[#414651]">
+              <div className="min-w-[200px] max-w-[280px] flex-1 text-sm font-semibold text-[color:var(--mofa-text-body)]">
                 Short Description
               </div>
-              <div className="min-w-[480px] max-w-[512px] flex-1">
+              <div className="w-full max-w-[512px] flex-1">
                 <textarea
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
                   placeholder="Add a short MOFA meeting description (e.g., agenda, briefing context, key discussion points, and any preparation notes)."
-                  className="h-[120px] w-full resize-none rounded-lg border border-[#d5d7da] bg-white p-4 text-[16px] leading-6 text-[#181d27] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none focus:shadow-[0_1px_2px_rgba(10,13,18,0.05),0_0_0_2px_var(--mofa-btn-outline-focus-halo)]"
+                  className="h-[120px] w-full resize-none rounded-lg border border-[color:var(--mofa-border-default)] bg-white p-4 text-[16px] leading-6 text-[color:var(--mofa-text-primary)] shadow-[0_1px_2px_rgba(10,13,18,0.05)] outline-none focus:shadow-[0_1px_2px_rgba(10,13,18,0.05),0_0_0_2px_var(--mofa-btn-outline-focus-halo)]"
                 />
               </div>
             </div>

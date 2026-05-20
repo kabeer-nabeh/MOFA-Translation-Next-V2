@@ -84,7 +84,7 @@ export function SelectMenu<T extends string>({
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
           {leadingIcon ? (
-            <span className="shrink-0 text-[#717680]" aria-hidden="true">
+            <span className="shrink-0 text-[color:var(--mofa-text-muted)]" aria-hidden="true">
               {leadingIcon}
             </span>
           ) : null}
@@ -92,7 +92,7 @@ export function SelectMenu<T extends string>({
             {current || placeholder}
           </span>
         </span>
-        <ChevronDown size={18} className="text-[#535862]" aria-hidden="true" />
+        <ChevronDown size={18} className="text-[color:var(--mofa-text-subtle)]" aria-hidden="true" />
       </button>
 
       {open && menuRect
@@ -103,7 +103,7 @@ export function SelectMenu<T extends string>({
               data-mofa-portal="select-menu"
               onMouseDown={(e) => e.stopPropagation()}
               className={cn(
-                "max-h-64 overflow-auto rounded-lg border border-[#eeedf5] bg-white py-1 shadow-lg",
+                "max-h-64 overflow-auto rounded-lg border border-[color:var(--mofa-border-default)] bg-white py-1 shadow-lg",
                 menuClassName,
               )}
               style={{
@@ -124,7 +124,7 @@ export function SelectMenu<T extends string>({
                     role="option"
                     aria-selected={selected}
                     className={cn(
-                      "flex w-full items-center px-3 py-2 text-left text-sm text-[#414651]",
+                      "flex w-full items-center px-3 py-2 text-left text-sm text-[color:var(--mofa-text-body)]",
                       "hover:bg-[color:var(--mofa-btn-outline-hover)]",
                       selected &&
                         "bg-[color:var(--mofa-btn-outline-selected)] font-semibold hover:bg-[color:var(--mofa-btn-outline-selected)]",
