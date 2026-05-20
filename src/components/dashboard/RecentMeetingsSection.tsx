@@ -74,7 +74,6 @@ export function RecentMeetingsSection({
         style={{
           border: "1px solid var(--mofa-border-default)",
           background: "white",
-          divideColor: "var(--mofa-border-default)",
         }}
       >
         {meetings.map((m) => (

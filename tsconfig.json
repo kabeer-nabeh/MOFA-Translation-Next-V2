@@ -22,6 +22,7 @@
         "name": "next"
       }
     ],
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": [
@@ -34,9 +35,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "/Users/abdulkabeer/Projects/mofa-app/MOFA-Translation-Next V2/.claude/worktrees/jolly-hopper-45a659/.next/types/**/*.ts",
-    "/Users/abdulkabeer/Projects/mofa-app/MOFA-Translation-Next V2/.claude/worktrees/jolly-hopper-45a659/.next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
