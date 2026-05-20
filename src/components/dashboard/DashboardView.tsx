@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { NewMeetingModalTrigger } from "@/components/meetings/NewMeetingModalTrigger";
 import { RecentCompletedMeetings } from "@/components/dashboard/RecentCompletedMeetings";
-import type { CalendarBadgeDate } from "@/types/meeting";
+import type { CalendarBadgeDate, Meeting } from "@/types/meeting";
 
 import {
   getLiveMeetings,
