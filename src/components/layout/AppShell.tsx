@@ -4,6 +4,9 @@ import { Bell } from "lucide-react";
 
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Avatar } from "@/components/ui/Avatar";
+import { FlowsLauncher } from "@/components/flows/FlowsLauncher";
+
+const SHOW_FLOWS = process.env.NEXT_PUBLIC_SHOW_FLOW_REGISTRY === "true";
 
 export type AppShellProps = {
   children: React.ReactNode;
@@ -42,6 +45,8 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </div>
       </div>
+
+      {SHOW_FLOWS && <FlowsLauncher />}
     </div>
   );
 }
