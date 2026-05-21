@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  distDir: `${process.cwd()}/.next`,
   images: {
     remotePatterns: [
       {
