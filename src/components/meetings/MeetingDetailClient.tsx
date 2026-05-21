@@ -1411,7 +1411,7 @@ function PipTranscriptContent({
 
 // ─── Live Meeting Room ────────────────────────────────────────────────────────
 
-function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof MEETINGS.find>> }) {
+function LiveMeetingRoom({ meeting, isGuest = false }: { meeting: NonNullable<ReturnType<typeof MEETINGS.find>>; isGuest?: boolean }) {
   const router = useRouter();
   const { startSession, endSession, minimizeSession, updateLines } = useActiveMeeting();
   // Memoize so the reference is stable across context-driven re-renders
@@ -2190,7 +2190,7 @@ export function MeetingDetailClient({ meetingId, isGuest = false }: { meetingId:
   if (meeting.status === "upcoming") {
     const participants = normalizeLiveParticipants(meeting);
     return showLiveRoom ? (
-      <LiveMeetingRoom meeting={meeting} />
+      <LiveMeetingRoom meeting={meeting} isGuest={isGuest} />
     ) : (
       <MeetingConnectingScreen
         meeting={meeting}

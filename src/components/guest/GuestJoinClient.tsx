@@ -28,7 +28,7 @@ type GuestMeeting = {
   languages: string[];
 };
 
-function getMeetingById(id: string): GuestMeeting | null {
+function getMeetingById(id: string): GuestMeeting {
   const now = new Date();
   const fmt = (d: Date) =>
     d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
