@@ -1730,8 +1730,8 @@ function LiveMeetingRoom({ meeting }: { meeting: NonNullable<ReturnType<typeof M
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Share / Invite button — In App only */}
-        {isInApp && (
+        {/* Share / Invite button — In App only, not for guests */}
+        {isInApp && !isGuest && (
           <div className="relative">
             <button
               type="button"
@@ -2159,7 +2159,7 @@ function DownloadMenu() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function MeetingDetailClient({ meetingId }: { meetingId: string }) {
+export function MeetingDetailClient({ meetingId, isGuest = false }: { meetingId: string; isGuest?: boolean }) {
   const [activeTab, setActiveTab] = React.useState<TabId>("summary");
   const [search, setSearch] = React.useState("");
   const [showLiveRoom, setShowLiveRoom] = React.useState(false);

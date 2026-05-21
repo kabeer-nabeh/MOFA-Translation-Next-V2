@@ -10,7 +10,7 @@ export default async function GuestViewPage({
   return (
     <GuestShell>
       <main className="flex h-full w-full max-w-6xl mx-auto overflow-hidden px-8 py-8">
-        <MeetingDetailClient meetingId={id} />
+        <MeetingDetailClient meetingId={id} isGuest />
       </main>
     </GuestShell>
   );
