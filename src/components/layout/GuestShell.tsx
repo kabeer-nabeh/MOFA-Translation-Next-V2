@@ -8,7 +8,7 @@ export function GuestShell({ children }: { children: React.ReactNode }) {
       {/* Minimal top bar — logo only */}
       <header
         className="shrink-0 flex items-center px-6"
-        style={{ height: "62px", borderBottom: "1px solid var(--mofa-border-subtle)" }}
+        style={{ height: "62px" }}
       >
         <Link href="/" className="inline-flex items-center shrink-0">
           <Image
