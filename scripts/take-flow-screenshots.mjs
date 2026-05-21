@@ -19,16 +19,16 @@ const WAIT = "--wait-for-timeout=2500";
 const FLOWS = [
   ["DB-01", "/dashboard"],
   ["ML-01", "/meetings"],
-  ["ML-03", "/meetings", "ML-01"],          // new meeting modal — same page
+  ["ML-03", "/meetings", "ML-01"],
   ["MD-01", "/meetings/m2"],
   ["MD-02", "/meetings/m8"],
   ["MD-03", "/meetings/m1"],
-  ["MD-04", "/meetings/m1", "MD-03"],        // transcript tab — same page
-  ["MD-05", "/meetings/m8", "MD-02"],        // participants panel — same page
-  ["MD-06", "/meetings/m8", "MD-02"],        // invite guest — same page
+  ["MD-04", "/meetings/m1", "MD-03"],
+  ["MD-05", "/meetings/m8", "MD-02"],
+  ["MD-06", "/meetings/m8", "MD-02"],
   ["GU-01", "/guest-join/m8"],
-  ["GU-02", "/guest-join/m8", "GU-01"],      // success state — same page
-  ["GU-03", "/guest-join/m8", "GU-01"],      // wrong password — same page
+  ["GU-02", "/guest-join/m8", "GU-01"],
+  ["GU-03", "/guest-join/m8", "GU-01"],
   ["GU-04", "/guest-view/m8"],
   ["CA-01", "/calendar"],
   ["AN-01", "/analytics"],
@@ -36,6 +36,21 @@ const FLOWS = [
   ["SE-02", "/settings", "SE-01"],
   ["SE-03", "/settings", "SE-01"],
   ["SE-04", "/settings", "SE-01"],
+  // ── Missing flows — now built ──────────────────────────────────────────
+  ["ON-01", "/flows/onboarding/first-launch"],
+  ["ON-02", "/flows/onboarding/sign-in"],
+  ["ON-03", "/flows/onboarding/post-login"],
+  ["DB-02", "/flows/dashboard/empty"],
+  ["ML-02", "/flows/meetings/empty"],
+  ["MD-07", "/flows/meeting-detail/leave-confirm"],
+  ["MD-08", "/flows/meeting-detail/not-found"],
+  ["GU-05", "/flows/guest/invalid-link"],
+  ["CA-02", "/flows/calendar/empty"],
+  ["AN-02", "/flows/analytics/empty"],
+  ["ER-01", "/flows/errors/404"],
+  ["ER-02", "/flows/errors/server-error"],
+  ["ER-03", "/flows/errors/session-expired"],
+  ["ER-04", "/flows/errors/no-mic"],
 ];
 
 let ok = 0;
